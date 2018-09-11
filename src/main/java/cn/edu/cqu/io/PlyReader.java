@@ -49,19 +49,41 @@ public class PlyReader implements PointCloudReader, MeshReader{
         readPlyFormat(secondLine, header);
         for (int lineNo = 2; lineNo < headerLines.size(); lineNo ++) {
             String elementLine = headerLines.get(lineNo);
-            readPlyElement(elementLine, header);
+            Pair<String, Integer> pair = readPlyElement(elementLine);
+            lineNo += 1;
+            int propertyStartNo = lineNo;
+            while (headerLines.get(lineNo ++).startsWith("property "));
+            PlyElement element = new PlyElement(lineNo - propertyStartNo);
+            for (int i = propertyStartNo; i < lineNo; i ++) {
+                String[] propertySlices = headerLines.get(i).split(" ");
+                if (propertySlices.length < 3) throw new IOException("Invalid ply file.");
+                element.propertiesName[i - propertyStartNo] = propertySlices[propertySlices.length - 1];
+                if (propertySlices[1].equals("char")) {
+                    element.propertiesType[i - propertyStartNo] = TYPE_CHAR;
+                } else if (propertySlices[1].equals("uchar")) {
+                    element.propertiesType[i - propertyStartNo] = TYPE_UCHAR;
+                } else if (propertySlices[1].equals("int")) {
+                } else if (propertySlices[1].equals("uint")) {
+                } else if (propertySlices[1].equals("float")) {
+                } else if (propertySlices[1].equals("double")) {
+                } else if (propertySlices[1].equals("list")) {
+                }
+
+            }
+            header.elementTypes.put(pair.getKey(), element);
 
         }
         return header;
     }
 
-    private void readPlyElement(String line, PlyHeader header) throws IOException {
+    private Pair<String, Integer> readPlyElement(String line) throws IOException {
         String[] elementSlices = line.split(" ");
         if (! line.startsWith("element ") || elementSlices.length < 3) {
             throw new IOException("Invalid ply file: Invalid format.");
         }
         String elementName = elementSlices[1];
         Integer elementNumber = Integer.valueOf(elementSlices[2]);
+        return new Pair<>(elementName, elementNumber);
     }
 
     private void readPlyProperty(String line, PlyHeader header) {
@@ -133,6 +155,11 @@ public class PlyReader implements PointCloudReader, MeshReader{
         /** [float, float, float, uchar, uchar, uchar] **/
         private int[] propertiesType;
 
+        PlyElement(int propertiesNum) {
+            this.propertiesName = new String [propertiesNum];
+            this.propertiesType = new int [propertiesNum];
+        }
+
         /**
          * because list will be the only property in a element
          * we can use two type-field to describe list
@@ -182,7 +209,7 @@ public class PlyReader implements PointCloudReader, MeshReader{
         /** [("vertex", 12), ("face", 8)] **/
         private List<Pair<String, Integer>> elementsNumber = new ArrayList<>();
 
-        private Map<String, ElementType> elementTypes = new HashMap<>();
+        private Map<String, PlyElement> elementTypes = new HashMap<>();
 
         private int headerBytes = 0;
 
@@ -210,12 +237,8 @@ public class PlyReader implements PointCloudReader, MeshReader{
             this.elementsNumber = elementsNumber;
         }
 
-        public Map<String, ElementType> getElementTypes() {
+        public Map<String, PlyElement> getElementTypes() {
             return elementTypes;
-        }
-
-        public void setElementTypes(Map<String, ElementType> elementTypes) {
-            this.elementTypes = elementTypes;
         }
 
         public int getHeaderBytes() {
