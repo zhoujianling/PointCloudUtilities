@@ -1,4 +1,4 @@
-package cn.edu.cqu;
+package cn.jimmiez;
 
 /**
  * Hello world!

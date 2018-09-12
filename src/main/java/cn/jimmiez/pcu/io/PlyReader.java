@@ -1,18 +1,36 @@
-package cn.edu.cqu.io;
+package cn.jimmiez.pcu.io;
 
+import cn.jimmiez.pcu.model.PcuPointCloud;
+import cn.jimmiez.pcu.Constants;
 import javafx.util.Pair;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.annotation.ElementType;
 import java.util.*;
-
-import static cn.edu.cqu.Constants.ERR_CODE_FILE_NOT_FOUND;
-import static cn.edu.cqu.Constants.MAGIC_STRING;
+import java.util.List;
 
 public class PlyReader implements PointCloudReader, MeshReader{
+
+    public static final Integer FORMAT_ASCII = 0x3001;
+    public static final Integer FORMAT_BINARY_BIG_ENDIAN = 0x3002;
+    public static final Integer FORMAT_BINARY_LITTLE_ENDIAN = 0x3003;
+
+    public static final Integer FORMAT_NON_FORMAT = - 0x3001;
+
+    public static final Integer TYPE_LIST = 0x1001;
+
+    /** scalar type **/
+    public static final Integer TYPE_CHAR = 0x0001;
+    public static final Integer TYPE_UCHAR = 0x0002;
+    public static final Integer TYPE_SHORT = 0x0003;
+    public static final Integer TYPE_USHORT = 0x0004;
+    public static final Integer TYPE_INT = 0x0005;
+    public static final Integer TYPE_UINT = 0x0006;
+    public static final Integer TYPE_FLOAT = 0x0007;
+    public static final Integer TYPE_DOUBLE = 0x0008;
+
+    public static final Integer TYPE_NONTYPE = - 0x0001;
 
     public PlyHeader readHeaderThenCloseFile(File file) throws IOException {
         PlyHeader result;
@@ -21,10 +39,13 @@ public class PlyReader implements PointCloudReader, MeshReader{
         reader.close();
         return result;
     }
-
     public PlyHeader readHeader(FileReader reader) throws IOException {
-        PlyHeader header = new PlyHeader();
         Scanner scanner = new Scanner(reader);
+        return readHeader(scanner);
+    }
+
+    private PlyHeader readHeader(Scanner scanner) throws IOException {
+        PlyHeader header = new PlyHeader();
         List<String> headerLines = new ArrayList<>();
         try {
             String line = scanner.nextLine();
@@ -34,7 +55,6 @@ public class PlyReader implements PointCloudReader, MeshReader{
                 }
                 line = scanner.nextLine();
             }
-
         } catch (NoSuchElementException e) {
             throw new IOException("Invalid ply file: Cannot find end of header.");
         }
@@ -42,38 +62,57 @@ public class PlyReader implements PointCloudReader, MeshReader{
             throw new IOException("Invalid ply file: No data");
         }
         String firstLine = headerLines.get(0);
-        if (! firstLine.equals(MAGIC_STRING)) {
+        if (! firstLine.equals(Constants.MAGIC_STRING)) {
             throw new IOException("Invalid ply file: Ply file does not start with ply.");
         }
         String secondLine = headerLines.get(1);
         readPlyFormat(secondLine, header);
-        for (int lineNo = 2; lineNo < headerLines.size(); lineNo ++) {
+        for (int lineNo = 2; lineNo < headerLines.size();) {
             String elementLine = headerLines.get(lineNo);
             Pair<String, Integer> pair = readPlyElement(elementLine);
             lineNo += 1;
             int propertyStartNo = lineNo;
-            while (headerLines.get(lineNo ++).startsWith("property "));
+            while (lineNo < headerLines.size() && headerLines.get(lineNo).startsWith("property ")) lineNo++;
             PlyElement element = new PlyElement(lineNo - propertyStartNo);
             for (int i = propertyStartNo; i < lineNo; i ++) {
                 String[] propertySlices = headerLines.get(i).split(" ");
                 if (propertySlices.length < 3) throw new IOException("Invalid ply file.");
                 element.propertiesName[i - propertyStartNo] = propertySlices[propertySlices.length - 1];
-                if (propertySlices[1].equals("char")) {
-                    element.propertiesType[i - propertyStartNo] = TYPE_CHAR;
-                } else if (propertySlices[1].equals("uchar")) {
-                    element.propertiesType[i - propertyStartNo] = TYPE_UCHAR;
-                } else if (propertySlices[1].equals("int")) {
-                } else if (propertySlices[1].equals("uint")) {
-                } else if (propertySlices[1].equals("float")) {
-                } else if (propertySlices[1].equals("double")) {
-                } else if (propertySlices[1].equals("list")) {
+                element.propertiesType[i - propertyStartNo] = recognizeType(propertySlices[1]);
+                if (element.propertiesType[i - propertyStartNo] == TYPE_LIST) {
+                    if (propertySlices.length < 5) throw new IOException("Invalid ply file. Wrong list property.");
+                    element.listType1 = recognizeType(propertySlices[2]);
+                    element.listType2 = recognizeType(propertySlices[3]);
                 }
-
             }
             header.elementTypes.put(pair.getKey(), element);
-
+            header.elementsNumber.add(pair);
         }
         return header;
+    }
+
+    private int recognizeType(String type) {
+        switch (type) {
+            case "char":
+                return TYPE_CHAR;
+            case "uchar":
+                return TYPE_UCHAR;
+            case "int":
+                return TYPE_INT;
+            case "uint":
+                return TYPE_UINT;
+            case "short":
+                return TYPE_SHORT;
+            case "ushort":
+                return TYPE_USHORT;
+            case "float":
+                return TYPE_FLOAT;
+            case "double":
+                return TYPE_DOUBLE;
+            case "list":
+                return TYPE_LIST;
+        }
+        return TYPE_NONTYPE;
     }
 
     private Pair<String, Integer> readPlyElement(String line) throws IOException {
@@ -84,10 +123,6 @@ public class PlyReader implements PointCloudReader, MeshReader{
         String elementName = elementSlices[1];
         Integer elementNumber = Integer.valueOf(elementSlices[2]);
         return new Pair<>(elementName, elementNumber);
-    }
-
-    private void readPlyProperty(String line, PlyHeader header) {
-
     }
 
     private void readPlyFormat(String line, PlyHeader header) throws IOException {
@@ -115,39 +150,57 @@ public class PlyReader implements PointCloudReader, MeshReader{
         readPointCloud(file, listener);
     }
 
+    /**
+     * read a 3d point cloud from a ply file
+     * @param file The point cloud file(ply)
+     * @param listener The result of reading point cloud
+     */
     @Override
     public void readPointCloud(File file, ReadPointCloudListener listener) {
         if (! file.exists()) {
-            listener.onError(ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
+            listener.onError(Constants.ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
             return;
         }
-
+        try {
+            FileReader reader = new FileReader(file);
+            Scanner scanner = new Scanner(reader);
+            PlyHeader header = readHeader(scanner);
+            PcuPointCloud cloud = new PcuPointCloud();
+            PlyElement element4Point = header.elementTypes.get("vertex") != null ? header.elementTypes.get("vertex") : header.elementTypes.get("vertices");
+            if (header.elementsNumber.size() < 1 || element4Point == null) {
+                throw new IllegalStateException("Not a valid header for 3d point cloud.");
+            }
+            int vertexElementIndex = 0;
+            for (vertexElementIndex = 0; vertexElementIndex < header.elementsNumber.size(); vertexElementIndex ++) {
+                if (header.elementsNumber.get(vertexElementIndex).getKey().equals("vertex")
+                        || header.elementsNumber.get(vertexElementIndex).getKey().equals("vertices")) {
+                   break;
+                }
+            }
+            /** read points iteratively **/
+            for (int j = 0; j < header.elementsNumber.get(vertexElementIndex).getValue(); j ++) {
+                double[] point = new double[3];
+                point[0] = scanner.nextDouble();
+                point[1] = scanner.nextDouble();
+                point[2] = scanner.nextDouble();
+                cloud.getPoint3ds().add(point);
+            }
+            listener.onReadPointCloudSuccessfully(cloud, header);
+        } catch (IOException e) {
+            e.printStackTrace();
+            listener.onError(Constants.ERR_CODE_FILE_FORMAT_ERROR, e.getMessage());
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+            listener.onError(Constants.ERR_CODE_NOT_3D_PLY, e.getMessage());
+        } catch (NoSuchElementException e) {
+            e.printStackTrace();
+            listener.onError(Constants.ERR_CODE_NOT_ENOUGH_POINTS, e.getMessage());
+        }
     }
 
     @Override
     public void readMesh(String fileName, ReadMeshListener listener) {
-        File f;
-        FileReader r;
     }
-
-    public static final Integer FORMAT_ASCII = 0x3001;
-    public static final Integer FORMAT_BINARY_BIG_ENDIAN = 0x3002;
-    public static final Integer FORMAT_BINARY_LITTLE_ENDIAN = 0x3003;
-
-    public static final Integer FORMAT_NON_FORMAT = - 0x3001;
-
-    public static final Integer TYPE_LIST = 0x1001;
-
-    public static final Integer TYPE_CHAR = 0x0001;
-    public static final Integer TYPE_UCHAR = 0x0002;
-    public static final Integer TYPE_SHORT = 0x0003;
-    public static final Integer TYPE_USHORT = 0x0004;
-    public static final Integer TYPE_INT = 0x0005;
-    public static final Integer TYPE_UINT = 0x0006;
-    public static final Integer TYPE_FLOAT = 0x0007;
-    public static final Integer TYPE_DOUBLE = 0x0008;
-
-    public static final Integer TYPE_NONTYPE = - 0x0001;
 
     public static class PlyElement {
         /** ["x", "y", "z", "red", "green", "blue"] **/
@@ -171,33 +224,18 @@ public class PlyReader implements PointCloudReader, MeshReader{
             return propertiesName;
         }
 
-        public void setPropertiesName(String[] propertiesName) {
-            this.propertiesName = propertiesName;
-        }
-
         public int[] getPropertiesType() {
             return propertiesType;
-        }
-
-        public void setPropertiesType(int[] propertiesType) {
-            this.propertiesType = propertiesType;
         }
 
         public int getListType1() {
             return listType1;
         }
 
-        public void setListType1(int listType1) {
-            this.listType1 = listType1;
-        }
-
         public int getListType2() {
             return listType2;
         }
 
-        public void setListType2(int listType2) {
-            this.listType2 = listType2;
-        }
     }
 
     public static class PlyHeader {
@@ -217,24 +255,12 @@ public class PlyReader implements PointCloudReader, MeshReader{
             return plyFormat;
         }
 
-        public void setPlyFormat(int plyFormat) {
-            this.plyFormat = plyFormat;
-        }
-
         public float getPlyVersion() {
             return plyVersion;
         }
 
-        public void setPlyVersion(float plyVersion) {
-            this.plyVersion = plyVersion;
-        }
-
         public List<Pair<String, Integer>> getElementsNumber() {
             return elementsNumber;
-        }
-
-        public void setElementsNumber(List<Pair<String, Integer>> elementsNumber) {
-            this.elementsNumber = elementsNumber;
         }
 
         public Map<String, PlyElement> getElementTypes() {
