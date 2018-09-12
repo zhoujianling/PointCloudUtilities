@@ -10,20 +10,22 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assert.*;
+
 public class PlyReaderTest {
 
-    public void simplePlyHeaderTest(PlyReader.PlyHeader header) {
-        Assert.assertTrue(header.getPlyFormat() == PlyReader.FORMAT_ASCII);
-        Assert.assertEquals(header.getPlyVersion(), 1.0f, 1e-5);
-        Assert.assertTrue(header.getElementTypes().get("vertex").getPropertiesName().length == 3);
-        Assert.assertTrue(header.getElementTypes().get("vertex").getPropertiesType().length == 3);
-        Assert.assertTrue(header.getElementTypes().get("face").getListType1() == PlyReader.TYPE_UCHAR);
-        Assert.assertTrue(header.getElementTypes().get("face").getListType2() == PlyReader.TYPE_INT);
+    private void simplePlyHeaderTest(PlyReader.PlyHeader header) {
+        assertTrue(header.getPlyFormat() == PlyReader.FORMAT_ASCII);
+        assertEquals(header.getPlyVersion(), 1.0f, 1e-5);
+        assertTrue(header.getElementTypes().get("vertex").getPropertiesName().length == 3);
+        assertTrue(header.getElementTypes().get("vertex").getPropertiesType().length == 3);
+        assertTrue(header.getElementTypes().get("face").getListType1() == PlyReader.TYPE_UCHAR);
+        assertTrue(header.getElementTypes().get("face").getListType2() == PlyReader.TYPE_INT);
         for (Pair<String, Integer> pair : header.getElementsNumber()) {
             if (pair.getKey().equals("vertex")) {
-                Assert.assertTrue(pair.getValue() == 4770);
+                assertTrue(pair.getValue() == 4770);
             } else if (pair.getKey().equals("face")) {
-                Assert.assertTrue(pair.getValue() == 0);
+                assertTrue(pair.getValue() == 0);
             }
         }
     }
@@ -37,15 +39,15 @@ public class PlyReaderTest {
     }
 
     @Test
-    public void readPlyDataTest() throws IOException {
+    public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
         reader.readPointCloud(file, new ReadPointCloudListener() {
             @Override
             public void onReadPointCloudSuccessfully(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
                 simplePlyHeaderTest(header);
-                Assert.assertTrue(pointCloud.getPoint3ds().size() == 4770);
-                Assert.assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
+                assertTrue(pointCloud.getPoint3ds().size() == 4770);
+                assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
             }
 
             @Override
@@ -53,5 +55,15 @@ public class PlyReaderTest {
                 Assert.assertTrue(false);
             }
         });
+    }
+
+    @Test
+    public void readBinaryBigEndianPlyDataTest() {
+
+    }
+
+    @Test
+    public void readBinaryLittleEndianPlyDataTest() {
+
     }
 }

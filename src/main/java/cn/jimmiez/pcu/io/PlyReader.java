@@ -4,24 +4,23 @@ import cn.jimmiez.pcu.model.PcuPointCloud;
 import cn.jimmiez.pcu.Constants;
 import javafx.util.Pair;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
 public class PlyReader implements PointCloudReader, MeshReader{
 
-    public static final Integer FORMAT_ASCII = 0x3001;
-    public static final Integer FORMAT_BINARY_BIG_ENDIAN = 0x3002;
-    public static final Integer FORMAT_BINARY_LITTLE_ENDIAN = 0x3003;
+    /** constant representing ply format **/
+    public static final int FORMAT_ASCII = 0x3001;
+    public static final int FORMAT_BINARY_BIG_ENDIAN = 0x3002;
+    public static final int FORMAT_BINARY_LITTLE_ENDIAN = 0x3003;
 
-    public static final Integer FORMAT_NON_FORMAT = - 0x3001;
+    public static final int FORMAT_NON_FORMAT = - 0x3001;
 
-    public static final Integer TYPE_LIST = 0x1001;
+    public static final int TYPE_LIST = 0x1001;
 
     /** scalar type **/
-    public static final Integer TYPE_CHAR = 0x0001;
+    public static final int TYPE_CHAR = 0x0001;
     public static final Integer TYPE_UCHAR = 0x0002;
     public static final Integer TYPE_SHORT = 0x0003;
     public static final Integer TYPE_USHORT = 0x0004;
@@ -150,8 +149,44 @@ public class PlyReader implements PointCloudReader, MeshReader{
         readPointCloud(file, listener);
     }
 
+    private void readBinaryBigEndianPointCloud(PlyHeader header, FileInputStream stream, ReadPointCloudListener listener) throws IOException {
+
+    }
+
+    private void readAsciiPointCloud(PlyHeader header, Scanner scanner, ReadPointCloudListener listener) {
+        PcuPointCloud cloud = new PcuPointCloud();
+        PlyElement element4Point = header.elementTypes.get("vertex") != null ? header.elementTypes.get("vertex") : header.elementTypes.get("vertices");
+        if (header.elementsNumber.size() < 1 || element4Point == null) {
+            throw new IllegalStateException("Not a valid header for 3d point cloud.");
+        }
+        int vertexElementIndex;
+        for (vertexElementIndex = 0; vertexElementIndex < header.elementsNumber.size(); vertexElementIndex ++) {
+            if (header.elementsNumber.get(vertexElementIndex).getKey().equals("vertex")
+                    || header.elementsNumber.get(vertexElementIndex).getKey().equals("vertices")) {
+                break;
+            }
+        }
+
+        int pointsNumber = header.elementsNumber.get(vertexElementIndex).getValue();
+        /** read points iteratively **/
+        for (int j = 0; j < pointsNumber; j ++) {
+            double[] point = new double[3];
+            point[0] = scanner.nextDouble();
+            point[1] = scanner.nextDouble();
+            point[2] = scanner.nextDouble();
+            cloud.getPoint3ds().add(point);
+            for (int k = 3; k < element4Point.getPropertiesType().length; k++) {
+                scanner.nextDouble(); // nextDouble() is able to skip int, float, long ...
+            }
+        }
+        listener.onReadPointCloudSuccessfully(cloud, header);
+
+    }
+
     /**
-     * read a 3d point cloud from a ply file
+     * read a 3d point cloud from a ply file.
+     * It is supposed that the properties of vertex is listed in such order:
+     * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
      * @param listener The result of reading point cloud
      */
@@ -162,30 +197,17 @@ public class PlyReader implements PointCloudReader, MeshReader{
             return;
         }
         try {
-            FileReader reader = new FileReader(file);
-            Scanner scanner = new Scanner(reader);
+            FileInputStream stream = new FileInputStream(file);
+            Scanner scanner = new Scanner(stream);
             PlyHeader header = readHeader(scanner);
-            PcuPointCloud cloud = new PcuPointCloud();
-            PlyElement element4Point = header.elementTypes.get("vertex") != null ? header.elementTypes.get("vertex") : header.elementTypes.get("vertices");
-            if (header.elementsNumber.size() < 1 || element4Point == null) {
-                throw new IllegalStateException("Not a valid header for 3d point cloud.");
+            switch (header.plyFormat) {
+                case FORMAT_ASCII:
+                    readAsciiPointCloud(header, scanner, listener);
+                    break;
+                case FORMAT_BINARY_BIG_ENDIAN:
+                    readBinaryBigEndianPointCloud(header, stream, listener);
+                    break;
             }
-            int vertexElementIndex = 0;
-            for (vertexElementIndex = 0; vertexElementIndex < header.elementsNumber.size(); vertexElementIndex ++) {
-                if (header.elementsNumber.get(vertexElementIndex).getKey().equals("vertex")
-                        || header.elementsNumber.get(vertexElementIndex).getKey().equals("vertices")) {
-                   break;
-                }
-            }
-            /** read points iteratively **/
-            for (int j = 0; j < header.elementsNumber.get(vertexElementIndex).getValue(); j ++) {
-                double[] point = new double[3];
-                point[0] = scanner.nextDouble();
-                point[1] = scanner.nextDouble();
-                point[2] = scanner.nextDouble();
-                cloud.getPoint3ds().add(point);
-            }
-            listener.onReadPointCloudSuccessfully(cloud, header);
         } catch (IOException e) {
             e.printStackTrace();
             listener.onError(Constants.ERR_CODE_FILE_FORMAT_ERROR, e.getMessage());
@@ -203,9 +225,9 @@ public class PlyReader implements PointCloudReader, MeshReader{
     }
 
     public static class PlyElement {
-        /** ["x", "y", "z", "red", "green", "blue"] **/
+        /** eg. ["x", "y", "z", "red", "green", "blue"] **/
         private String[] propertiesName;
-        /** [float, float, float, uchar, uchar, uchar] **/
+        /** eg. [float, float, float, uchar, uchar, uchar] **/
         private int[] propertiesType;
 
         PlyElement(int propertiesNum) {

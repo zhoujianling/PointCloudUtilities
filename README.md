@@ -34,3 +34,8 @@ plyReader.readPointCloud(file, new ReadPointCloudListener() {
 });
 ```
 
+## ToDo List
+* Add support for reading and writing ply files
+* Add normal estimator for point cloud
+
+
