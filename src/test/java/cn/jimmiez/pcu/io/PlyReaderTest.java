@@ -1,7 +1,5 @@
-package cn.jimmiez.pcu;
+package cn.jimmiez.pcu.io;
 
-import cn.jimmiez.pcu.io.PlyReader;
-import cn.jimmiez.pcu.io.ReadPointCloudListener;
 import cn.jimmiez.pcu.model.PcuPointCloud;
 import javafx.util.Pair;
 import org.junit.Assert;
@@ -42,16 +40,17 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
-        reader.readPointCloud(file, new ReadPointCloudListener() {
+        PcuPointCloud pointCloud = new PcuPointCloud();
+        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
             @Override
-            public void onReadPointCloudSuccessfully(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
+            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
                 simplePlyHeaderTest(header);
                 assertTrue(pointCloud.getPoint3ds().size() == 4770);
                 assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
             }
 
             @Override
-            public void onError(int code, String message) {
+            public void onFail(int code, String message) {
                 Assert.assertTrue(false);
             }
         });
@@ -64,6 +63,19 @@ public class PlyReaderTest {
 
     @Test
     public void readBinaryLittleEndianPlyDataTest() {
-
+        PlyReader reader = new PlyReader();
+//        File file = new File("D:\\User\\zhouh\\Documents\\CQU_SKELETON\\Data\\收集数据\\surface-L2-clean1.ply");
+//        PcuPointCloud pointCloud = new PcuPointCloud();
+//        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
+//            @Override
+//            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
+//                System.out.println("????");
+//            }
+//
+//            @Override
+//            public void onFail(int code, String message) {
+//                System.out.println(message);
+//            }
+//        });
     }
 }

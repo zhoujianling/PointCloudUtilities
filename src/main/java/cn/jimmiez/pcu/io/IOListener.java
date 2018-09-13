@@ -1,5 +1,5 @@
 package cn.jimmiez.pcu.io;
 
 public interface IOListener {
-    void onError(int code, String message);
+    void onFail(int code, String message);
 }

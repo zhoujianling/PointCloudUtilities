@@ -23,12 +23,12 @@ File file = ...; //ply file
 PlyReader plyReader = new PlyReader();
 plyReader.readPointCloud(file, new ReadPointCloudListener() {
     @Override
-    public void onReadPointCloudSuccessfully(PcuPointCloud pcuPointCloud, PlyReader.PlyHeader plyHeader) {
+    public void onSucceed(PcuPointCloud pcuPointCloud, PlyReader.PlyHeader plyHeader) {
         // process data
     }
 
     @Override
-    public void onError(int i, String s) {
+    public void onFail(int i, String s) {
         // handle exception
     }
 });

@@ -7,13 +7,18 @@ import java.util.List;
  *
  */
 public class PcuPointCloud {
-    private List<double[]> point3ds;
+    private List<float[]> point3ds;
 
     public PcuPointCloud() {
         point3ds = new ArrayList<>();
     }
 
-    public List<double[]> getPoint3ds() {
+    @PcuElement(
+            properties = {"x", "y", "z"},
+            alternativeNames = {"vertex", "vertices"}
+    )
+    public List<float[]> getPoint3ds() {
         return point3ds;
     }
+
 }
