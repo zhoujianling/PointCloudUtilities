@@ -2,7 +2,6 @@ package cn.jimmiez.pcu.io;
 
 import cn.jimmiez.pcu.model.PcuPointCloud;
 import javafx.util.Pair;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -40,20 +39,10 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
-        PcuPointCloud pointCloud = new PcuPointCloud();
-        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
-            @Override
-            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
-                simplePlyHeaderTest(header);
-                assertTrue(pointCloud.getPoint3ds().size() == 4770);
-                assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
-            }
-
-            @Override
-            public void onFail(int code, String message) {
-                Assert.assertTrue(false);
-            }
-        });
+        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        assertNotNull(pointCloud);
+        assertTrue(pointCloud.getPoint3ds().size() == 4770);
+        assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
     }
 
     @Test
@@ -65,17 +54,7 @@ public class PlyReaderTest {
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/tree_bin.ply").getFile());
-        PcuPointCloud pointCloud = new PcuPointCloud();
-        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
-            @Override
-            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
-                assertTrue(pointCloud.getPoint3ds().size() == 27788);
-            }
-
-            @Override
-            public void onFail(int code, String message) {
-                assertTrue(false);
-            }
-        });
+        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        assertTrue(pointCloud.getPoint3ds().size() == 27788);
     }
 }

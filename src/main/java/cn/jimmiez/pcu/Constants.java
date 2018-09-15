@@ -1,6 +1,7 @@
 package cn.jimmiez.pcu;
 
 public class Constants {
+    public static final Integer ERR_CODE_NO_ERROR = 200;
     public static final Integer ERR_CODE_FILE_NOT_FOUND = 404;
     public static final Integer ERR_CODE_FILE_HEADER_FORMAT_ERROR = 500;
     public static final Integer ERR_CODE_FILE_DATA_FORMAT_ERROR = 501;

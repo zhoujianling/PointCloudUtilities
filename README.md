@@ -6,7 +6,7 @@ This is a util for point cloud processing. Until recently few features have been
 
 ## Features
 * Read a ply header from a file which follows the [standard](http://paulbourke.net/dataformats/ply/).
-* Read a ASCII-format ply file and acquire a point cloud structure.
+* Read a ply file and acquire a point cloud structure.
 
 ## Build
 
@@ -17,25 +17,54 @@ mvn package
 
 ## How to Use It
 
-Import the project, then use following code to read a point cloud:
-```java
-File file = ...; //ply file
-PlyReader plyReader = new PlyReader();
-plyReader.readPointCloud(file, new ReadPointCloudListener() {
-    @Override
-    public void onSucceed(PcuPointCloud pcuPointCloud, PlyReader.PlyHeader plyHeader) {
-        // process data
-    }
+Firstly, on *NIX system, use following command to see the header of your ply file:
+```shell
+head -n 20 foo.ply
 
-    @Override
-    public void onFail(int i, String s) {
-        // handle exception
-    }
-});
+```
+you will see a structure like this:
+```
+ply
+format binary_little_endian 1.0
+comment VCGLIB generated
+element vertex 27788
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+property uchar alpha
+property float quality
+element face 52113
+property list uchar int vertex_indices
+end_header
 ```
 
-## ToDo List
-* Add support for reading and writing ply files
+Secondly, you need to define a class to describe your point cloud.
+```java
+class YourPointCloud {
+    private List<float[]> points = new ArrayList<>();
+
+    @PcuElement(
+        properties = {"x", "y", "z"},
+        alternativeNames = {"vertex"}
+    )
+    public List<double[]> getPoints() {
+        return points;
+    }
+}
+```
+Thirdly, instantialize a PlyReader, use readPointCloud() to get your point cloud.
+```java
+File file = ...;// ply file
+PlyReader plyReader = new PlyReader();
+YourPointCloud pc = plyReader.readPointCloud(file, YourPointCloud.class);
+```
+
+## TODO List
+* Add support for writing ply files
+* Add support for reading obj files
 * Add normal estimator for point cloud
 
 

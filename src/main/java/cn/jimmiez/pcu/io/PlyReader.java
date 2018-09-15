@@ -38,6 +38,7 @@ public class PlyReader implements  MeshReader{
     public static final int TYPE_FLOAT = 0x0007;
     public static final int TYPE_DOUBLE = 0x0008;
 
+
     /**
      * The size of type：
      * NON_TYPE, CHAR, UCHAR, SHORT, USHORT, INT, UINT, FLOAT, DOUBLE, RESERVED, RESERVED
@@ -56,6 +57,7 @@ public class PlyReader implements  MeshReader{
         reader.close();
         return result;
     }
+
     public PlyHeader readHeader(FileReader reader) throws IOException {
         Scanner scanner = new Scanner(reader);
         return readHeader(scanner);
@@ -168,22 +170,20 @@ public class PlyReader implements  MeshReader{
         readPointCloud(file, object, listener);
     }
 
-//    public <T> void readPointCloud(String fileName, Class<T> clazz, ReadListener<T> listener) {
-//
-//
-//    }
-
-    public <T> T readPointCloud(String fileName, Class<T> clazz) {
+    public <T> T readPointCloud(File file, Class<T> clazz) {
         T object = null;
+        final List<Integer> errorCodes = new ArrayList<>();
         try {
             object = clazz.newInstance();
-            readPointCloud(fileName, object, new ReadListener<T>() {
+            readPointCloud(file, object, new ReadListener<T>() {
                 @Override
                 public void onSucceed(T pointCloud, PlyHeader header) {
+
                 }
 
                 @Override
                 public void onFail(int code, String message) {
+                    errorCodes.add(code);
                     System.err.println("Read point cloud failed, error code: " + code);
                     System.err.println(message);
                 }
@@ -193,7 +193,12 @@ public class PlyReader implements  MeshReader{
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
+        if (errorCodes.size() > 0) return null;
         return object;
+    }
+
+    public <T> T readPointCloud(String fileName, Class<T> clazz) {
+        return readPointCloud(new File(fileName), clazz);
     }
 
     @SuppressWarnings("unchecked")
@@ -626,6 +631,5 @@ public class PlyReader implements  MeshReader{
             return headerBytes;
         }
     }
-
 
 }
