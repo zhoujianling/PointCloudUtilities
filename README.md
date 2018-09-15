@@ -50,12 +50,12 @@ class YourPointCloud {
         properties = {"x", "y", "z"},
         alternativeNames = {"vertex"}
     )
-    public List<double[]> getPoints() {
+    public List<float[]> getPoints() {
         return points;
     }
 }
 ```
-Thirdly, instantialize a PlyReader, use readPointCloud() to get your point cloud.
+Thirdly, instantiate a PlyReader, use readPointCloud() to get your point cloud.
 ```java
 File file = ...;// ply file
 PlyReader plyReader = new PlyReader();
