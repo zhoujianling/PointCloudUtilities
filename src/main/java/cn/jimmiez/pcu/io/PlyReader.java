@@ -1,7 +1,6 @@
 package cn.jimmiez.pcu.io;
 
 import cn.jimmiez.pcu.model.PcuElement;
-import cn.jimmiez.pcu.model.PcuPointCloud;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
@@ -65,13 +64,14 @@ public class PlyReader implements  MeshReader{
     private PlyHeader readHeader(Scanner scanner) throws IOException {
         PlyHeader header = new PlyHeader();
         List<String> headerLines = new ArrayList<>();
+        int byteCount = 0;
         try {
-            String line = scanner.nextLine();
-            while (! line.equals("end_header")) {
-                if (! line.startsWith("comment ")) {
-                    headerLines.add(line);
-                }
-                line = scanner.nextLine();
+            String line = null;
+            while ((line = scanner.nextLine()) != null) {
+                byteCount += (line.getBytes().length + 1);
+                if (line.equals("end_header")) break;
+                if (line.startsWith("comment ")) continue;
+                headerLines.add(line);
             }
         } catch (NoSuchElementException e) {
             throw new IOException("Invalid ply file: Cannot find end of header.");
@@ -79,6 +79,7 @@ public class PlyReader implements  MeshReader{
         if (headerLines.size() < 1) {
             throw new IOException("Invalid ply file: No data");
         }
+        header.headerBytes = byteCount;
         String firstLine = headerLines.get(0);
         if (! firstLine.equals(Constants.MAGIC_STRING)) {
             throw new IOException("Invalid ply file: Ply file does not start with ply.");
@@ -167,16 +168,18 @@ public class PlyReader implements  MeshReader{
         readPointCloud(file, object, listener);
     }
 
+//    public <T> void readPointCloud(String fileName, Class<T> clazz, ReadListener<T> listener) {
+//
+//
+//    }
 
     public <T> T readPointCloud(String fileName, Class<T> clazz) {
         T object = null;
-//        final Boolean readSuccess = false;
         try {
             object = clazz.newInstance();
             readPointCloud(fileName, object, new ReadListener<T>() {
                 @Override
                 public void onSucceed(T pointCloud, PlyHeader header) {
-//                    readSuccess = ;
                 }
 
                 @Override
@@ -193,41 +196,137 @@ public class PlyReader implements  MeshReader{
         return object;
     }
 
-    private void readBinaryPointCloud(PlyHeader header, FileInputStream stream, ReadListener listener, ByteOrder order) throws IOException {
-        /**
-        PcuPointCloud pointCloud = new PcuPointCloud();
+    @SuppressWarnings("unchecked")
+    private <T> void readBinaryPointCloud(PlyHeader header, FileInputStream stream, T pointCloud, ReadListener<T> listener, ByteOrder order)
+            throws IOException, InvocationTargetException, IllegalAccessException {
+        List<Method> methods = PcuReflectUtil.fetchAllMethods(pointCloud);
         for (int i = 0; i < header.elementsNumber.size(); i ++) {
             String elementName = header.elementsNumber.get(i).getKey();
             int elementNum = header.elementsNumber.get(i).getValue();
             PlyElement element = header.elementTypes.get(elementName);
-            boolean isVertex = elementName.equals("vertex") || elementName.equals("vertices");
-            int size = sizeOfElement(element);
-            if (! isVertex) {
-                stream.skip(elementNum * size);
+            List<Method> getters = findElementGetter(methods, elementName);
+            List<List> data = new ArrayList<>();
+            List<PcuElement> userDefinedEles = new ArrayList<>();
+
+            for (Method m : getters) {
+                Object listObj = m.invoke(pointCloud);
+                if (listObj != null && (listObj instanceof List)) {
+                    data.add((List) listObj);
+                    userDefinedEles.add(m.getAnnotation(PcuElement.class));
+                }
+            }
+
+            if (userDefinedEles.size() < 1) {
+                skipBinaryElement(elementNum, element, stream);
                 continue;
             }
 
-            for (int j = 0; j < elementNum; j ++) {
-                float[] point = new float[3];
-                for (int k = 0; k < element.getPropertiesType().length; k ++) {
+            /**key is index for data, value is index for data.get(key)**/
+            Pair[] dataIndexList = new Pair[element.propertiesType.length];
+            int originalSize = data.get(0).size();
 
-                    int type = element.getPropertiesType()[k];
-                    if (type > TYPE_LOW_BOUNDS && type < TYPE_UPPER_BOUNDS) {
-                        if (k > 2) {
-                            stream.skip(TYPE_SIZE[type]);
-                        } else {
-                            byte[] bytes = new byte[TYPE_SIZE[type]];
-                            stream.read(bytes);
-                            point[k] = bytes2double(type, bytes, order);
+            for (int j = 0; j < element.propertiesType.length ; j ++) {
+                boolean jump = false;
+                for (int k = 0; k < userDefinedEles.size() && !jump; k ++) {
+                    PcuElement pcuEle = userDefinedEles.get(k);
+                    for (int l = 0; l < pcuEle.properties().length && !jump; l ++) {
+                        if (pcuEle.properties()[l].equals(element.propertiesName[j])) {
+                            Pair<Integer, Integer> pair = new Pair<>(k, l);
+                            dataIndexList[j] = pair;
+                            jump = true;
                         }
                     }
                 }
-                pointCloud.getPoint3ds().add(point);
             }
-            listener.onSucceed(pointCloud, header);
-            break;
+            int lineSize = sizeOfElement(element);
+            byte[] bytes = new byte[lineSize];
+            for (int j = 0; j < elementNum; j ++) {
+                stream.read(bytes);
+                parseBinaryElement(bytes, dataIndexList, element, data, order, userDefinedEles);
+            }
         }
-         **/
+        listener.onSucceed(pointCloud, header);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void parseBinaryElement(byte[] bytes, Pair[] dataIndexList, PlyElement element, List<List> data,
+                                    ByteOrder order, List<PcuElement> pcuEles) throws IOException {
+        int offset = 0;
+        int originalSize = data.get(0).size();
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        buffer.order(order);
+        if (element.listType1 == TYPE_NONTYPE) {
+            for (int i = 0; i < element.propertiesType.length; i ++) {
+                Pair<Integer, Integer> pair = dataIndexList[i];
+                if (pair == null) continue;
+                switch (element.propertiesType[i]) {
+                    case TYPE_DOUBLE: {
+                        if (originalSize == data.get(pair.getKey()).size()) {
+                            data.get(pair.getKey()).add(new double[pcuEles.get(pair.getKey()).properties().length]);
+                        }
+                        List<double[]> vectors = data.get(pair.getKey());
+                        double val = buffer.getDouble(offset);
+                        vectors.get(vectors.size() - 1)[pair.getValue()] = val;
+                        offset += 8;
+                    }
+                    break;
+                    case TYPE_FLOAT: {
+                        if (originalSize == data.get(pair.getKey()).size()) {
+                            data.get(pair.getKey()).add(new float[pcuEles.get(pair.getKey()).properties().length]);
+                        }
+                        List<float[]> vector = data.get(pair.getKey());
+                        float val = buffer.getFloat(offset);
+                        vector.get(vector.size() - 1)[pair.getValue()] = val;
+                        offset += 4;
+                    }
+                    break;
+                    case TYPE_INT:
+                    case TYPE_UINT:{
+                        if (originalSize == data.get(pair.getKey()).size()) {
+                            data.get(pair.getKey()).add(new int[pcuEles.get(pair.getKey()).properties().length]);
+                        }
+                        List<int[]> vector = data.get(pair.getKey());
+                        int val = buffer.getInt(offset);
+                        vector.get(vector.size() - 1)[pair.getValue()] = val;
+                        offset += 4;
+                    }
+                    break;
+                    case TYPE_SHORT:
+                    case TYPE_USHORT: {
+                        if (originalSize == data.get(pair.getKey()).size()) {
+                            data.get(pair.getKey()).add(new short[pcuEles.get(pair.getKey()).properties().length]);
+                        }
+                        List<short[]> vector = data.get(pair.getKey());
+                        short val = buffer.getShort(offset);
+                        vector.get(vector.size() - 1)[pair.getValue()] = val;
+                        offset += 2;
+                    }
+                    break;
+                    case TYPE_CHAR:
+                    case TYPE_UCHAR: {
+                        if (originalSize == data.get(pair.getKey()).size()) {
+                            data.get(pair.getKey()).add(new byte[pcuEles.get(pair.getKey()).properties().length]);
+                        }
+                        List<byte[]> vector = data.get(pair.getKey());
+                        byte val = buffer.get(offset);
+                        vector.get(vector.size() - 1)[pair.getValue()] = val;
+                        offset += 1;
+                    }
+                    break;
+                }
+            }
+        } else if (element.getPropertiesType()[0] == TYPE_LIST){
+
+        } else {
+            System.err.println("Invalid ply file.");
+            throw new IllegalArgumentException("Invalid entity class, please check the annotation.");
+        }
+
+    }
+
+    private void skipBinaryElement(int elementNum, PlyElement element, FileInputStream stream) throws IOException {
+        int totalSize = sizeOfElement(element) * elementNum;
+        stream.skip(totalSize);
     }
 
     private double bytes2double(int type, byte[] bytes, ByteOrder order) {
@@ -253,7 +352,14 @@ public class PlyReader implements  MeshReader{
      */
     private int sizeOfElement(PlyElement element) {
         int size = 0;
-
+        if (element.listType1 == TYPE_NONTYPE) {
+            for (int type : element.propertiesType) {
+                size += TYPE_SIZE[type];
+            }
+        } else {
+            // list type
+            //???
+        }
         return size;
     }
 
@@ -342,8 +448,8 @@ public class PlyReader implements  MeshReader{
     }
 
     @SuppressWarnings("unchecked")
-    private void readAsciiPly(PlyHeader header, Scanner scanner, Object pointCloud, ReadListener listener) throws InvocationTargetException, IllegalAccessException, IOException {
-
+    private void readAsciiPly(PlyHeader header, FileInputStream stream, Object pointCloud, ReadListener listener) throws InvocationTargetException, IllegalAccessException, IOException {
+        Scanner scanner = new Scanner(stream);
         List<Method> methods = PcuReflectUtil.fetchAllMethods(pointCloud);
         for (int i = 0; i < header.elementsNumber.size(); i ++) {
             String elementName = header.elementsNumber.get(i).getKey();
@@ -384,31 +490,6 @@ public class PlyReader implements  MeshReader{
                 parseAsciiElement(line, indicesList, element, data);
             }
         }
-//        PcuPointCloud cloud = new PcuPointCloud();
-//        PlyElement element4Point = header.elementTypes.get("vertex") != null ? header.elementTypes.get("vertex") : header.elementTypes.get("vertices");
-//        if (header.elementsNumber.size() < 1 || element4Point == null) {
-//            throw new IllegalStateException("Not a valid header for 3d point cloud.");
-//        }
-//        int vertexElementIndex;
-//        for (vertexElementIndex = 0; vertexElementIndex < header.elementsNumber.size(); vertexElementIndex ++) {
-//            if (header.elementsNumber.get(vertexElementIndex).getKey().equals("vertex")
-//                    || header.elementsNumber.get(vertexElementIndex).getKey().equals("vertices")) {
-//                break;
-//            }
-//        }
-//
-//        int pointsNumber = header.elementsNumber.get(vertexElementIndex).getValue();
-//        /** read points iteratively **/
-//        for (int j = 0; j < pointsNumber; j ++) {
-//            double[] point = new double[3];
-//            point[0] = scanner.nextDouble();
-//            point[1] = scanner.nextDouble();
-//            point[2] = scanner.nextDouble();
-//            cloud.getPoint3ds().add(point);
-//            for (int k = 3; k < element4Point.getPropertiesType().length; k++) {
-//                scanner.nextDouble(); // nextDouble() is able to skip int, float, long ...
-//            }
-//        }
         listener.onSucceed(pointCloud, header);
 
     }
@@ -425,38 +506,51 @@ public class PlyReader implements  MeshReader{
             listener.onFail(Constants.ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
             return;
         }
+        FileInputStream stream = null;
+        PlyHeader header = null;
         try {
-            FileInputStream stream = new FileInputStream(file);
+            stream = new FileInputStream(file);
             Scanner scanner = new Scanner(stream);
-            PlyHeader header = readHeader(scanner);
-            switch (header.plyFormat) {
-                case FORMAT_ASCII:
-                    readAsciiPly(header, scanner, pointCloud, listener);
-                    break;
-                case FORMAT_BINARY_BIG_ENDIAN:
-                    readBinaryPointCloud(header, stream, listener, ByteOrder.BIG_ENDIAN);
-                    break;
-                case FORMAT_BINARY_LITTLE_ENDIAN:
-                    readBinaryPointCloud(header, stream, listener, ByteOrder.LITTLE_ENDIAN);
-                    break;
-            }
+            header = readHeader(scanner);
             stream.close();
+            stream = new FileInputStream(file);
+            stream.skip(header.headerBytes);
         } catch (IOException e) {
             e.printStackTrace();
-            listener.onFail(Constants.ERR_CODE_FILE_FORMAT_ERROR, e.getMessage());
+            listener.onFail(Constants.ERR_CODE_FILE_HEADER_FORMAT_ERROR, e.getMessage());
         } catch (IllegalStateException e) {
             e.printStackTrace();
             listener.onFail(Constants.ERR_CODE_NOT_3D_PLY, e.getMessage());
         } catch (NoSuchElementException e) {
             e.printStackTrace();
             listener.onFail(Constants.ERR_CODE_NOT_ENOUGH_POINTS, e.getMessage());
+        }
+        if (header == null) return;
+
+        try {
+            switch (header.plyFormat) {
+                case FORMAT_ASCII:
+                    readAsciiPly(header, stream, pointCloud, listener);
+                    break;
+                case FORMAT_BINARY_BIG_ENDIAN:
+                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
+                    break;
+                case FORMAT_BINARY_LITTLE_ENDIAN:
+                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
+                    break;
+            }
+
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             listener.onFail(Constants.ERR_CODE_PRIVATE_METHOD, e.getMessage());
         } catch (InvocationTargetException e) {
             e.printStackTrace();
             listener.onFail(Constants.ERR_CODE_METHOD_NO_LIST, e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            listener.onFail(Constants.ERR_CODE_FILE_DATA_FORMAT_ERROR, e.getMessage());
         }
+
     }
 
     @Override
@@ -532,5 +626,6 @@ public class PlyReader implements  MeshReader{
             return headerBytes;
         }
     }
+
 
 }

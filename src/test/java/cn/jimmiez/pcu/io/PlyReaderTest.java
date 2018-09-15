@@ -64,18 +64,18 @@ public class PlyReaderTest {
     @Test
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
-//        File file = new File("D:\\User\\zhouh\\Documents\\CQU_SKELETON\\Data\\收集数据\\surface-L2-clean1.ply");
-//        PcuPointCloud pointCloud = new PcuPointCloud();
-//        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
-//            @Override
-//            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
-//                System.out.println("????");
-//            }
-//
-//            @Override
-//            public void onFail(int code, String message) {
-//                System.out.println(message);
-//            }
-//        });
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/tree_bin.ply").getFile());
+        PcuPointCloud pointCloud = new PcuPointCloud();
+        reader.readPointCloud(file, pointCloud, new ReadListener<PcuPointCloud>() {
+            @Override
+            public void onSucceed(PcuPointCloud pointCloud, PlyReader.PlyHeader header) {
+                assertTrue(pointCloud.getPoint3ds().size() == 27788);
+            }
+
+            @Override
+            public void onFail(int code, String message) {
+                assertTrue(false);
+            }
+        });
     }
 }
