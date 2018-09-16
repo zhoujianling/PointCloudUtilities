@@ -388,67 +388,61 @@ public class PlyReader implements  MeshReader{
         }
     }
 
+    /** parse one line in ASCII-format ply file **/
     @SuppressWarnings("unchecked")
-    private void parseAsciiElement(String line, List<int[]> indicesList, PlyElement element, List<List> data) throws IOException {
+    private void parseAsciiScalarElement(String line, List<int[]> indicesList, PlyElement element, List<List> data) throws IOException {
         String[] slices = line.split(" ");
-        if (element.listType1 == TYPE_NONTYPE) {
-            if (slices.length != element.getPropertiesType().length) throw new IOException("Invalid ply file.");
-            for (int i = 0; i < data.size(); i ++) {
-                int[] indices = indicesList.get(i);
-                if (indices.length < 1) continue;
-                switch (element.propertiesType[indices[0]]) {
-                    case TYPE_DOUBLE: {
-                        double[] values = new double[indices.length];
-                        for (int j = 0; j < indices.length; j ++) {
-                            values[j] = Double.valueOf(slices[indices[j]]);
-                        }
-                        data.get(i).add(values);
+        if (slices.length != element.getPropertiesType().length) throw new IOException("Invalid ply file.");
+        for (int i = 0; i < data.size(); i ++) {
+            int[] indices = indicesList.get(i);
+            if (indices.length < 1) continue;
+            switch (element.propertiesType[indices[0]]) {
+                case TYPE_DOUBLE: {
+                    double[] values = new double[indices.length];
+                    for (int j = 0; j < indices.length; j ++) {
+                        values[j] = Double.valueOf(slices[indices[j]]);
                     }
-                        break;
-                    case TYPE_FLOAT: {
-                        float[] values = new float[indices.length];
-                        for (int j = 0; j < indices.length; j ++) {
-                            values[j] = Float.valueOf(slices[indices[j]]);
-                        }
-                        data.get(i).add(values);
+                    data.get(i).add(values);
+                }
+                break;
+                case TYPE_FLOAT: {
+                    float[] values = new float[indices.length];
+                    for (int j = 0; j < indices.length; j ++) {
+                        values[j] = Float.valueOf(slices[indices[j]]);
                     }
-                        break;
-                    case TYPE_INT:
-                    case TYPE_UINT:{
-                        int[] values = new int[indices.length];
-                        for (int j = 0; j < indices.length; j ++) {
-                            values[j] = Integer.valueOf(slices[indices[j]]);
-                        }
-                        data.get(i).add(values);
+                    data.get(i).add(values);
+                }
+                break;
+                case TYPE_INT:
+                case TYPE_UINT:{
+                    int[] values = new int[indices.length];
+                    for (int j = 0; j < indices.length; j ++) {
+                        values[j] = Integer.valueOf(slices[indices[j]]);
                     }
-                        break;
-                    case TYPE_SHORT:
-                    case TYPE_USHORT: {
-                        short[] values = new short[indices.length];
-                        for (int j = 0; j < indices.length; j ++) {
-                            values[j] = Short.valueOf(slices[indices[j]]);
-                        }
-                        data.get(i).add(values);
+                    data.get(i).add(values);
+                }
+                break;
+                case TYPE_SHORT:
+                case TYPE_USHORT: {
+                    short[] values = new short[indices.length];
+                    for (int j = 0; j < indices.length; j ++) {
+                        values[j] = Short.valueOf(slices[indices[j]]);
                     }
-                        break;
-                    case TYPE_CHAR:
-                    case TYPE_UCHAR: {
-                        byte[] values = new byte[indices.length];
-                        for (int j = 0; j < indices.length; j ++) {
-                            values[j] = Byte.valueOf(slices[indices[j]]);
-                        }
-                        data.get(i).add(values);
-
+                    data.get(i).add(values);
+                }
+                break;
+                case TYPE_CHAR:
+                case TYPE_UCHAR: {
+                    byte[] values = new byte[indices.length];
+                    for (int j = 0; j < indices.length; j ++) {
+                        values[j] = Byte.valueOf(slices[indices[j]]);
                     }
-                        break;
+                    data.get(i).add(values);
 
                 }
-            }
-        } else if (element.getPropertiesType()[0] == TYPE_LIST){
+                break;
 
-        } else {
-            System.err.println("Invalid ply file.");
-            throw new IllegalArgumentException("Invalid entity class, please check the annotation.");
+            }
         }
     }
 
@@ -490,13 +484,77 @@ public class PlyReader implements  MeshReader{
                indicesList.add(indices);
             }
 
-            for (int j = 0; j < elementNum; j ++) {
-                String line = scanner.nextLine();
-                parseAsciiElement(line, indicesList, element, data);
+            /** scalar type **/
+            if (element.listType1 == TYPE_NONTYPE) {
+                for (int j = 0; j < elementNum; j ++) {
+                    String line = scanner.nextLine();
+                    parseAsciiScalarElement(line, indicesList, element, data);
+                }
+            } else {
+                for (int j = 0; j < elementNum; j ++) {
+                    String line = scanner.nextLine();
+                    parseAsciiListElement(line, element, data);
+                }
             }
         }
         listener.onSucceed(pointCloud, header);
 
+    }
+
+    @SuppressWarnings("unchecked")
+    private void parseAsciiListElement(String line, PlyElement element, List<List> data) throws IOException {
+        String[] slices = line.split(" ");
+        if (slices.length < 1) throw new IOException("Invalid ply file.");
+        if (element.propertiesType[0] != TYPE_LIST) return;
+        int num = Integer.valueOf(slices[0]);
+        if (slices.length < num + 1) throw new IOException("Invalid ply file. Too less values in a list.");
+
+        switch (element.listType2) {
+            case TYPE_DOUBLE: {
+                double[] values = new double[num];
+                for (int j = 0; j < num; j ++) {
+                    values[j] = Double.valueOf(slices[j]);
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_FLOAT: {
+                float[] values = new float[num];
+                for (int j = 0; j < num; j ++) {
+                    values[j] = Float.valueOf(slices[j]);
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_INT:
+            case TYPE_UINT:{
+                int[] values = new int[num];
+                for (int j = 0; j < num; j ++) {
+                    values[j] = Integer.valueOf(slices[j]);
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_SHORT:
+            case TYPE_USHORT: {
+                short[] values = new short[num];
+                for (int j = 0; j < num; j ++) {
+                    values[j] = Short.valueOf(slices[j]);
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_CHAR:
+            case TYPE_UCHAR: {
+                byte[] values = new byte[num];
+                for (int j = 0; j < num; j ++) {
+                    values[j] = Byte.valueOf(slices[j]);
+                }
+                data.get(0).add(values);
+            }
+            break;
+
+        }
     }
 
     /**

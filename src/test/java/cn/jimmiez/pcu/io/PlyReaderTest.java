@@ -46,6 +46,17 @@ public class PlyReaderTest {
     }
 
     @Test
+    public void readAsciiPlyDataTest2() throws IOException {
+        PlyReader reader = new PlyReader();
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/drill_shaft_zip.ply").getFile());
+        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        assertNotNull(pointCloud);
+        assertTrue(pointCloud.getPoint3ds().size() == 881);
+        assertTrue(pointCloud.getPoint3ds().get(200).length == 3);
+        assertTrue(pointCloud.getFaces().size() == 1288);
+    }
+
+    @Test
     public void readBinaryBigEndianPlyDataTest() {
 
     }

@@ -8,9 +8,11 @@ import java.util.List;
  */
 public class PcuPointCloud {
     private List<float[]> point3ds;
+    private List<int[]> faces;
 
     public PcuPointCloud() {
         point3ds = new ArrayList<>();
+        faces = new ArrayList<>();
     }
 
     @PcuElement(
@@ -21,4 +23,11 @@ public class PcuPointCloud {
         return point3ds;
     }
 
+    @PcuElement(
+            properties = {"vertex_indices"},
+            alternativeNames = {"face"}
+    )
+    public List<int[]> getFaces() {
+        return faces;
+    }
 }
