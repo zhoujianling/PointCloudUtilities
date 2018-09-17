@@ -6,7 +6,7 @@
 
   <groupId>cn.jimmiez</groupId>
   <artifactId>pcutil</artifactId>
-  <version>0.0.1-ALPHA</version>
+  <version>0.0.2</version>
 
   <name>pcutil</name>
   <url>http://www.jimmiez.cn/pcu/</url>
@@ -19,6 +19,18 @@
   </properties>
 
   <packaging>jar</packaging>
+
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
