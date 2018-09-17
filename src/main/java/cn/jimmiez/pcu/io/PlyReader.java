@@ -245,86 +245,215 @@ public class PlyReader implements  MeshReader{
             }
             int lineSize = sizeOfElement(element);
             byte[] bytes = new byte[lineSize];
-            for (int j = 0; j < elementNum; j ++) {
-                stream.read(bytes);
-                parseBinaryElement(bytes, dataIndexList, element, data, order, userDefinedEles);
+            if (element.listType1 == TYPE_NONTYPE) {
+                for (int j = 0; j < elementNum; j ++) {
+                    stream.read(bytes);
+                    parseBinaryScalarElement(bytes, dataIndexList, element, data, order, userDefinedEles);
+                }
+            } else { // list type
+                for (int j = 0; j < elementNum; j ++) {
+                    int num = parseNumber4BinaryList(element, stream, order);
+                    parseBinaryListElement(num, stream, dataIndexList, element, data, order, userDefinedEles);
+                }
             }
         }
         listener.onSucceed(pointCloud, header);
     }
+    private int parseNumber4BinaryList(PlyElement element, FileInputStream stream, ByteOrder order) throws IOException {
+        int num = 0;
+        switch (element.listType1) {
+            case TYPE_DOUBLE: {
+                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                double val = buffer.getDouble(0);
+                num = (int) val;
+            }
+            break;
+            case TYPE_FLOAT: {
+                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                float val = buffer.getFloat(0);
+                num = (int) val;
+            }
+            break;
+            case TYPE_INT:
+            case TYPE_UINT:{
+                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                num = buffer.getInt(0);
+            }
+            break;
+            case TYPE_SHORT:
+            case TYPE_USHORT: {
+                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                short val = buffer.getShort(0);
+                num = (int) val;
+            }
+            break;
+            case TYPE_CHAR:
+            case TYPE_UCHAR: {
+                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                Byte val = buffer.get(0);
+                num = (int) val;
+            }
+            break;
+        }
+        return num;
+    }
+    @SuppressWarnings("unchecked")
+    private void parseBinaryListElement(int num, FileInputStream stream, Pair[] dataIndexList, PlyElement element, List<List> data, ByteOrder order, List<PcuElement> userDefinedEles) throws IOException {
+        int offset = 0;
+        switch (element.listType2) {
+            case TYPE_DOUBLE: {
+                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                double[] values = new double[num];
+
+                for (int i = 0; i < num; i ++) {
+                    values[i] = buffer.getDouble(offset);
+                    offset += 8;
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_FLOAT: {
+                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                float[] values = new float[num];
+                for (int i = 0; i < num; i ++) {
+                    values[i] = buffer.getFloat(offset);
+                    offset += 4;
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_INT:
+            case TYPE_UINT:{
+                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                int[] values = new int[num];
+                for (int i = 0; i < num; i ++) {
+                    values[i] = buffer.getInt(offset);
+                    offset += 4;
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_SHORT:
+            case TYPE_USHORT: {
+                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                short[] values = new short[num];
+                for (int i = 0; i < num; i ++) {
+                    values[i] = buffer.getShort(offset);
+                    offset += 2;
+                }
+                data.get(0).add(values);
+            }
+            break;
+            case TYPE_CHAR:
+            case TYPE_UCHAR: {
+                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
+                stream.read(bytes);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                buffer.order(order);
+                byte[] values = new byte[num];
+                for (int i = 0; i < num; i ++) {
+                    values[i] = buffer.get(offset);
+                    offset += 1;
+                }
+                data.get(0).add(values);
+            }
+            break;
+        }
+
+    }
 
     @SuppressWarnings("unchecked")
-    private void parseBinaryElement(byte[] bytes, Pair[] dataIndexList, PlyElement element, List<List> data,
-                                    ByteOrder order, List<PcuElement> pcuEles) throws IOException {
+    private void parseBinaryScalarElement(byte[] bytes, Pair[] dataIndexList, PlyElement element, List<List> data,
+                                          ByteOrder order, List<PcuElement> pcuEles) throws IOException {
         int offset = 0;
         int originalSize = data.get(0).size();
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(order);
-        if (element.listType1 == TYPE_NONTYPE) {
-            for (int i = 0; i < element.propertiesType.length; i ++) {
-                Pair<Integer, Integer> pair = dataIndexList[i];
-                if (pair == null) continue;
-                switch (element.propertiesType[i]) {
-                    case TYPE_DOUBLE: {
-                        if (originalSize == data.get(pair.getKey()).size()) {
-                            data.get(pair.getKey()).add(new double[pcuEles.get(pair.getKey()).properties().length]);
-                        }
-                        List<double[]> vectors = data.get(pair.getKey());
-                        double val = buffer.getDouble(offset);
-                        vectors.get(vectors.size() - 1)[pair.getValue()] = val;
-                        offset += 8;
+        for (int i = 0; i < element.propertiesType.length; i ++) {
+            Pair<Integer, Integer> pair = dataIndexList[i];
+            if (pair == null) continue;
+            switch (element.propertiesType[i]) {
+                case TYPE_DOUBLE: {
+                    if (originalSize == data.get(pair.getKey()).size()) {
+                        data.get(pair.getKey()).add(new double[pcuEles.get(pair.getKey()).properties().length]);
                     }
-                    break;
-                    case TYPE_FLOAT: {
-                        if (originalSize == data.get(pair.getKey()).size()) {
-                            data.get(pair.getKey()).add(new float[pcuEles.get(pair.getKey()).properties().length]);
-                        }
-                        List<float[]> vector = data.get(pair.getKey());
-                        float val = buffer.getFloat(offset);
-                        vector.get(vector.size() - 1)[pair.getValue()] = val;
-                        offset += 4;
-                    }
-                    break;
-                    case TYPE_INT:
-                    case TYPE_UINT:{
-                        if (originalSize == data.get(pair.getKey()).size()) {
-                            data.get(pair.getKey()).add(new int[pcuEles.get(pair.getKey()).properties().length]);
-                        }
-                        List<int[]> vector = data.get(pair.getKey());
-                        int val = buffer.getInt(offset);
-                        vector.get(vector.size() - 1)[pair.getValue()] = val;
-                        offset += 4;
-                    }
-                    break;
-                    case TYPE_SHORT:
-                    case TYPE_USHORT: {
-                        if (originalSize == data.get(pair.getKey()).size()) {
-                            data.get(pair.getKey()).add(new short[pcuEles.get(pair.getKey()).properties().length]);
-                        }
-                        List<short[]> vector = data.get(pair.getKey());
-                        short val = buffer.getShort(offset);
-                        vector.get(vector.size() - 1)[pair.getValue()] = val;
-                        offset += 2;
-                    }
-                    break;
-                    case TYPE_CHAR:
-                    case TYPE_UCHAR: {
-                        if (originalSize == data.get(pair.getKey()).size()) {
-                            data.get(pair.getKey()).add(new byte[pcuEles.get(pair.getKey()).properties().length]);
-                        }
-                        List<byte[]> vector = data.get(pair.getKey());
-                        byte val = buffer.get(offset);
-                        vector.get(vector.size() - 1)[pair.getValue()] = val;
-                        offset += 1;
-                    }
-                    break;
+                    List<double[]> vectors = data.get(pair.getKey());
+                    double val = buffer.getDouble(offset);
+                    vectors.get(vectors.size() - 1)[pair.getValue()] = val;
+                    offset += 8;
                 }
+                break;
+                case TYPE_FLOAT: {
+                    if (originalSize == data.get(pair.getKey()).size()) {
+                        data.get(pair.getKey()).add(new float[pcuEles.get(pair.getKey()).properties().length]);
+                    }
+                    List<float[]> vector = data.get(pair.getKey());
+                    float val = buffer.getFloat(offset);
+                    vector.get(vector.size() - 1)[pair.getValue()] = val;
+                    offset += 4;
+                }
+                break;
+                case TYPE_INT:
+                case TYPE_UINT:{
+                    if (originalSize == data.get(pair.getKey()).size()) {
+                        data.get(pair.getKey()).add(new int[pcuEles.get(pair.getKey()).properties().length]);
+                    }
+                    List<int[]> vector = data.get(pair.getKey());
+                    int val = buffer.getInt(offset);
+                    vector.get(vector.size() - 1)[pair.getValue()] = val;
+                    offset += 4;
+                }
+                break;
+                case TYPE_SHORT:
+                case TYPE_USHORT: {
+                    if (originalSize == data.get(pair.getKey()).size()) {
+                        data.get(pair.getKey()).add(new short[pcuEles.get(pair.getKey()).properties().length]);
+                    }
+                    List<short[]> vector = data.get(pair.getKey());
+                    short val = buffer.getShort(offset);
+                    vector.get(vector.size() - 1)[pair.getValue()] = val;
+                    offset += 2;
+                }
+                break;
+                case TYPE_CHAR:
+                case TYPE_UCHAR: {
+                    if (originalSize == data.get(pair.getKey()).size()) {
+                        data.get(pair.getKey()).add(new byte[pcuEles.get(pair.getKey()).properties().length]);
+                    }
+                    List<byte[]> vector = data.get(pair.getKey());
+                    byte val = buffer.get(offset);
+                    vector.get(vector.size() - 1)[pair.getValue()] = val;
+                    offset += 1;
+                }
+                break;
             }
-        } else if (element.getPropertiesType()[0] == TYPE_LIST){
-
-        } else {
-            System.err.println("Invalid ply file.");
-            throw new IllegalArgumentException("Invalid entity class, please check the annotation.");
         }
 
     }
@@ -334,22 +463,6 @@ public class PlyReader implements  MeshReader{
         stream.skip(totalSize);
     }
 
-    private double bytes2double(int type, byte[] bytes, ByteOrder order) {
-        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(order);
-        switch (type) {
-            case TYPE_INT:
-            case TYPE_UINT:
-                return (double)buffer.getInt();
-            case TYPE_SHORT:
-            case TYPE_USHORT:
-                return (double)buffer.getShort();
-            case TYPE_FLOAT:
-                return (double)buffer.getFloat();
-            case TYPE_DOUBLE:
-                return buffer.getDouble();
-        }
-        return 0;
-    }
 
     /**
      * @param element all data types in the element must be scalar type
@@ -363,7 +476,6 @@ public class PlyReader implements  MeshReader{
             }
         } else {
             // list type
-            //???
         }
         return size;
     }

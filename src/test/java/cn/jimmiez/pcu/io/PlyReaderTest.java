@@ -67,5 +67,7 @@ public class PlyReaderTest {
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/tree_bin.ply").getFile());
         PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
         assertTrue(pointCloud.getPoint3ds().size() == 27788);
+        assertTrue(pointCloud.getFaces().size() == 52113);
     }
+
 }
