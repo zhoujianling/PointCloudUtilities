@@ -28,12 +28,22 @@ public class OctreeTest {
         List<double[]> data = randomData(10384, 0, 10);
         Octree octree = new Octree();
         octree.buildIndex(data);
+        int pointNum = 0;
+        for (Long nodeKey : octree.getOctreeIndices().keySet()) {
+            pointNum += octree.getOctreeIndices().get(nodeKey).getIndices().size();
+        }
+
         assertTrue(octree.getDepth() == 4);
+        assertTrue(octree.getOctreeIndices().size() == 8 * 8 * 8);
+        assertTrue(pointNum == 10384);
+
         List<double[]> emptyData = new ArrayList<>();
         octree.buildIndex(emptyData);
         assertTrue(octree.getDepth() == 1);
         List<double[]> data2 = randomData(129, 0, 1);
         octree.buildIndex(data2);
         assertTrue(octree.getDepth() == 2);
+        assertTrue(octree.getOctreeIndices().size() == 8);
     }
+
 }
