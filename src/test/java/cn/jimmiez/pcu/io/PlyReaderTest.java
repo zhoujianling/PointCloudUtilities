@@ -1,6 +1,6 @@
 package cn.jimmiez.pcu.io;
 
-import cn.jimmiez.pcu.model.PcuPointCloud;
+import cn.jimmiez.pcu.model.PcuPointCloud3f;
 import javafx.util.Pair;
 import org.junit.Test;
 
@@ -39,7 +39,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
-        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoint3ds().size() == 4770);
         assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
@@ -49,7 +49,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/drill_shaft_zip.ply").getFile());
-        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoint3ds().size() == 881);
         assertTrue(pointCloud.getPoint3ds().get(200).length == 3);
@@ -65,7 +65,7 @@ public class PlyReaderTest {
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/tree_bin.ply").getFile());
-        PcuPointCloud pointCloud = reader.readPointCloud(file, PcuPointCloud.class);
+        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertTrue(pointCloud.getPoint3ds().size() == 27788);
         assertTrue(pointCloud.getFaces().size() == 52113);
     }

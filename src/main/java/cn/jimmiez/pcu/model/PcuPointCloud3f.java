@@ -6,11 +6,11 @@ import java.util.List;
 /**
  *
  */
-public class PcuPointCloud {
+public class PcuPointCloud3f {
     private List<float[]> point3ds;
     private List<int[]> faces;
 
-    public PcuPointCloud() {
+    public PcuPointCloud3f() {
         point3ds = new ArrayList<>();
         faces = new ArrayList<>();
     }
