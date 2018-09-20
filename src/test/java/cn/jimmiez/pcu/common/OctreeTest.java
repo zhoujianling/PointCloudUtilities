@@ -97,4 +97,19 @@ public class OctreeTest {
         assertTrue(nkc[2] == 13);
     }
 
+    @Test
+    public void obtainAdjacent26IndicesTest() {
+        List<double[]> data = randomData(4770, 0, 10);
+        Octree octree = new Octree();
+        octree.buildIndex(data);
+        assertTrue(octree.getDepth() == 4);
+        int[] c2 = new int[] {2, 3, 1};
+        long index = octree.coordinates2Index(c2);
+        List<Long> adjacentIndices = octree.obtainAdjacent26Indices(index);
+        for (Long ii : adjacentIndices) {
+            int[] coord = octree.index2Coordinates(ii);
+            System.out.println("x: " + coord[0] + " y: " + coord[1] + " z: " + coord[2]);
+        }
+    }
+
 }
