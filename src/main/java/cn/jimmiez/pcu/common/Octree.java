@@ -4,7 +4,6 @@ package cn.jimmiez.pcu.common;
 import javafx.util.Pair;
 
 import java.util.*;
-//import static cn.jimmiez.pcu.util.PcuCommonUtil.*;
 import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
 import static java.lang.Math.*;
 
@@ -119,9 +118,7 @@ public class Octree {
      * @return the indices of nearest neighbors
      */
     public int[] searchNearestNeighbors(int k, int index) {
-        if (points == null) {
-            throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
-        }
+        if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
         if (k > this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
 
         List<Pair<Integer, Double>> nearest = new ArrayList<>();
@@ -139,6 +136,12 @@ public class Octree {
                 double distance = distance(p, point);
                 if (nearest.size() < k) {
                     nearest.add(new Pair<>(pointIndex, distance));
+                    if (nearest.size() == k) Collections.sort(nearest, new Comparator<Pair<Integer, Double>>() {
+                        @Override
+                        public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+                            return o1.getValue() > o2.getValue() ? 1 : -1;
+                        }
+                    });
                 } else if (distance < nearest.get(k - 1).getValue()){
                     int nearestIndex;
                     for (nearestIndex = k - 1; nearestIndex >= 1; nearestIndex --) {
@@ -153,6 +156,7 @@ public class Octree {
         int[] indices = new int[k];
         for (int i = 0; i < k; i ++) {
             indices[i] = nearest.get(i).getKey();
+//            System.out.println("distance: " + nearest.get(i).getValue());
         }
         return indices;
     }
@@ -194,11 +198,11 @@ public class Octree {
         for (long leafIndex : leafIndices) {
             num += this.octreeIndices.get(leafIndex).indices.size();
         }
-        System.out.println("num: " + num);
+//        System.out.println("num: " + num);
         if (num > k) return;
         Set<Long> indicesSet = new HashSet<>(leafIndices);
         for (Long leafIndex : leafIndices) {
-            List<Long> adjacent26 = obtainAdjacents26(leafIndex);
+            List<Long> adjacent26 = obtainAdjacent26Indices(leafIndex);
 //            System.out.println("adjacent: " + adjacent26.size());
             indicesSet.addAll(adjacent26);
         }
@@ -208,11 +212,15 @@ public class Octree {
     }
 
     /**
+     *
+     * interpreter the index to three-dimensional Cartesian coordinates
+     * high bits   <----   ----> low bits
      * root index  <----   ----> leaf index
-     * if index is (101 011 001 101)_2
+     * eg. if index is (101 011 001 101)
      * the coord is [(1001), (0100), (1111)]
+     *
      **/
-    private int[] index2LeftTop(Long index) {
+    public int[] index2Coordinates(Long index) {
         int []coord = new int[3];//x y z
         coord[0] = 0; coord[1] = 0; coord[2] = 0;
         /** from left to right **/
@@ -226,12 +234,12 @@ public class Octree {
     }
 
     /**
+     *
      * root index  <----   ----> leaf index
      * if index is (101 011 001 101)_2
      * the coord is [(1001), (0100), (1111)]
      **/
-    private Long leftTop2Index(int []coord) {
-        assert coord.length >= 3;
+    public Long coordinates2Index(int []coord) {
         Long index = 0L;
         for (int i = this.depth; i > 1; i --) {
             index |= (((coord[0] >> (i - 2)) & 1) << 2);
@@ -243,9 +251,9 @@ public class Octree {
         return index;
     }
 
-    public Vector<Long> obtainAdjacents26(Long index) {
+    public Vector<Long> obtainAdjacent26Indices(Long index) {
         Vector<Long> result = new Vector<>();
-        int []coord = index2LeftTop(index);
+        int []coord = index2Coordinates(index);
         for (int i : new int[] {-1, 0, 1}) {
             for (int j : new int[] {-1, 0, 1}) {
                 for (int k : new int[] {-1, 0, 1}) {
@@ -258,8 +266,8 @@ public class Octree {
                     if (coord[2] == Math.pow(2, this.depth) - 1 && k > 0) continue;
 
                     int []newCoord = new int [] {coord[0] + i, coord[1] + j, coord[2] + k};
-                    if (validCoord(newCoord))
-                        result.add(leftTop2Index(newCoord));
+                    if (isValidCoordinates(newCoord))
+                        result.add(coordinates2Index(newCoord));
                 }
             }
         }
@@ -267,9 +275,11 @@ public class Octree {
         return result;
     }
 
-    private boolean validCoord(int []coord) {
+    private boolean isValidCoordinates(int []coord) {
         if (coord.length < 3) return false;
-        return coord[0] >= 0 && coord[1] >= 1 && coord[2] >= 2;//???
+        return coord[0] >= 0 && coord[0] < (int) pow(2, this.depth - 1)
+                && coord[1] >= 0 && coord[1] < (int) pow(2, this.depth - 1)
+                && coord[2] >= 0 && coord[2] < (int) pow(2, this.depth - 1);
     }
 
     public class OctreeNode {
