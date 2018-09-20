@@ -46,4 +46,19 @@ public class OctreeTest {
         assertTrue(octree.getOctreeIndices().size() == 8);
     }
 
+    @Test
+    public void searchNearestNeighborsTest() {
+        List<double[]> data = randomData(10384, 0, 10);
+        Octree octree = new Octree();
+        octree.buildIndex(data);
+        int[] indices = octree.searchNearestNeighbors(5, 3);
+        double[] target = data.get(3);
+        System.out.println("target x " + target[0] + " y " + target[1] + " z " + target[2]);
+        for (int index : indices) {
+            double[] point = data.get(index);
+            System.out.println("x " + point[0] + " y " + point[1] + " z " + point[2]);
+        }
+        indices = octree.searchNearestNeighbors(105, 90);
+    }
+
 }
