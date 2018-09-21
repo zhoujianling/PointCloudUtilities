@@ -268,9 +268,9 @@ public class Octree {
                     if (coord[0] == 0 && i < 0) continue;
                     if (coord[1] == 0 && j < 0) continue;
                     if (coord[2] == 0 && k < 0) continue;
-                    if (coord[0] == Math.pow(2, this.depth) - 1 && i > 0) continue;
-                    if (coord[1] == Math.pow(2, this.depth) - 1 && j > 0) continue;
-                    if (coord[2] == Math.pow(2, this.depth) - 1 && k > 0) continue;
+                    if (coord[0] == Math.pow(2, this.depth - 1) - 1 && i > 0) continue;
+                    if (coord[1] == Math.pow(2, this.depth - 1) - 1 && j > 0) continue;
+                    if (coord[2] == Math.pow(2, this.depth - 1) - 1 && k > 0) continue;
 
                     int []newCoord = new int [] {coord[0] + i, coord[1] + j, coord[2] + k};
                     if (isValidCoordinates(newCoord))
