@@ -27,17 +27,25 @@ public class OctreeTest {
 
     @Test
     public void buildIndexTest() {
-        List<double[]> data = randomData(10384, 0, 10);
+        int dataSize = 10384;
+        double min = 0;
+        double max = 10;
+        List<double[]> data = randomData(dataSize, min, max);
         Octree octree = new Octree();
         octree.buildIndex(data);
         int pointNum = 0;
-        for (Long nodeKey : octree.getOctreeIndices().keySet()) {
-            pointNum += octree.getOctreeIndices().get(nodeKey).getIndices().size();
+        for (Long nodeKey : octree.octreeIndices.keySet()) {
+            pointNum += octree.octreeIndices.get(nodeKey).getIndices().size();
         }
-
         assertTrue(octree.getDepth() == 4);
-        assertTrue(octree.getOctreeIndices().size() == 8 * 8 * 8);
-        assertTrue(pointNum == 10384);
+        assertTrue(octree.octreeIndices.size() == 8 * 8 * 8);
+        assertTrue(pointNum == dataSize);
+
+        /** corner node **/
+        Octree.OctreeNode node = octree.octreeIndices.get(0L);
+        assertTrue(Math.abs(node.minX - 0) < 1e-1);
+        assertTrue(Math.abs(node.minY - 0) < 1e-1);
+        assertTrue(Math.abs(node.minZ - 0) < 1e-1);
 
         List<double[]> emptyData = new ArrayList<>();
         octree.buildIndex(emptyData);
@@ -45,7 +53,7 @@ public class OctreeTest {
         List<double[]> data2 = randomData(129, 0, 1);
         octree.buildIndex(data2);
         assertTrue(octree.getDepth() == 2);
-        assertTrue(octree.getOctreeIndices().size() == 8);
+        assertTrue(octree.octreeIndices.size() == 8);
     }
 
     @Test
@@ -95,6 +103,70 @@ public class OctreeTest {
         assertTrue(nkc[0] == 4);
         assertTrue(nkc[1] == 7);
         assertTrue(nkc[2] == 13);
+    }
+
+    @Test
+    public void locateOctreeNodeTest() {
+        int dataSize = 42349;
+        List<double[]> data = randomData(dataSize, 1, 11.5);
+        Octree octree = new Octree();
+        octree.buildIndex(data);
+        Random random = new Random(System.currentTimeMillis());
+        for (int i = 0; i < 10; i ++) {
+            int randomPointIndex = random.nextInt(dataSize);
+            long nodeIndex = octree.locateOctreeNode(octree.root, data.get(randomPointIndex));
+            List<Integer> indices = octree.octreeIndices.get(nodeIndex).indices;
+            boolean exist = false;
+            for (int pointIndex : indices) {
+                if (pointIndex == randomPointIndex) {
+                    exist = true;
+                    break;
+                }
+            }
+            assertTrue(exist);
+
+            exist = false;
+            nodeIndex = nodeIndex == 0 ? 1 : nodeIndex - 1;
+            indices = octree.octreeIndices.get(nodeIndex).indices;
+            for (int pointIndex : indices) {
+                if (pointIndex == randomPointIndex) {
+                    exist = true;
+                    break;
+                }
+            }
+            assertFalse(exist);
+        }
+    }
+
+    @Test
+    public void obtainAdjacent26IndicesTest() {
+        int dataSize = 82940;
+        List<double[]> data = randomData(dataSize, 0.5, 11.5);
+        Octree octree = new Octree();
+        octree.buildIndex(data);
+        long nodeIndex = octree.coordinates2Index(new int[] {1, 2, 3});
+        Octree.OctreeNode centralNode = octree.octreeIndices.get(nodeIndex);
+        assertNotNull(centralNode);
+
+        List<Long> adjacentIndices = octree.obtainAdjacent26Indices(nodeIndex);
+        assertTrue(adjacentIndices.size() == 26);
+        List<Octree.OctreeNode> nodes = new ArrayList<>();
+        for (Long adjacentNodeIndex : adjacentIndices) {
+            nodes.add(octree.octreeIndices.get(adjacentNodeIndex));
+        }
+
+        /** test boundary nodes **/
+        nodeIndex = octree.coordinates2Index(new int[] {0, 0, 0});
+        centralNode = octree.octreeIndices.get(nodeIndex);
+        assertNotNull(centralNode);
+        adjacentIndices = octree.obtainAdjacent26Indices(nodeIndex);
+        assertTrue(adjacentIndices.size() == 7);
+
+        nodeIndex = octree.coordinates2Index(new int[] {0, 0, 1});
+        centralNode = octree.octreeIndices.get(nodeIndex);
+        assertNotNull(centralNode);
+        adjacentIndices = octree.obtainAdjacent26Indices(nodeIndex);
+        assertTrue(adjacentIndices.size() == 11);
     }
 
 }

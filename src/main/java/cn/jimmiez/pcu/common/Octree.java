@@ -16,7 +16,7 @@ public class Octree {
      * the root node of the octree,
      * the size of root node is the bounding box of point cloud
      **/
-    private OctreeNode root = null;
+    OctreeNode root = null;
 
     private List<double[]> points = null;
 
@@ -24,7 +24,7 @@ public class Octree {
      * used to find an octree node by its index
      * the index of an octree node is generated according to its spatial position
      */
-    private Map<Long, OctreeNode> octreeIndices = new HashMap<>();
+    protected Map<Long, OctreeNode> octreeIndices = new HashMap<>();
 
     /** the depth of this tree **/
     private int depth = 1;
@@ -90,8 +90,8 @@ public class Octree {
             for (int j : new int[]{-1, 1}) {
                 for (int k : new int[]{-1, 1}) {
                     long index = (long) (((i + 1) * 2 + (j + 1) * 1 + (k + 1) / 2));
-                    index <<= (currentDepth - 1) * 3;
-                    index |= currentNode.index;
+//                    index <<= (currentDepth - 1) * 3;
+                    index |= (currentNode.index << 3);
                     OctreeNode node = new OctreeNode();
                     currentNode.children[cnt] = node;
                     node.index = index;
@@ -125,11 +125,18 @@ public class Octree {
 
         double[] point = points.get(index);
         long leafNode = locateOctreeNode(this.root, point);
+        List<Long> adjacentLeaves = obtainAdjacent26Indices(leafNode);
         List<Long> candidateLeaves = new ArrayList<>();
+//        System.out.println("adjacent leaves: " + adjacentLeaves.size());
         candidateLeaves.add(leafNode);
+        candidateLeaves.addAll(adjacentLeaves);
+
         adjacentOctreeNodesIndices(candidateLeaves, k);
+//        System.out.println("candidate leaves: " + candidateLeaves.size());
 
         for (long leafIndex : candidateLeaves) {
+            int[] coords = index2Coordinates(leafIndex);
+//            System.out.println("x: " + coords[0] + " y: " + coords[1] + " z: " + coords[2]);
             for (int pointIndex : this.octreeIndices.get(leafIndex).indices) {
                 if (pointIndex == index) continue;
                 double[] p = this.points.get(pointIndex);
@@ -167,7 +174,7 @@ public class Octree {
      * @param point the target point
      * @return the index of leaf node
      */
-    private Long locateOctreeNode(OctreeNode node, double[] point) {
+    protected Long locateOctreeNode(OctreeNode node, double[] point) {
         if (node.children == null) {
             if (node.contains(point)) {
                 return node.index;
@@ -220,7 +227,7 @@ public class Octree {
      * the coord is [(1001), (0100), (1111)]
      *
      **/
-    public int[] index2Coordinates(Long index) {
+    protected int[] index2Coordinates(Long index) {
         int []coord = new int[3];//x y z
         coord[0] = 0; coord[1] = 0; coord[2] = 0;
         /** from left to right **/
@@ -239,7 +246,7 @@ public class Octree {
      * if index is (101 011 001 101)_2
      * the coord is [(1001), (0100), (1111)]
      **/
-    public Long coordinates2Index(int []coord) {
+    protected Long coordinates2Index(int []coord) {
         Long index = 0L;
         for (int i = this.depth; i > 1; i --) {
             index |= (((coord[0] >> (i - 2)) & 1) << 2);
@@ -251,7 +258,7 @@ public class Octree {
         return index;
     }
 
-    public Vector<Long> obtainAdjacent26Indices(Long index) {
+    protected Vector<Long> obtainAdjacent26Indices(Long index) {
         Vector<Long> result = new Vector<>();
         int []coord = index2Coordinates(index);
         for (int i : new int[] {-1, 0, 1}) {
@@ -336,7 +343,4 @@ public class Octree {
         return depth;
     }
 
-    public Map<Long, OctreeNode> getOctreeIndices() {
-        return octreeIndices;
-    }
 }
