@@ -7,6 +7,7 @@ This is a util for point cloud processing. Until recently few features have been
 ## Features
 * Read a ply header from a file which follows the [standard](http://paulbourke.net/dataformats/ply/).
 * Read a ply file and acquire a point cloud structure.
+* Provide an octree for searching nearest neighbors
 
 ## Build
 
