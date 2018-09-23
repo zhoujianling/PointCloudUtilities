@@ -38,8 +38,8 @@ public class Octree {
 
     /**
      * build spatial index for point cloud
-     * @param points the point cloud
      * note that the length double array in List points must be 3
+     * @param points the point cloud
      */
     public void buildIndex(List<double[]> points) {
         this.depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))) + 1);
@@ -198,7 +198,6 @@ public class Octree {
      *
      * @param leafIndices index of leaf node in which the point is located
      * @param k number of nearest neighbors
-     * @return indices array of leaf nodes which must contains all k-nearest neighbors
      */
     private void adjacentOctreeNodesIndices(List<Long> leafIndices, int k) {
         int num = 0;
@@ -221,11 +220,12 @@ public class Octree {
     /**
      *
      * interpreter the index to three-dimensional Cartesian coordinates
-     * high bits   <----   ----> low bits
-     * root index  <----   ----> leaf index
+     * high bits   ----   ---- low bits
+     * root index  ----   ---- leaf index
      * eg. if index is (101 011 001 101)
      * the coord is [(1001), (0100), (1111)]
-     *
+     * @param index index of an octree node
+     * @return  3-d coordinate of octree node
      **/
     protected int[] index2Coordinates(Long index) {
         int []coord = new int[3];//x y z
@@ -242,9 +242,11 @@ public class Octree {
 
     /**
      *
-     * root index  <----   ----> leaf index
+     * root index  ----   ---- leaf index
      * if index is (101 011 001 101)_2
      * the coord is [(1001), (0100), (1111)]
+     * @param coord 3-d coordinate
+     * @return index of an octree node
      **/
     protected Long coordinates2Index(int []coord) {
         Long index = 0L;

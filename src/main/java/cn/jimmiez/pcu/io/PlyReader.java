@@ -674,6 +674,7 @@ public class PlyReader implements  MeshReader{
      * It is supposed that the properties of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
+     * @param pointCloud The point cloud object (with annotation PcuElement)
      * @param listener The result of reading point cloud
      */
     public <T> void readPointCloud(File file, T pointCloud, ReadListener<T> listener) {
