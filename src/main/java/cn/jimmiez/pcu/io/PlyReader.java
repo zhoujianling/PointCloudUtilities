@@ -49,6 +49,7 @@ public class PlyReader implements  MeshReader{
     };
 
     public static final Integer TYPE_NONTYPE =  0x0000;
+    private int ERR_LINE_NO = 0;
 
     public PlyHeader readHeaderThenCloseFile(File file) throws IOException {
         PlyHeader result;
@@ -82,6 +83,7 @@ public class PlyReader implements  MeshReader{
             throw new IOException("Invalid ply file: No data");
         }
         header.headerBytes = byteCount;
+        ERR_LINE_NO = headerLines.size() + 1;
         String firstLine = headerLines.get(0);
         if (! firstLine.equals(Constants.MAGIC_STRING)) {
             throw new IOException("Invalid ply file: Ply file does not start with ply.");
@@ -115,16 +117,22 @@ public class PlyReader implements  MeshReader{
     private int recognizeType(String type) {
         switch (type) {
             case "char":
+            case "int8":
                 return TYPE_CHAR;
             case "uchar":
+            case "uint8":
                 return TYPE_UCHAR;
             case "int":
+            case "int32":
                 return TYPE_INT;
             case "uint":
+            case "uint32":
                 return TYPE_UINT;
             case "short":
+            case "int16":
                 return TYPE_SHORT;
             case "ushort":
+            case "uint16":
                 return TYPE_USHORT;
             case "float":
                 return TYPE_FLOAT;
@@ -504,7 +512,9 @@ public class PlyReader implements  MeshReader{
     @SuppressWarnings("unchecked")
     private void parseAsciiScalarElement(String line, List<int[]> indicesList, PlyElement element, List<List> data) throws IOException {
         String[] slices = line.split(" ");
-        if (slices.length != element.getPropertiesType().length) throw new IOException("Invalid ply file.");
+        if (slices.length != element.getPropertiesType().length) {
+            throw new IOException("Invalid ply file, error line no: " + ERR_LINE_NO);
+        }
         for (int i = 0; i < data.size(); i ++) {
             int[] indices = indicesList.get(i);
             if (indices.length < 1) continue;
@@ -600,6 +610,7 @@ public class PlyReader implements  MeshReader{
             if (element.listType1 == TYPE_NONTYPE) {
                 for (int j = 0; j < elementNum; j ++) {
                     String line = scanner.nextLine();
+                    ERR_LINE_NO += 1;
                     parseAsciiScalarElement(line, indicesList, element, data);
                 }
             } else {
