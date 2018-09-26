@@ -1,5 +1,8 @@
 # PointCloudUtil
 
+[![GitHub license](https://img.shields.io/github/license/Jimmie00x0000/PointCloudUtil.svg)](https://github.com/Jimmie00x0000/PointCloudUtil/blob/master/LICENSE)
+
+
 ## Description
 
 This is a util for point cloud processing. Until recently few features have been added, so DO NOT watch this project :)
@@ -17,7 +20,7 @@ mvn package
 ```
 
 ## How to Use It
-
+### PlyReader
 Firstly, on *NIX system, use following command to see the header of your ply file:
 ```shell
 head -n 20 foo.ply
@@ -42,7 +45,7 @@ property list uchar int vertex_indices
 end_header
 ```
 
-Secondly, you need to define a class to describe your point cloud.
+Secondly, you need to declare a class to describe your point cloud. Decorate the getter with an annotation \@PcuElement. Make sure the name and type of field is corresponding to your ply header.
 ```java
 class YourPointCloud {
     private List<float[]> points = new ArrayList<>();
@@ -63,6 +66,17 @@ PlyReader plyReader = new PlyReader();
 YourPointCloud pc = plyReader.readPointCloud(file, YourPointCloud.class);
 ```
 
+### Octree
+Instantiate the Octree object, after calling *buildIndex()*, the nearest neighbors of certain point can be found in *O(n)* time.
+```java
+List<float[]> points = new ArrayList();
+// ****
+int k = 5; // number of neighbors
+int i = 6; // if you want to find the neighbors of the 6th point.
+Octree octree = new Octree();
+octree.buildIndex(points);
+int[] neighborIndices = octree.searchNearestNeighbors(k, i);
+```
 ## TODO List
 * Add support for writing ply files
 * Add support for reading obj files

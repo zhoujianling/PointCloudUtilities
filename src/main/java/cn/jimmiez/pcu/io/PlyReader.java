@@ -616,6 +616,7 @@ public class PlyReader implements  MeshReader{
             } else {
                 for (int j = 0; j < elementNum; j ++) {
                     String line = scanner.nextLine();
+                    ERR_LINE_NO += 1;
                     parseAsciiListElement(line, element, data);
                 }
             }
@@ -627,10 +628,10 @@ public class PlyReader implements  MeshReader{
     @SuppressWarnings("unchecked")
     private void parseAsciiListElement(String line, PlyElement element, List<List> data) throws IOException {
         String[] slices = line.split(" ");
-        if (slices.length < 1) throw new IOException("Invalid ply file.");
+        if (slices.length < 1) throw new IOException("Invalid ply file, error line no: " + ERR_LINE_NO);
         if (element.propertiesType[0] != TYPE_LIST) return;
         int num = Integer.valueOf(slices[0]);
-        if (slices.length < num + 1) throw new IOException("Invalid ply file. Too less values in a list.");
+        if (slices.length < num + 1) throw new IOException("Invalid ply file. Too less values in a list, error line no: " + ERR_LINE_NO);
 
         switch (element.listType2) {
             case TYPE_DOUBLE: {
