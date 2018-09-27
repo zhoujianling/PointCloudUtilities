@@ -104,6 +104,8 @@ public class PlyReader implements  MeshReader{
                 element.propertiesType[i - propertyStartNo] = recognizeType(propertySlices[1]);
                 if (element.propertiesType[i - propertyStartNo] == TYPE_LIST) {
                     if (propertySlices.length < 5) throw new IOException("Invalid ply file. Wrong list property.");
+                    int[] types = new int[] {recognizeType(propertySlices[2]), recognizeType(propertySlices[3])};
+                    element.getListTypes().put(element.propertiesName[i - propertyStartNo], types);
                     element.listType1 = recognizeType(propertySlices[2]);
                     element.listType2 = recognizeType(propertySlices[3]);
                 }
@@ -205,9 +207,6 @@ public class PlyReader implements  MeshReader{
         return object;
     }
 
-    public <T> T readPointCloud(String fileName, Class<T> clazz) {
-        return readPointCloud(new File(fileName), clazz);
-    }
 
     @SuppressWarnings("unchecked")
     private <T> void readBinaryPointCloud(PlyHeader header, FileInputStream stream, T pointCloud, ReadListener<T> listener, ByteOrder order)
@@ -568,7 +567,7 @@ public class PlyReader implements  MeshReader{
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "Duplicates"})
     private void readAsciiPly(PlyHeader header, FileInputStream stream, Object pointCloud, ReadListener listener) throws InvocationTargetException, IllegalAccessException, IOException {
         Scanner scanner = new Scanner(stream);
         List<Method> methods = PcuReflectUtil.fetchAllMethods(pointCloud);
@@ -763,6 +762,8 @@ public class PlyReader implements  MeshReader{
         private int listType1 = TYPE_NONTYPE;
         private int listType2 = TYPE_NONTYPE;
 
+        private Map<String, int[]> listTypes = new HashMap<>();
+
         public String[] getPropertiesName() {
             return propertiesName;
         }
@@ -779,6 +780,9 @@ public class PlyReader implements  MeshReader{
             return listType2;
         }
 
+        public Map<String, int[]> getListTypes() {
+            return listTypes;
+        }
     }
 
     public static class PlyHeader {
