@@ -681,6 +681,137 @@ public class PlyReader implements  MeshReader{
     }
 
     /**
+     * generated from user-defined annotations
+     */
+    private interface ParserCallback {
+
+        void gotDoubleVal(String elementName, int pos, double val);
+
+        void gotFloatVal(String elementName, int pos, float val);
+
+        void gotIntVal(String elementName, int pos, int val);
+
+        void gotShortVal(String elementName, int pos, short val);
+
+        void gotByte(String elementName, int pos, byte val);
+    }
+
+    private class PlyBodyParser {
+        private ParserCallback callback;
+        private PlyHeader header;
+
+        public PlyBodyParser(PlyHeader header, ParserCallback callback) {
+            this.header = header;
+            this.callback = callback;
+        }
+
+        public void readBinaryData(FileInputStream stream) {
+
+        }
+
+        private static final int STATE_ASCII_READY = 0;
+        private static final int STATE_ASCII_READING_SCALAR_VAL = 1;
+        private static final int STATE_ASCII_READING_LIST_SIZE = 2;
+        private static final int STATE_ASCII_READING_LIST_VAL = 3;
+        private static final int STATE_ASCII_TO_READ_NEXT_PROPERTY = 6;
+        private static final int STATE_ASCII_ERROR = 4;
+        private static final int STATE_ASCII_COMPLETE = 5;
+
+        /**
+         * I design a state machine to parser ASCII ply file
+         * @param stream FileInputStream of ply file, head is omitted
+         * @throws NoSuchElementException if scanner try to read next element, but reach the end of file, throw this exception
+         */
+        public void readAsciiData(FileInputStream stream) throws NoSuchElementException {
+            Scanner scanner = new Scanner(stream);
+            int state = STATE_ASCII_READY;
+
+            int expectedType = TYPE_NONTYPE;
+            String currentElementName = null;
+
+            int currentElementPtr = 0;
+            int currentPropertyPtr = 0;
+            int currentItemNumber = 0;
+
+            boolean loop = true;
+
+            while (loop) {
+                switch (state) {
+                    case STATE_ASCII_READY: {
+                        currentElementPtr = 0;
+                        currentPropertyPtr = 0;
+                        currentItemNumber = 0;
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        break;
+                    }
+                    case STATE_ASCII_TO_READ_NEXT_PROPERTY: {
+                        if (currentElementPtr >= header.elementsNumber.size()) {
+                            state = STATE_ASCII_COMPLETE;
+                            break;
+                        }
+                        if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
+                            currentItemNumber = 0;
+                            currentElementPtr += 1;
+                            break;
+                        }
+                        currentElementName = header.elementsNumber.get(currentElementPtr).getKey();
+                        if (currentPropertyPtr >= header.elementTypes.get(currentElementName).propertiesType.length) {
+                            currentPropertyPtr = 0;
+                            currentItemNumber += 1;
+                            break;
+                        } else {
+                            expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
+                            if (expectedType != TYPE_LIST) {
+                                state = STATE_ASCII_READING_SCALAR_VAL;
+                            } else {
+                                state = STATE_ASCII_READING_LIST_SIZE;
+                            }
+                        }
+
+                        break;
+                    }
+                    case STATE_ASCII_READING_SCALAR_VAL: {
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        switch (expectedType) {
+                            case TYPE_DOUBLE:
+                                callback.gotDoubleVal(currentElementName, currentPropertyPtr, scanner.nextDouble());
+                                break;
+                            case TYPE_INT:
+                                callback.gotIntVal(currentElementName, currentPropertyPtr, scanner.nextInt());
+                                break;
+                            case TYPE_SHORT:
+                                callback.gotShortVal(currentElementName, currentPropertyPtr, scanner.nextShort());
+                                break;
+                            case TYPE_LIST:
+                                state = STATE_ASCII_ERROR;
+                                break;
+                        }
+                        currentPropertyPtr += 1;
+                        break;
+                    }
+                    case STATE_ASCII_READING_LIST_SIZE: {
+                        state = STATE_ASCII_READING_LIST_VAL;
+                        break;
+                    }
+                    case STATE_ASCII_READING_LIST_VAL: {
+                        currentPropertyPtr += 1;
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        break;
+                    }
+                    case STATE_ASCII_COMPLETE: {
+                        loop = true;
+                        break;
+                    }
+                    case STATE_ASCII_ERROR: {
+                        loop = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * read a 3d point cloud from a ply file.
      * It is supposed that the properties of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
