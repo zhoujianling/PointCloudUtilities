@@ -5,6 +5,7 @@ import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 import javafx.util.Pair;
+import sun.security.krb5.internal.PAForUserEnc;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -487,6 +488,15 @@ public class PlyReader implements  MeshReader{
         return size;
     }
 
+    private List<Method> findAllElementGetter(List<Method> methods) {
+        List<Method> getters = new ArrayList<>();
+        for (Method m : methods) {
+            PcuElement pcuEle = m.getAnnotation(PcuElement.class);
+            if (pcuEle == null) continue;
+            getters.add(m);
+        }
+        return getters;
+    }
 
     private List<Method> findElementGetter(List<Method> methods, String elementName) {
         List<Method> getters = new ArrayList<>();
@@ -700,6 +710,134 @@ public class PlyReader implements  MeshReader{
         void gotIntArray(String elementName, int[] array);
         void gotShortArray(String elementName, short[] array);
         void gotByteArray(String elementName, byte[] array);
+    }
+
+    private abstract class DataStager implements ParserCallback{
+
+        public DataStager(PlyHeader header) {
+
+        }
+
+        protected Map<String, double[]> doubleMap;
+        protected Map<String, float[]> floatMap;
+        protected Map<String, int[]> intMap;
+        protected Map<String, short[]> shortMap;
+        protected Map<String, byte[]> byteMap;
+
+        abstract void release() throws IllegalStateException, InvocationTargetException, IllegalAccessException;
+
+        @Override
+        public void gotDoubleVal(String elementName, int pos, double val) {
+
+        }
+
+        @Override
+        public void gotFloatVal(String elementName, int pos, float val) {
+
+        }
+
+        @Override
+        public void gotIntVal(String elementName, int pos, int val) {
+
+        }
+
+        @Override
+        public void gotShortVal(String elementName, int pos, short val) {
+
+        }
+
+        @Override
+        public void gotByte(String elementName, int pos, byte val) {
+
+        }
+
+        @Override
+        public void gotDoubleArray(String elementName, double[] array) {
+
+        }
+
+        @Override
+        public void gotFloatArray(String elementName, float[] array) {
+
+        }
+
+        @Override
+        public void gotIntArray(String elementName, int[] array) {
+
+        }
+
+        @Override
+        public void gotShortArray(String elementName, short[] array) {
+
+        }
+
+        @Override
+        public void gotByteArray(String elementName, byte[] array) {
+
+        }
+    }
+
+    private <T> ParserCallback generateParserCallback(final T userDefinedObject, final PlyHeader header) {
+        List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedObject);
+        final List<Method> getters = findAllElementGetter(allMethods);
+        List<PcuElement> annotations = new ArrayList<>();
+        for (Method m : getters) {
+            annotations.add(m.getAnnotation(PcuElement.class));
+        }
+        return new DataStager(header) {
+            @Override
+            void release() throws InvocationTargetException, IllegalAccessException {
+                for (int i = 0; i < getters.size(); i ++) {
+                    Method method = getters.get(i);
+                    PcuElement annotation = method.getAnnotation(PcuElement.class);
+                    String[] elementNames = annotation.alternativeNames();
+                    String elementName = elementNames[0];
+                    for (String elementNameInPly : header.getElementTypes().keySet()) {
+                        if (PcuArrayUtil.find(elementNames, elementName) >= 0) {
+                            elementName = elementNameInPly;
+                        }
+                    }
+                    String[] properties = annotation.properties();
+                    int[] propertiesPosition = new int[properties.length];
+                    int numOfDouble = 1; // the number of all TYPE_XXX fields
+                    for (int j = 0; j < propertiesPosition.length; j ++) {
+
+                    }
+                    if (propertiesPosition.length < 1) return;
+                    PlyElement plyElement = header.getElementTypes().get(elementName);
+                    /** make an assumption that all field has same type **/
+                    switch (plyElement.getPropertiesType()[propertiesPosition[0]]) {
+                        case TYPE_LIST:
+                            throw new IllegalStateException("The type of field you included in @PcuElement is a list.");
+                        case TYPE_FLOAT:
+                            break;
+                        case TYPE_DOUBLE: {
+                            double[] vector = new double[propertiesPosition.length];
+                            double[] allDoubles = doubleMap.get(elementName);
+                            for (int j = 0; j < allDoubles.length / numOfDouble; j++) {
+                                for (int k = 0; k < propertiesPosition.length; k ++) {
+                                    int index = propertiesPosition[k];
+                                    vector[k] = allDoubles[j * numOfDouble + index];
+                                }
+                            }
+                            List<double[]> list = (List<double[]>) method.invoke(userDefinedObject);
+                            list.add(vector);
+                            break;
+                        }
+                        case TYPE_INT:
+                        case TYPE_UINT:
+                            break;
+                        case TYPE_SHORT:
+                        case TYPE_USHORT:
+                            break;
+                        case TYPE_CHAR:
+                        case TYPE_UCHAR:
+
+                            break;
+                    }
+                }
+            }
+        };
     }
 
     private class PlyBodyParser {
@@ -952,60 +1090,7 @@ public class PlyReader implements  MeshReader{
         try {
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
-//                    readAsciiPly(header, stream, pointCloud, listener);
-
-                    PlyBodyParser parser = new PlyBodyParser(header, new ParserCallback() {
-                        @Override
-                        public void gotDoubleVal(String elementName, int pos, double val) {
-
-                        }
-
-                        @Override
-                        public void gotFloatVal(String elementName, int pos, float val) {
-
-                        }
-
-                        @Override
-                        public void gotIntVal(String elementName, int pos, int val) {
-
-                        }
-
-                        @Override
-                        public void gotShortVal(String elementName, int pos, short val) {
-
-                        }
-
-                        @Override
-                        public void gotByte(String elementName, int pos, byte val) {
-
-                        }
-
-                        @Override
-                        public void gotDoubleArray(String elementName, double[] array) {
-
-                        }
-
-                        @Override
-                        public void gotFloatArray(String elementName, float[] array) {
-
-                        }
-
-                        @Override
-                        public void gotIntArray(String elementName, int[] array) {
-
-                        }
-
-                        @Override
-                        public void gotShortArray(String elementName, short[] array) {
-
-                        }
-
-                        @Override
-                        public void gotByteArray(String elementName, byte[] array) {
-
-                        }
-                    });
-                    parser.readAsciiData(stream);
+                    readAsciiPly(header, stream, pointCloud, listener);
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
