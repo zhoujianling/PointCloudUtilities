@@ -694,6 +694,12 @@ public class PlyReader implements  MeshReader{
         void gotShortVal(String elementName, int pos, short val);
 
         void gotByte(String elementName, int pos, byte val);
+
+        void gotDoubleArray(String elementName, double[] array);
+        void gotFloatArray(String elementName, float[] array);
+        void gotIntArray(String elementName, int[] array);
+        void gotShortArray(String elementName, short[] array);
+        void gotByteArray(String elementName, byte[] array);
     }
 
     private class PlyBodyParser {
@@ -733,6 +739,9 @@ public class PlyReader implements  MeshReader{
             int currentPropertyPtr = 0;
             int currentItemNumber = 0;
 
+            /** when reading a list property, these two fields are to store current state **/
+            int currentListSize = 0;
+
             boolean loop = true;
 
             while (loop) {
@@ -771,16 +780,26 @@ public class PlyReader implements  MeshReader{
                         break;
                     }
                     case STATE_ASCII_READING_SCALAR_VAL: {
+//                        System.out.println("SCALAR VAL STATE");
                         state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
                         switch (expectedType) {
                             case TYPE_DOUBLE:
                                 callback.gotDoubleVal(currentElementName, currentPropertyPtr, scanner.nextDouble());
                                 break;
+                            case TYPE_FLOAT:
+                                callback.gotFloatVal(currentElementName, currentPropertyPtr, scanner.nextFloat());
+                                break;
                             case TYPE_INT:
+                            case TYPE_UINT:
                                 callback.gotIntVal(currentElementName, currentPropertyPtr, scanner.nextInt());
                                 break;
                             case TYPE_SHORT:
+                            case TYPE_USHORT:
                                 callback.gotShortVal(currentElementName, currentPropertyPtr, scanner.nextShort());
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                callback.gotByte(currentElementName, currentPropertyPtr, scanner.nextByte());
                                 break;
                             case TYPE_LIST:
                                 state = STATE_ASCII_ERROR;
@@ -791,15 +810,100 @@ public class PlyReader implements  MeshReader{
                     }
                     case STATE_ASCII_READING_LIST_SIZE: {
                         state = STATE_ASCII_READING_LIST_VAL;
+                        PlyElement element = header.elementTypes.get(currentElementName);
+                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        int [] listTypes = element.listTypes.get(currentProperty);
+                        if (listTypes == null || listTypes.length < 2) {
+                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            state = STATE_ASCII_ERROR;
+                            break;
+                        }
+
+                        int firstType = listTypes[0];
+
+                        switch (firstType) {
+                            case TYPE_DOUBLE:
+                            case TYPE_FLOAT:
+                            case TYPE_LIST:
+                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                state = STATE_ASCII_ERROR;
+                                break;
+                            case TYPE_INT:
+                            case TYPE_UINT:
+                                currentListSize = scanner.nextInt();
+                                break;
+                            case TYPE_SHORT:
+                            case TYPE_USHORT:
+                                currentListSize = scanner.nextShort();
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                currentListSize = scanner.nextByte();
+                                break;
+                        }
                         break;
                     }
                     case STATE_ASCII_READING_LIST_VAL: {
-                        currentPropertyPtr += 1;
                         state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+
+                        PlyElement element = header.elementTypes.get(currentElementName);
+                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        int [] listTypes = element.listTypes.get(currentProperty);
+
+                        if (listTypes == null || listTypes.length < 2) {
+                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            state = STATE_ASCII_ERROR;
+                            break;
+                        }
+                        int listItemType = listTypes[1];
+                        switch (listItemType) {
+                            case TYPE_DOUBLE:
+                                double[] doubleList = new double[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    doubleList[i] = scanner.nextDouble();
+                                }
+                                callback.gotDoubleArray(currentElementName, doubleList);
+                            case TYPE_FLOAT:
+                                float[] floatList = new float[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    floatList[i] = scanner.nextFloat();
+                                }
+                                callback.gotFloatArray(currentElementName, floatList);
+                            case TYPE_INT:
+                            case TYPE_UINT:
+                                int[] intList = new int[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    intList[i] = scanner.nextInt();
+                                }
+                                callback.gotIntArray(currentElementName, intList);
+                                break;
+                            case TYPE_SHORT:
+                            case TYPE_USHORT:
+                                short[] shortList = new short[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    shortList[i] = scanner.nextShort();
+                                }
+                                callback.gotShortArray(currentElementName, shortList);
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                byte[] byteList = new byte[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    byteList[i] = scanner.nextByte();
+                                }
+                                callback.gotByteArray(currentElementName, byteList);
+                                break;
+                            case TYPE_LIST:
+                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                state = STATE_ASCII_ERROR;
+                                break;
+                        }
+                        currentPropertyPtr += 1;
                         break;
                     }
                     case STATE_ASCII_COMPLETE: {
-                        loop = true;
+//                        System.out.println("STATE_ASCII_COMPLETE, EXIT LOOP.");
+                        loop = false;
                         break;
                     }
                     case STATE_ASCII_ERROR: {
@@ -848,7 +952,60 @@ public class PlyReader implements  MeshReader{
         try {
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
-                    readAsciiPly(header, stream, pointCloud, listener);
+//                    readAsciiPly(header, stream, pointCloud, listener);
+
+                    PlyBodyParser parser = new PlyBodyParser(header, new ParserCallback() {
+                        @Override
+                        public void gotDoubleVal(String elementName, int pos, double val) {
+
+                        }
+
+                        @Override
+                        public void gotFloatVal(String elementName, int pos, float val) {
+
+                        }
+
+                        @Override
+                        public void gotIntVal(String elementName, int pos, int val) {
+
+                        }
+
+                        @Override
+                        public void gotShortVal(String elementName, int pos, short val) {
+
+                        }
+
+                        @Override
+                        public void gotByte(String elementName, int pos, byte val) {
+
+                        }
+
+                        @Override
+                        public void gotDoubleArray(String elementName, double[] array) {
+
+                        }
+
+                        @Override
+                        public void gotFloatArray(String elementName, float[] array) {
+
+                        }
+
+                        @Override
+                        public void gotIntArray(String elementName, int[] array) {
+
+                        }
+
+                        @Override
+                        public void gotShortArray(String elementName, short[] array) {
+
+                        }
+
+                        @Override
+                        public void gotByteArray(String elementName, byte[] array) {
+
+                        }
+                    });
+                    parser.readAsciiData(stream);
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
