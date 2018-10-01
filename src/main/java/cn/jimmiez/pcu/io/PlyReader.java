@@ -716,10 +716,15 @@ public class PlyReader implements  MeshReader{
 
     }
 
-    private abstract class DataStager implements ParserCallback{
+    private abstract class DataContainer implements ParserCallback{
+        private PlyHeader header;
 
-        public DataStager(PlyHeader header) {
+        public DataContainer(PlyHeader header) {
+            this.header = header;
+            this.initArray();
+        }
 
+        private void initArray() {
             int doubleDataLength = 0;
             int floatDataLength = 0;
             int intDataLength = 0;
@@ -740,9 +745,19 @@ public class PlyReader implements  MeshReader{
                 int intPeriod = 0;
                 int shortPeriod = 0;
                 int bytePeriod = 0;
+
+                /**
+                 * there may be header like this:
+                 * element xxxxx 150
+                 * property list uchar int list1
+                 * property list uchar int list2
+                 **/
+                int doubleListPeriod = 0;
+                int floatListPeriod = 0;
+                int intListPeriod = 0;
+                int shortListPeriod = 0;
+                int byteListPeriod = 0;
                 for (int j = 0; j < element.propertiesName.length; j ++) {
-                    String propertyName = element.propertiesName[j];
-                    Pair<String, String> eleProNamePair = new Pair<>(plyElementName, propertyName);
                     switch (element.propertiesType[j]) {
                         case TYPE_LIST:
                             break;
@@ -809,6 +824,7 @@ public class PlyReader implements  MeshReader{
             this.intData = new int[intDataLength];
             this.shortData = new short[shortDataLength];
             this.byteData = new byte[byteDataLength];
+
         }
 
         /**
@@ -822,11 +838,11 @@ public class PlyReader implements  MeshReader{
         protected int[] intData;
         protected short[] shortData;
         protected byte[] byteData;
-        protected Map<String, List<double[]>> doubleListMap = new HashMap<>();
-        protected Map<String, List<float[]>> floatListMap = new HashMap<>();
-        protected Map<String, List<int[]>> intListMap = new HashMap<>();
-        protected Map<String, List<short[]>> shortListMap = new HashMap<>();
-        protected Map<String, List<byte[]>> byteListMap = new HashMap<>();
+        protected List<double[]> doubleListData = new ArrayList<>();
+        protected List<float[]> floatListData = new ArrayList<>();
+        protected List<int[]> intListData = new ArrayList<>();
+        protected List<short[]> shortListData = new ArrayList<>();
+        protected List<byte[]> byteListData = new ArrayList<>();
 
         private int doublePtr = 0;
         private int floatPtr = 0;
@@ -863,38 +879,38 @@ public class PlyReader implements  MeshReader{
 
         @Override
         public void gotDoubleArray(String elementName, double[] array) {
-
+            this.doubleListData.add(array);
         }
 
         @Override
         public void gotFloatArray(String elementName, float[] array) {
-
+            this.floatListData.add(array);
         }
 
         @Override
         public void gotIntArray(String elementName, int[] array) {
-
+            this.intListData.add(array);
         }
 
         @Override
         public void gotShortArray(String elementName, short[] array) {
-
+            this.shortListData.add(array);
         }
 
         @Override
         public void gotByteArray(String elementName, byte[] array) {
-
+            this.byteListData.add(array);
         }
     }
 
-    private <T> DataStager generateParserCallback(final T userDefinedObject, final PlyHeader header) {
+    private <T> DataContainer generateParserCallback(final T userDefinedObject, final PlyHeader header) {
         List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedObject);
         final List<Method> getters = findAllElementGetter(allMethods);
         List<PcuElement> annotations = new ArrayList<>();
         for (Method m : getters) {
             annotations.add(m.getAnnotation(PcuElement.class));
         }
-        return new DataStager(header) {
+        return new DataContainer(header) {
             @Override
             void release() throws InvocationTargetException, IllegalAccessException {
                 for (int i = 0; i < getters.size(); i ++) {
@@ -912,7 +928,7 @@ public class PlyReader implements  MeshReader{
                     if (elementName == null) {
                         throw new IllegalStateException("Cannot find the element in ply for your getter: " + method.getName());
                     }
-                    /** an ugly way to find number of items in current elemtn **/
+                    /** an ugly way to find number of items in current element **/
                     for (Pair<String, Integer> pair : header.getElementsNumber()) {
                         if (pair.getKey().equals(elementName)) {
                             elementNumber = pair.getValue();
@@ -1259,7 +1275,7 @@ public class PlyReader implements  MeshReader{
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
 //                    readAsciiPly(header, stream, pointCloud, listener);
-                    DataStager stager = generateParserCallback(pointCloud, header);
+                    DataContainer stager = generateParserCallback(pointCloud, header);
                     PlyBodyParser parser = new PlyBodyParser(header, stager);
                     parser.readAsciiData(stream);
                     stager.release();
