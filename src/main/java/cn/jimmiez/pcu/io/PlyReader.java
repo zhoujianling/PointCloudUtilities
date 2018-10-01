@@ -887,7 +887,7 @@ public class PlyReader implements  MeshReader{
         }
     }
 
-    private <T> ParserCallback generateParserCallback(final T userDefinedObject, final PlyHeader header) {
+    private <T> DataStager generateParserCallback(final T userDefinedObject, final PlyHeader header) {
         List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedObject);
         final List<Method> getters = findAllElementGetter(allMethods);
         List<PcuElement> annotations = new ArrayList<>();
@@ -901,58 +901,107 @@ public class PlyReader implements  MeshReader{
                     Method method = getters.get(i);
                     PcuElement annotation = method.getAnnotation(PcuElement.class);
                     String[] elementNames = annotation.alternativeNames();
-                    String elementName = elementNames[0];
+                    String elementName = null;
                     int elementNumber = 0;
                     for (String elementNameInPly : header.getElementTypes().keySet()) {
-                        if (PcuArrayUtil.find(elementNames, elementName) >= 0) {
+                        if (PcuArrayUtil.find(elementNames, elementNameInPly) >= 0) {
                             elementName = elementNameInPly;
-                        } else {
-                            throw new IllegalStateException("Cannot find the element in your getter: " + method.getName());
+                            break;
+                        }
+                    }
+                    if (elementName == null) {
+                        throw new IllegalStateException("Cannot find the element in ply for your getter: " + method.getName());
+                    }
+                    /** an ugly way to find number of items in current elemtn **/
+                    for (Pair<String, Integer> pair : header.getElementsNumber()) {
+                        if (pair.getKey().equals(elementName)) {
+                            elementNumber = pair.getValue();
+                            break;
                         }
                     }
 
                     String[] properties = annotation.properties();
-                    int[] propertiesPosition = new int[properties.length];
-                    if (propertiesPosition.length < 1) return;
+                    if (properties.length < 1) return;
+
                     PlyElement plyElement = header.getElementTypes().get(elementName);
-                    for (int j = 0; j < propertiesPosition.length; j ++) {
-                        propertiesPosition[j] = PcuArrayUtil.find(plyElement.propertiesName, properties[j]);
-                        if (propertiesPosition[j] == -1) {
-                            throw new IllegalStateException("The property " + properties[j] + " for getter: " + method.getName() + " cannot be found in ply header!");
-                        }
-                    }
+
+                    if (elementName.equals("face")) return;
                     /** make an assumption that all field has same type **/
-                    switch (plyElement.getPropertiesType()[propertiesPosition[0]]) {
+                    int propertyPosition = PcuArrayUtil.find(plyElement.propertiesName, properties[0]);
+                    if (propertyPosition == -1) {
+                        throw new IllegalStateException("The property " + properties[0] + " for getter: " + method.getName() + " cannot be found in ply header!");
+                    }
+                    int firstPropertyType = plyElement.propertiesType[propertyPosition];
+                    /** user may input "z", "y", "x" **/
+                    int[] indices = new int[properties.length];
+                    int period = 0;
+                    for (int j = 0; j < indices.length; j ++) {
+                        String propertyName = properties[j];
+                        int[] startIndexAndPeriod = positionRecord.get(new Pair<>(elementName, propertyName));
+                        indices[j] = startIndexAndPeriod[0];
+                        period = startIndexAndPeriod[1];
+                    }
+                    switch (firstPropertyType) {
                         case TYPE_LIST:
                             throw new IllegalStateException("The type of field you included in @PcuElement is a list.");
-                        case TYPE_FLOAT:
-                            break;
-                        case TYPE_DOUBLE: {
-                            double[] vector = new double[propertiesPosition.length];
-                            /** user may input "z", "y", "x" **/
-                            int[] indices = new int[vector.length];
-                            int period = 0;
-                            for (int j = 0; j < indices.length; j ++) {
-                                String propertyName = properties[j];
-                                int[] startIndexAndPeriod = positionRecord.get(new Pair<String, String>(elementName, propertyName));
-                                indices[j] = startIndexAndPeriod[0];
-                                period = startIndexAndPeriod[1];
+                        case TYPE_FLOAT: {
+                            List<float[]> list = (List<float[]>) method.invoke(userDefinedObject);
+                            for (int j = 0; j < elementNumber; j++) {
+                                float[] vector = new float[properties.length];
+                                for (int k = 0; k < properties.length; k++) {
+                                    vector[k] = floatData[indices[k] + j * period];
+                                }
+                                list.add(vector);
                             }
-//                            for (int j = 0; j < header.elementsNumber.get())
+                            break;
+                        }
+                        case TYPE_DOUBLE: {
                             List<double[]> list = (List<double[]>) method.invoke(userDefinedObject);
-                            list.add(vector);
+                            for (int j = 0; j < elementNumber; j ++) {
+                                double[] vector = new double[properties.length];
+                                for (int k = 0; k < properties.length; k ++) {
+                                    vector[k] = doubleData[indices[k] + j * period];
+                                }
+                                list.add(vector);
+                            }
                             break;
                         }
                         case TYPE_INT:
-                        case TYPE_UINT:
+                        case TYPE_UINT: {
+                            List<int[]> list = (List<int[]>) method.invoke(userDefinedObject);
+                            for (int j = 0; j < elementNumber; j++) {
+                                int[] vector = new int[properties.length];
+                                for (int k = 0; k < properties.length; k++) {
+                                    vector[k] = intData[indices[k] + j * period];
+                                }
+                                list.add(vector);
+                            }
                             break;
+                        }
                         case TYPE_SHORT:
-                        case TYPE_USHORT:
+                        case TYPE_USHORT: {
+                            List<short[]> list = (List<short[]>) method.invoke(userDefinedObject);
+                            for (int j = 0; j < elementNumber; j++) {
+                                short[] vector = new short[properties.length];
+                                for (int k = 0; k < properties.length; k++) {
+                                    vector[k] = shortData[indices[k] + j * period];
+                                }
+                                list.add(vector);
+                            }
                             break;
+                        }
                         case TYPE_CHAR:
-                        case TYPE_UCHAR:
-
+                        case TYPE_UCHAR: {
+                            List<byte[]> list = (List<byte[]>) method.invoke(userDefinedObject);
+                            for (int j = 0; j < elementNumber; j++) {
+                                byte[] vector = new byte[properties.length];
+                                for (int k = 0; k < properties.length; k++) {
+                                    vector[k] = byteData[indices[k] + j * period];
+                                }
+                                list.add(vector);
+                            }
                             break;
+                        }
                     }
                 }
             }
@@ -1209,7 +1258,11 @@ public class PlyReader implements  MeshReader{
         try {
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
-                    readAsciiPly(header, stream, pointCloud, listener);
+//                    readAsciiPly(header, stream, pointCloud, listener);
+                    DataStager stager = generateParserCallback(pointCloud, header);
+                    PlyBodyParser parser = new PlyBodyParser(header, stager);
+                    parser.readAsciiData(stream);
+                    stager.release();
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
