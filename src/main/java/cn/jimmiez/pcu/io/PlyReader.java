@@ -5,7 +5,6 @@ import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 import javafx.util.Pair;
-import sun.security.krb5.internal.PAForUserEnc;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -706,49 +705,160 @@ public class PlyReader implements  MeshReader{
         void gotByte(String elementName, int pos, byte val);
 
         void gotDoubleArray(String elementName, double[] array);
+
         void gotFloatArray(String elementName, float[] array);
+
         void gotIntArray(String elementName, int[] array);
+
         void gotShortArray(String elementName, short[] array);
+
         void gotByteArray(String elementName, byte[] array);
+
     }
 
     private abstract class DataStager implements ParserCallback{
 
         public DataStager(PlyHeader header) {
 
+            int doubleDataLength = 0;
+            int floatDataLength = 0;
+            int intDataLength = 0;
+            int shortDataLength = 0;
+            int byteDataLength = 0;
+            for (int i = 0; i < header.elementsNumber.size(); i ++) {
+                String plyElementName = header.elementsNumber.get(i).getKey();
+                PlyElement element = header.getElementTypes().get(plyElementName);
+
+                int doubleCnt = 0;
+                int floatCnt = 0;
+                int intCnt = 0;
+                int shortCnt = 0;
+                int byteCnt = 0;
+
+                int doublePeriod = 0;
+                int floatPeriod = 0;
+                int intPeriod = 0;
+                int shortPeriod = 0;
+                int bytePeriod = 0;
+                for (int j = 0; j < element.propertiesName.length; j ++) {
+                    String propertyName = element.propertiesName[j];
+                    Pair<String, String> eleProNamePair = new Pair<>(plyElementName, propertyName);
+                    switch (element.propertiesType[j]) {
+                        case TYPE_LIST:
+                            break;
+                        case TYPE_FLOAT:
+                            floatPeriod += 1;
+                            break;
+                        case TYPE_DOUBLE:
+                            doublePeriod += 1;
+                            break;
+                        case TYPE_INT:
+                        case TYPE_UINT:
+                            intPeriod += 1;
+                            break;
+                        case TYPE_SHORT:
+                        case TYPE_USHORT:
+                            shortPeriod += 1;
+                            break;
+                        case TYPE_CHAR:
+                        case TYPE_UCHAR:
+                            shortPeriod += 1;
+                            break;
+                    }
+                }
+
+                for (int j = 0; j < element.propertiesName.length; j ++) {
+                    String propertyName = element.propertiesName[j];
+                    Pair<String, String> eleProNamePair = new Pair<>(plyElementName, propertyName);
+                    switch (element.propertiesType[j]) {
+                        case TYPE_LIST:
+                            break;
+                        case TYPE_FLOAT:
+                            positionRecord.put(eleProNamePair, new int[] {floatDataLength + floatCnt, floatPeriod});
+                            floatCnt += 1;
+                            break;
+                        case TYPE_DOUBLE:
+                            positionRecord.put(eleProNamePair, new int[] {doubleDataLength + doubleCnt, doublePeriod});
+                            doubleCnt += 1;
+                            break;
+                        case TYPE_INT:
+                        case TYPE_UINT:
+                            positionRecord.put(eleProNamePair, new int[] {intDataLength + intCnt, intPeriod});
+                            intCnt += 1;
+                            break;
+                        case TYPE_SHORT:
+                        case TYPE_USHORT:
+                            positionRecord.put(eleProNamePair, new int[] {shortDataLength + shortCnt, shortPeriod});
+                            shortCnt += 1;
+                            break;
+                        case TYPE_CHAR:
+                        case TYPE_UCHAR:
+                            positionRecord.put(eleProNamePair, new int[] {byteDataLength + byteCnt, bytePeriod});
+                            byteCnt += 1;
+                            break;
+                    }
+                }
+                doubleDataLength += (doublePeriod * header.elementsNumber.get(i).getValue());
+                floatDataLength += (floatPeriod * header.elementsNumber.get(i).getValue());
+                intDataLength += (intPeriod * header.elementsNumber.get(i).getValue());
+                shortDataLength += (shortPeriod * header.elementsNumber.get(i).getValue());
+                byteDataLength += (bytePeriod * header.elementsNumber.get(i).getValue());
+            }
+            this.doubleData = new double[doubleDataLength];
+            this.floatData = new float[floatDataLength];
+            this.intData = new int[intDataLength];
+            this.shortData = new short[shortDataLength];
+            this.byteData = new byte[byteDataLength];
         }
 
-        protected Map<String, double[]> doubleMap;
-        protected Map<String, float[]> floatMap;
-        protected Map<String, int[]> intMap;
-        protected Map<String, short[]> shortMap;
-        protected Map<String, byte[]> byteMap;
+        /**
+         * ("vertex", "x") -> [10475, 12]
+         * means first property "x" is the 10475th element in dataArray
+         * and 12 is the period
+         **/
+        protected Map<Pair<String, String>, int[]> positionRecord = new HashMap<>();
+        protected double[] doubleData;
+        protected float[] floatData;
+        protected int[] intData;
+        protected short[] shortData;
+        protected byte[] byteData;
+        protected Map<String, List<double[]>> doubleListMap = new HashMap<>();
+        protected Map<String, List<float[]>> floatListMap = new HashMap<>();
+        protected Map<String, List<int[]>> intListMap = new HashMap<>();
+        protected Map<String, List<short[]>> shortListMap = new HashMap<>();
+        protected Map<String, List<byte[]>> byteListMap = new HashMap<>();
+
+        private int doublePtr = 0;
+        private int floatPtr = 0;
+        private int intPtr = 0;
+        private int shortPtr = 0;
+        private int bytePtr = 0;
 
         abstract void release() throws IllegalStateException, InvocationTargetException, IllegalAccessException;
 
         @Override
         public void gotDoubleVal(String elementName, int pos, double val) {
-
+            this.doubleData[doublePtr ++] = val;
         }
 
         @Override
         public void gotFloatVal(String elementName, int pos, float val) {
-
+            this.floatData[floatPtr ++] = val;
         }
 
         @Override
         public void gotIntVal(String elementName, int pos, int val) {
-
+            this.intData[intPtr ++] = val;
         }
 
         @Override
         public void gotShortVal(String elementName, int pos, short val) {
-
+            this.shortData[shortPtr ++] = val;
         }
 
         @Override
         public void gotByte(String elementName, int pos, byte val) {
-
+            this.byteData[bytePtr ++] = val;
         }
 
         @Override
@@ -792,19 +902,25 @@ public class PlyReader implements  MeshReader{
                     PcuElement annotation = method.getAnnotation(PcuElement.class);
                     String[] elementNames = annotation.alternativeNames();
                     String elementName = elementNames[0];
+                    int elementNumber = 0;
                     for (String elementNameInPly : header.getElementTypes().keySet()) {
                         if (PcuArrayUtil.find(elementNames, elementName) >= 0) {
                             elementName = elementNameInPly;
+                        } else {
+                            throw new IllegalStateException("Cannot find the element in your getter: " + method.getName());
                         }
                     }
+
                     String[] properties = annotation.properties();
                     int[] propertiesPosition = new int[properties.length];
-                    int numOfDouble = 1; // the number of all TYPE_XXX fields
-                    for (int j = 0; j < propertiesPosition.length; j ++) {
-
-                    }
                     if (propertiesPosition.length < 1) return;
                     PlyElement plyElement = header.getElementTypes().get(elementName);
+                    for (int j = 0; j < propertiesPosition.length; j ++) {
+                        propertiesPosition[j] = PcuArrayUtil.find(plyElement.propertiesName, properties[j]);
+                        if (propertiesPosition[j] == -1) {
+                            throw new IllegalStateException("The property " + properties[j] + " for getter: " + method.getName() + " cannot be found in ply header!");
+                        }
+                    }
                     /** make an assumption that all field has same type **/
                     switch (plyElement.getPropertiesType()[propertiesPosition[0]]) {
                         case TYPE_LIST:
@@ -813,13 +929,16 @@ public class PlyReader implements  MeshReader{
                             break;
                         case TYPE_DOUBLE: {
                             double[] vector = new double[propertiesPosition.length];
-                            double[] allDoubles = doubleMap.get(elementName);
-                            for (int j = 0; j < allDoubles.length / numOfDouble; j++) {
-                                for (int k = 0; k < propertiesPosition.length; k ++) {
-                                    int index = propertiesPosition[k];
-                                    vector[k] = allDoubles[j * numOfDouble + index];
-                                }
+                            /** user may input "z", "y", "x" **/
+                            int[] indices = new int[vector.length];
+                            int period = 0;
+                            for (int j = 0; j < indices.length; j ++) {
+                                String propertyName = properties[j];
+                                int[] startIndexAndPeriod = positionRecord.get(new Pair<String, String>(elementName, propertyName));
+                                indices[j] = startIndexAndPeriod[0];
+                                period = startIndexAndPeriod[1];
                             }
+//                            for (int j = 0; j < header.elementsNumber.get())
                             List<double[]> list = (List<double[]>) method.invoke(userDefinedObject);
                             list.add(vector);
                             break;
