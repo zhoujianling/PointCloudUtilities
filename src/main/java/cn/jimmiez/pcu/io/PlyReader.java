@@ -5,6 +5,7 @@ import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 import javafx.util.Pair;
+import jdk.internal.org.objectweb.asm.ByteVector;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -730,6 +731,12 @@ public class PlyReader implements  MeshReader{
             int intDataLength = 0;
             int shortDataLength = 0;
             int byteDataLength = 0;
+
+            int doubleListDataLength = 0;
+            int floatListDataLength = 0;
+            int intListDataLength = 0;
+            int shortListDataLength = 0;
+            int byteListDataLength = 0;
             for (int i = 0; i < header.elementsNumber.size(); i ++) {
                 String plyElementName = header.elementsNumber.get(i).getKey();
                 PlyElement element = header.getElementTypes().get(plyElementName);
@@ -746,21 +753,10 @@ public class PlyReader implements  MeshReader{
                 int shortPeriod = 0;
                 int bytePeriod = 0;
 
-                /**
-                 * there may be header like this:
-                 * element xxxxx 150
-                 * property list uchar int list1
-                 * property list uchar int list2
-                 **/
-                int doubleListPeriod = 0;
-                int floatListPeriod = 0;
-                int intListPeriod = 0;
-                int shortListPeriod = 0;
-                int byteListPeriod = 0;
                 for (int j = 0; j < element.propertiesName.length; j ++) {
-                    switch (element.propertiesType[j]) {
-                        case TYPE_LIST:
-                            break;
+                    boolean isList = element.propertiesType[j] == TYPE_LIST;
+                    int type = isList ? element.listTypes.get(element.propertiesName[j])[1] : element.propertiesType[j];
+                    switch (type) {
                         case TYPE_FLOAT:
                             floatPeriod += 1;
                             break;
@@ -777,17 +773,17 @@ public class PlyReader implements  MeshReader{
                             break;
                         case TYPE_CHAR:
                         case TYPE_UCHAR:
-                            shortPeriod += 1;
+                            bytePeriod += 1;
                             break;
                     }
                 }
 
                 for (int j = 0; j < element.propertiesName.length; j ++) {
+                    boolean isList = element.propertiesType[j] == TYPE_LIST;
+                    int type = isList ? element.listTypes.get(element.propertiesName[j])[1] : element.propertiesType[j];
                     String propertyName = element.propertiesName[j];
                     Pair<String, String> eleProNamePair = new Pair<>(plyElementName, propertyName);
-                    switch (element.propertiesType[j]) {
-                        case TYPE_LIST:
-                            break;
+                    switch (type) {
                         case TYPE_FLOAT:
                             positionRecord.put(eleProNamePair, new int[] {floatDataLength + floatCnt, floatPeriod});
                             floatCnt += 1;
@@ -818,6 +814,12 @@ public class PlyReader implements  MeshReader{
                 intDataLength += (intPeriod * header.elementsNumber.get(i).getValue());
                 shortDataLength += (shortPeriod * header.elementsNumber.get(i).getValue());
                 byteDataLength += (bytePeriod * header.elementsNumber.get(i).getValue());
+
+                doubleListDataLength += (doubleCnt * header.elementsNumber.get(i).getValue());
+                floatListDataLength += (floatCnt * header.elementsNumber.get(i).getValue());
+                intListDataLength += (intCnt * header.elementsNumber.get(i).getValue());
+                shortListDataLength += (shortCnt * header.elementsNumber.get(i).getValue());
+                byteListDataLength += (byteCnt * header.elementsNumber.get(i).getValue());
             }
             this.doubleData = new double[doubleDataLength];
             this.floatData = new float[floatDataLength];
@@ -825,6 +827,11 @@ public class PlyReader implements  MeshReader{
             this.shortData = new short[shortDataLength];
             this.byteData = new byte[byteDataLength];
 
+            this.doubleListData = new Vector<>(doubleListDataLength);
+            this.floatListData = new Vector<>(floatListDataLength);
+            this.intListData = new Vector<>(intListDataLength);
+            this.shortListData = new Vector<>(shortListDataLength);
+            this.byteListData = new Vector<>(byteListDataLength);
         }
 
         /**
@@ -838,11 +845,11 @@ public class PlyReader implements  MeshReader{
         protected int[] intData;
         protected short[] shortData;
         protected byte[] byteData;
-        protected List<double[]> doubleListData = new ArrayList<>();
-        protected List<float[]> floatListData = new ArrayList<>();
-        protected List<int[]> intListData = new ArrayList<>();
-        protected List<short[]> shortListData = new ArrayList<>();
-        protected List<byte[]> byteListData = new ArrayList<>();
+        protected List<double[]> doubleListData = null;
+        protected List<float[]> floatListData = null;
+        protected List<int[]> intListData = null;
+        protected List<short[]> shortListData = null;
+        protected List<byte[]> byteListData = null;
 
         private int doublePtr = 0;
         private int floatPtr = 0;
@@ -906,10 +913,6 @@ public class PlyReader implements  MeshReader{
     private <T> DataContainer generateParserCallback(final T userDefinedObject, final PlyHeader header) {
         List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedObject);
         final List<Method> getters = findAllElementGetter(allMethods);
-        List<PcuElement> annotations = new ArrayList<>();
-        for (Method m : getters) {
-            annotations.add(m.getAnnotation(PcuElement.class));
-        }
         return new DataContainer(header) {
             @Override
             void release() throws InvocationTargetException, IllegalAccessException {
@@ -941,7 +944,6 @@ public class PlyReader implements  MeshReader{
 
                     PlyElement plyElement = header.getElementTypes().get(elementName);
 
-                    if (elementName.equals("face")) return;
                     /** make an assumption that all field has same type **/
                     int propertyPosition = PcuArrayUtil.find(plyElement.propertiesName, properties[0]);
                     if (propertyPosition == -1) {
@@ -957,64 +959,100 @@ public class PlyReader implements  MeshReader{
                         indices[j] = startIndexAndPeriod[0];
                         period = startIndexAndPeriod[1];
                     }
+                    boolean isListType = (firstPropertyType == TYPE_LIST);
+                    if (isListType) {
+                        if (properties.length > 1) {
+                            throw new IllegalStateException("You need declare the name of only one list-type property.");
+                        } else {
+                            firstPropertyType = plyElement.listTypes.get(properties[0])[1];
+                        }
+                    }
                     switch (firstPropertyType) {
-                        case TYPE_LIST:
-                            throw new IllegalStateException("The type of field you included in @PcuElement is a list.");
                         case TYPE_FLOAT: {
                             List<float[]> list = (List<float[]>) method.invoke(userDefinedObject);
-                            for (int j = 0; j < elementNumber; j++) {
-                                float[] vector = new float[properties.length];
-                                for (int k = 0; k < properties.length; k++) {
-                                    vector[k] = floatData[indices[k] + j * period];
+                            if (isListType) {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    list.add(floatListData.get(indices[0] + j * period));
                                 }
-                                list.add(vector);
+                            } else {
+                                for (int j = 0; j < elementNumber; j++) {
+                                    float[] vector = new float[properties.length];
+                                    for (int k = 0; k < properties.length; k++) {
+                                        vector[k] = floatData[indices[k] + j * period];
+                                    }
+                                    list.add(vector);
+                                }
                             }
                             break;
                         }
                         case TYPE_DOUBLE: {
                             List<double[]> list = (List<double[]>) method.invoke(userDefinedObject);
-                            for (int j = 0; j < elementNumber; j ++) {
-                                double[] vector = new double[properties.length];
-                                for (int k = 0; k < properties.length; k ++) {
-                                    vector[k] = doubleData[indices[k] + j * period];
+                            if (isListType) {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    list.add(doubleListData.get(indices[0] + j * period));
                                 }
-                                list.add(vector);
+                            } else {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    double[] vector = new double[properties.length];
+                                    for (int k = 0; k < properties.length; k ++) {
+                                        vector[k] = doubleData[indices[k] + j * period];
+                                    }
+                                    list.add(vector);
+                                }
                             }
                             break;
                         }
                         case TYPE_INT:
                         case TYPE_UINT: {
                             List<int[]> list = (List<int[]>) method.invoke(userDefinedObject);
-                            for (int j = 0; j < elementNumber; j++) {
-                                int[] vector = new int[properties.length];
-                                for (int k = 0; k < properties.length; k++) {
-                                    vector[k] = intData[indices[k] + j * period];
+                            if (isListType) {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    list.add(intListData.get(indices[0] + j * period));
                                 }
-                                list.add(vector);
+                            } else {
+                                for (int j = 0; j < elementNumber; j++) {
+                                    int[] vector = new int[properties.length];
+                                    for (int k = 0; k < properties.length; k++) {
+                                        vector[k] = intData[indices[k] + j * period];
+                                    }
+                                    list.add(vector);
+                                }
                             }
                             break;
                         }
                         case TYPE_SHORT:
                         case TYPE_USHORT: {
                             List<short[]> list = (List<short[]>) method.invoke(userDefinedObject);
-                            for (int j = 0; j < elementNumber; j++) {
-                                short[] vector = new short[properties.length];
-                                for (int k = 0; k < properties.length; k++) {
-                                    vector[k] = shortData[indices[k] + j * period];
+                            if (isListType) {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    list.add(shortListData.get(indices[0] + j * period));
                                 }
-                                list.add(vector);
+                            } else {
+                                for (int j = 0; j < elementNumber; j++) {
+                                    short[] vector = new short[properties.length];
+                                    for (int k = 0; k < properties.length; k++) {
+                                        vector[k] = shortData[indices[k] + j * period];
+                                    }
+                                    list.add(vector);
+                                }
                             }
                             break;
                         }
                         case TYPE_CHAR:
                         case TYPE_UCHAR: {
                             List<byte[]> list = (List<byte[]>) method.invoke(userDefinedObject);
-                            for (int j = 0; j < elementNumber; j++) {
-                                byte[] vector = new byte[properties.length];
-                                for (int k = 0; k < properties.length; k++) {
-                                    vector[k] = byteData[indices[k] + j * period];
+                            if (isListType) {
+                                for (int j = 0; j < elementNumber; j ++) {
+                                    list.add(byteListData.get(indices[0] + j * period));
                                 }
-                                list.add(vector);
+                            } else {
+                                for (int j = 0; j < elementNumber; j++) {
+                                    byte[] vector = new byte[properties.length];
+                                    for (int k = 0; k < properties.length; k++) {
+                                        vector[k] = byteData[indices[k] + j * period];
+                                    }
+                                    list.add(vector);
+                                }
                             }
                             break;
                         }
@@ -1033,7 +1071,199 @@ public class PlyReader implements  MeshReader{
             this.callback = callback;
         }
 
-        public void readBinaryData(FileInputStream stream) {
+        public void readBinaryData(FileInputStream stream, ByteOrder order) throws IOException {
+            int state = STATE_ASCII_READY;
+
+            int expectedType = TYPE_NONTYPE;
+            String currentElementName = null;
+
+            int currentElementPtr = 0;
+            int currentPropertyPtr = 0;
+            int currentItemNumber = 0;
+
+            /** when reading a list property, these two fields are to store current state **/
+            int currentListSize = 0;
+            byte[] bytes = null;
+
+            boolean loop = true;
+
+            while (loop) {
+                switch (state) {
+                    case STATE_ASCII_READY: {
+                        currentElementPtr = 0;
+                        currentPropertyPtr = 0;
+                        currentItemNumber = 0;
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        break;
+                    }
+                    case STATE_ASCII_TO_READ_NEXT_PROPERTY: {
+                        if (currentElementPtr >= header.elementsNumber.size()) {
+                            state = STATE_ASCII_COMPLETE;
+                            break;
+                        }
+                        if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
+                            currentItemNumber = 0;
+                            currentElementPtr += 1;
+                            break;
+                        }
+                        currentElementName = header.elementsNumber.get(currentElementPtr).getKey();
+                        if (currentPropertyPtr >= header.elementTypes.get(currentElementName).propertiesType.length) {
+                            currentPropertyPtr = 0;
+                            currentItemNumber += 1;
+                            break;
+                        } else {
+                            expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
+                            if (expectedType != TYPE_LIST) {
+                                state = STATE_ASCII_READING_SCALAR_VAL;
+                            } else {
+                                state = STATE_ASCII_READING_LIST_SIZE;
+                            }
+                        }
+
+                        break;
+                    }
+                    case STATE_ASCII_READING_SCALAR_VAL: {
+//                        System.out.println("SCALAR VAL STATE");
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        bytes = new byte[TYPE_SIZE[expectedType]];
+                        stream.read(bytes);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                        switch (expectedType) {
+                            case TYPE_DOUBLE:
+                                callback.gotDoubleVal(currentElementName, currentPropertyPtr, buffer.getDouble());
+                                break;
+                            case TYPE_FLOAT:
+                                callback.gotFloatVal(currentElementName, currentPropertyPtr, buffer.getFloat());
+                                break;
+                            case TYPE_INT:
+                            case TYPE_UINT:
+                                callback.gotIntVal(currentElementName, currentPropertyPtr, buffer.getInt());
+                                break;
+                            case TYPE_SHORT:
+                            case TYPE_USHORT:
+                                callback.gotShortVal(currentElementName, currentPropertyPtr, buffer.getShort());
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                callback.gotByte(currentElementName, currentPropertyPtr, buffer.get(0));
+                                break;
+                            case TYPE_LIST:
+                                state = STATE_ASCII_ERROR;
+                                break;
+                        }
+                        currentPropertyPtr += 1;
+                        break;
+                    }
+                    case STATE_ASCII_READING_LIST_SIZE: {
+                        state = STATE_ASCII_READING_LIST_VAL;
+                        PlyElement element = header.elementTypes.get(currentElementName);
+                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        int [] listTypes = element.listTypes.get(currentProperty);
+                        if (listTypes == null || listTypes.length < 2) {
+                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            state = STATE_ASCII_ERROR;
+                            break;
+                        }
+
+                        int firstType = listTypes[0];
+                        bytes = new byte[TYPE_SIZE[firstType]];
+                        stream.read(bytes);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+                        switch (firstType) {
+                            case TYPE_DOUBLE:
+                            case TYPE_FLOAT:
+                            case TYPE_LIST:
+                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                state = STATE_ASCII_ERROR;
+                                break;
+                            case TYPE_INT:
+                            case TYPE_UINT:
+                                currentListSize = buffer.getInt();
+                                break;
+                            case TYPE_SHORT:
+                            case TYPE_USHORT:
+                                currentListSize = buffer.getShort();
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                currentListSize = buffer.get(0);
+                                break;
+                        }
+                        break;
+                    }
+                    case STATE_ASCII_READING_LIST_VAL: {
+                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+
+                        PlyElement element = header.elementTypes.get(currentElementName);
+                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        int [] listTypes = element.listTypes.get(currentProperty);
+
+                        if (listTypes == null || listTypes.length < 2) {
+                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            state = STATE_ASCII_ERROR;
+                            break;
+                        }
+                        int listItemType = listTypes[1];
+                        bytes = new byte[TYPE_SIZE[listItemType] * currentListSize];
+                        stream.read(bytes);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                        switch (listItemType) {
+                            case TYPE_DOUBLE:
+                                double[] doubleList = new double[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    doubleList[i] = buffer.getDouble();
+                                }
+                                callback.gotDoubleArray(currentElementName, doubleList);
+                            case TYPE_FLOAT:
+                                float[] floatList = new float[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    floatList[i] = buffer.getFloat();
+                                }
+                                callback.gotFloatArray(currentElementName, floatList);
+                            case TYPE_INT:
+                            case TYPE_UINT:
+                                int[] intList = new int[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    intList[i] = buffer.getInt();
+                                }
+                                callback.gotIntArray(currentElementName, intList);
+                                break;
+                            case TYPE_SHORT:
+                            case TYPE_USHORT:
+                                short[] shortList = new short[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    shortList[i] = buffer.getShort();
+                                }
+                                callback.gotShortArray(currentElementName, shortList);
+                                break;
+                            case TYPE_CHAR:
+                            case TYPE_UCHAR:
+                                byte[] byteList = new byte[currentListSize];
+                                for (int i = 0; i < currentListSize; i++) {
+                                    byteList[i] = buffer.get(0);
+                                }
+                                callback.gotByteArray(currentElementName, byteList);
+                                break;
+                            case TYPE_LIST:
+                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                state = STATE_ASCII_ERROR;
+                                break;
+                        }
+                        currentPropertyPtr += 1;
+                        break;
+                    }
+                    case STATE_ASCII_COMPLETE: {
+//                        System.out.println("STATE_ASCII_COMPLETE, EXIT LOOP.");
+                        loop = false;
+                        break;
+                    }
+                    case STATE_ASCII_ERROR: {
+                        loop = false;
+                        break;
+                    }
+                }
+            }
 
         }
 
@@ -1274,17 +1504,31 @@ public class PlyReader implements  MeshReader{
         try {
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
-//                    readAsciiPly(header, stream, pointCloud, listener);
-                    DataContainer stager = generateParserCallback(pointCloud, header);
-                    PlyBodyParser parser = new PlyBodyParser(header, stager);
-                    parser.readAsciiData(stream);
-                    stager.release();
+                    readAsciiPly(header, stream, pointCloud, listener);
+//                    DataContainer stager = generateParserCallback(pointCloud, header);
+//                    PlyBodyParser parser = new PlyBodyParser(header, stager);
+//                    long t1 = System.currentTimeMillis();
+//                    parser.readAsciiData(stream);
+//                    long t2 = System.currentTimeMillis();
+//                    stager.release();
+//                    long t3 = System.currentTimeMillis();
+//                    System.out.println("t2 - t1: " + (t2 - t1));
+//                    System.out.println("t3 - t2: " + (t3 - t2));
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
                     break;
                 case FORMAT_BINARY_LITTLE_ENDIAN:
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
+//                    DataContainer stager = generateParserCallback(pointCloud, header);
+//                    PlyBodyParser parser = new PlyBodyParser(header, stager);
+//                    long t1 = System.currentTimeMillis();
+//                    parser.readBinaryData(stream, ByteOrder.LITTLE_ENDIAN);
+//                    long t2 = System.currentTimeMillis();
+//                    stager.release();
+//                    long t3 = System.currentTimeMillis();
+//                    System.out.println("t2 - t1: " + (t2 - t1));
+//                    System.out.println("t3 - t2: " + (t3 - t2));
                     break;
             }
 

@@ -54,6 +54,8 @@ public class PlyReaderTest {
         assertNotNull(pointCloud);
     }
 
+    // new: 80 - 160 ms
+    // old: 40 - 50 ms
     @Test
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();
