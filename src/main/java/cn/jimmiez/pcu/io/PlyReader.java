@@ -4,6 +4,7 @@ import cn.jimmiez.pcu.model.PcuElement;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
+import com.sun.xml.internal.bind.v2.model.core.TypeInfoSet;
 import javafx.util.Pair;
 import jdk.internal.org.objectweb.asm.ByteVector;
 
@@ -12,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
@@ -1071,7 +1073,7 @@ public class PlyReader implements  MeshReader{
             this.callback = callback;
         }
 
-        public void readBinaryData(FileInputStream stream, ByteOrder order) throws IOException {
+        public void readBinaryData(File file, ByteOrder order) throws IOException {
             int state = STATE_ASCII_READY;
 
             int expectedType = TYPE_NONTYPE;
@@ -1083,7 +1085,9 @@ public class PlyReader implements  MeshReader{
 
             /** when reading a list property, these two fields are to store current state **/
             int currentListSize = 0;
-            byte[] bytes = null;
+
+            byte[] bytes = Files.readAllBytes(file.toPath());
+            int currBytePtr = header.headerBytes;
 
             boolean loop = true;
 
@@ -1125,9 +1129,11 @@ public class PlyReader implements  MeshReader{
                     case STATE_ASCII_READING_SCALAR_VAL: {
 //                        System.out.println("SCALAR VAL STATE");
                         state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
-                        bytes = new byte[TYPE_SIZE[expectedType]];
-                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+//                        bytes = new byte[TYPE_SIZE[expectedType]];
+//                        stream.read(bytes);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[expectedType]);
+                        buffer.order(order);
+                        currBytePtr += TYPE_SIZE[expectedType];
                         switch (expectedType) {
                             case TYPE_DOUBLE:
                                 callback.gotDoubleVal(currentElementName, currentPropertyPtr, buffer.getDouble());
@@ -1166,9 +1172,11 @@ public class PlyReader implements  MeshReader{
                         }
 
                         int firstType = listTypes[0];
-                        bytes = new byte[TYPE_SIZE[firstType]];
-                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+//                        bytes = new byte[TYPE_SIZE[firstType]];
+//                        stream.read(bytes);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[firstType]);
+                        currBytePtr += TYPE_SIZE[firstType];
+                        buffer.order(order);
 
                         switch (firstType) {
                             case TYPE_DOUBLE:
@@ -1187,7 +1195,7 @@ public class PlyReader implements  MeshReader{
                                 break;
                             case TYPE_CHAR:
                             case TYPE_UCHAR:
-                                currentListSize = buffer.get(0);
+                                currentListSize = buffer.get();
                                 break;
                         }
                         break;
@@ -1205,9 +1213,14 @@ public class PlyReader implements  MeshReader{
                             break;
                         }
                         int listItemType = listTypes[1];
-                        bytes = new byte[TYPE_SIZE[listItemType] * currentListSize];
-                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+//                        bytes = new byte[TYPE_SIZE[listItemType] * currentListSize];
+//                        stream.read(bytes);
+                        if (currBytePtr == 1233159) {
+                            System.out.println("?");
+                        }
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[listItemType] * currentListSize);
+                        currBytePtr += TYPE_SIZE[listItemType] * currentListSize;
+                        buffer.order(order);
                         switch (listItemType) {
                             case TYPE_DOUBLE:
                                 double[] doubleList = new double[currentListSize];
@@ -1519,16 +1532,12 @@ public class PlyReader implements  MeshReader{
                     readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
                     break;
                 case FORMAT_BINARY_LITTLE_ENDIAN:
-                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
-//                    DataContainer stager = generateParserCallback(pointCloud, header);
-//                    PlyBodyParser parser = new PlyBodyParser(header, stager);
-//                    long t1 = System.currentTimeMillis();
-//                    parser.readBinaryData(stream, ByteOrder.LITTLE_ENDIAN);
-//                    long t2 = System.currentTimeMillis();
-//                    stager.release();
-//                    long t3 = System.currentTimeMillis();
-//                    System.out.println("t2 - t1: " + (t2 - t1));
-//                    System.out.println("t3 - t2: " + (t3 - t2));
+//                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
+                    DataContainer stager = generateParserCallback(pointCloud, header);
+                    PlyBodyParser parser = new PlyBodyParser(header, stager);
+                    stream.close();
+                    parser.readBinaryData(file, ByteOrder.LITTLE_ENDIAN);
+                    stager.release();
                     break;
             }
 

@@ -119,7 +119,7 @@ public class Octree {
      */
     public int[] searchNearestNeighbors(int k, int index) {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
-        if (k > this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
 
         List<Pair<Integer, Double>> nearest = new ArrayList<>();
 
