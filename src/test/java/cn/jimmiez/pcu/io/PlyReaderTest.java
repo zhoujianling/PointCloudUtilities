@@ -30,7 +30,7 @@ public class PlyReaderTest {
     @Test
     public void readAsciiPlyHeaderTest() throws IOException {
         PlyReader reader = new PlyReader();
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PlyReader.PlyHeader header = reader.readHeaderThenCloseFile(file);
         simplePlyHeaderTest(header);
     }
@@ -38,7 +38,7 @@ public class PlyReaderTest {
     @Test
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoint3ds().size() == 4770);
@@ -49,7 +49,7 @@ public class PlyReaderTest {
     @Test
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/drill_shaft_zip.ply").getFile());
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
         PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoint3ds().size() == 881);
@@ -65,7 +65,7 @@ public class PlyReaderTest {
     @Test
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/tree_bin.ply").getFile());
+        File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
         PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertTrue(pointCloud.getPoint3ds().size() == 27788);
         assertTrue(pointCloud.getFaces().size() == 52113);
