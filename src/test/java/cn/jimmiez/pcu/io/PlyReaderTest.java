@@ -45,17 +45,7 @@ public class PlyReaderTest {
         assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
     }
 
-    @Test
-    public void readAsciiPlyDataImpl2Test() throws IOException {
-        PlyReader reader = new PlyReader();
-//        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/simple.ply").getFile());
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("pc/ply/drill_shaft_zip.ply").getFile());
-        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
-        assertNotNull(pointCloud);
-    }
 
-    // new: 80 - 160 ms
-    // old: 40 - 50 ms
     @Test
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();

@@ -4,9 +4,7 @@ import cn.jimmiez.pcu.model.PcuElement;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
-import com.sun.xml.internal.bind.v2.model.core.TypeInfoSet;
 import javafx.util.Pair;
-import jdk.internal.org.objectweb.asm.ByteVector;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -17,7 +15,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
-public class PlyReader implements  MeshReader{
+public class PlyReader {
 
     /** constant representing ply format **/
     public static final int FORMAT_ASCII = 0x3001;
@@ -140,8 +138,10 @@ public class PlyReader implements  MeshReader{
             case "uint16":
                 return TYPE_USHORT;
             case "float":
+            case "float32":
                 return TYPE_FLOAT;
             case "double":
+            case "float64":
                 return TYPE_DOUBLE;
             case "list":
                 return TYPE_LIST;
@@ -178,22 +178,12 @@ public class PlyReader implements  MeshReader{
         }
     }
 
-    public <T> void readPointCloud(String fileName, T object, ReadListener<T> listener) {
-        File file = new File(fileName);
-        readPointCloud(file, object, listener);
-    }
-
     public <T> T readPointCloud(File file, Class<T> clazz) {
         T object = null;
         final List<Integer> errorCodes = new ArrayList<>();
         try {
             object = clazz.newInstance();
-            readPointCloud(file, object, new ReadListener<T>() {
-                @Override
-                public void onSucceed(T pointCloud, PlyHeader header) {
-
-                }
-
+            readPointCloud(file, object, new ReadListener() {
                 @Override
                 public void onFail(int code, String message) {
                     errorCodes.add(code);
@@ -210,286 +200,6 @@ public class PlyReader implements  MeshReader{
         return object;
     }
 
-
-    @SuppressWarnings("unchecked")
-    private <T> void readBinaryPointCloud(PlyHeader header, FileInputStream stream, T pointCloud, ReadListener<T> listener, ByteOrder order)
-            throws IOException, InvocationTargetException, IllegalAccessException {
-        List<Method> methods = PcuReflectUtil.fetchAllMethods(pointCloud);
-        for (int i = 0; i < header.elementsNumber.size(); i ++) {
-            String elementName = header.elementsNumber.get(i).getKey();
-            int elementNum = header.elementsNumber.get(i).getValue();
-            PlyElement element = header.elementTypes.get(elementName);
-            List<Method> getters = findElementGetter(methods, elementName);
-            List<List> data = new ArrayList<>();
-            List<PcuElement> userDefinedEles = new ArrayList<>();
-
-            for (Method m : getters) {
-                Object listObj = m.invoke(pointCloud);
-                if (listObj != null && (listObj instanceof List)) {
-                    data.add((List) listObj);
-                    userDefinedEles.add(m.getAnnotation(PcuElement.class));
-                }
-            }
-
-            if (userDefinedEles.size() < 1) {
-                skipBinaryElement(elementNum, element, stream);
-                continue;
-            }
-
-            /**key is index for data, value is index for data.get(key)**/
-            Pair[] dataIndexList = new Pair[element.propertiesType.length];
-            int originalSize = data.get(0).size();
-
-            for (int j = 0; j < element.propertiesType.length ; j ++) {
-                boolean jump = false;
-                for (int k = 0; k < userDefinedEles.size() && !jump; k ++) {
-                    PcuElement pcuEle = userDefinedEles.get(k);
-                    for (int l = 0; l < pcuEle.properties().length && !jump; l ++) {
-                        if (pcuEle.properties()[l].equals(element.propertiesName[j])) {
-                            Pair<Integer, Integer> pair = new Pair<>(k, l);
-                            dataIndexList[j] = pair;
-                            jump = true;
-                        }
-                    }
-                }
-            }
-            int lineSize = sizeOfElement(element);
-            byte[] bytes = new byte[lineSize];
-            if (element.listType1 == TYPE_NONTYPE) {
-                for (int j = 0; j < elementNum; j ++) {
-                    stream.read(bytes);
-                    parseBinaryScalarElement(bytes, dataIndexList, element, data, order, userDefinedEles);
-                }
-            } else { // list type
-                for (int j = 0; j < elementNum; j ++) {
-                    int num = parseNumber4BinaryList(element, stream, order);
-                    parseBinaryListElement(num, stream, dataIndexList, element, data, order, userDefinedEles);
-                }
-            }
-        }
-        listener.onSucceed(pointCloud, header);
-    }
-    private int parseNumber4BinaryList(PlyElement element, FileInputStream stream, ByteOrder order) throws IOException {
-        int num = 0;
-        switch (element.listType1) {
-            case TYPE_DOUBLE: {
-                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                double val = buffer.getDouble(0);
-                num = (int) val;
-            }
-            break;
-            case TYPE_FLOAT: {
-                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                float val = buffer.getFloat(0);
-                num = (int) val;
-            }
-            break;
-            case TYPE_INT:
-            case TYPE_UINT:{
-                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                num = buffer.getInt(0);
-            }
-            break;
-            case TYPE_SHORT:
-            case TYPE_USHORT: {
-                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                short val = buffer.getShort(0);
-                num = (int) val;
-            }
-            break;
-            case TYPE_CHAR:
-            case TYPE_UCHAR: {
-                byte[] bytes = new byte[TYPE_SIZE[element.listType1]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                Byte val = buffer.get(0);
-                num = (int) val;
-            }
-            break;
-        }
-        return num;
-    }
-    @SuppressWarnings("unchecked")
-    private void parseBinaryListElement(int num, FileInputStream stream, Pair[] dataIndexList, PlyElement element, List<List> data, ByteOrder order, List<PcuElement> userDefinedEles) throws IOException {
-        int offset = 0;
-        switch (element.listType2) {
-            case TYPE_DOUBLE: {
-                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                double[] values = new double[num];
-
-                for (int i = 0; i < num; i ++) {
-                    values[i] = buffer.getDouble(offset);
-                    offset += 8;
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_FLOAT: {
-                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                float[] values = new float[num];
-                for (int i = 0; i < num; i ++) {
-                    values[i] = buffer.getFloat(offset);
-                    offset += 4;
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_INT:
-            case TYPE_UINT:{
-                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                int[] values = new int[num];
-                for (int i = 0; i < num; i ++) {
-                    values[i] = buffer.getInt(offset);
-                    offset += 4;
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_SHORT:
-            case TYPE_USHORT: {
-                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                short[] values = new short[num];
-                for (int i = 0; i < num; i ++) {
-                    values[i] = buffer.getShort(offset);
-                    offset += 2;
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_CHAR:
-            case TYPE_UCHAR: {
-                byte[] bytes = new byte[num * TYPE_SIZE[element.listType2]];
-                stream.read(bytes);
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                buffer.order(order);
-                byte[] values = new byte[num];
-                for (int i = 0; i < num; i ++) {
-                    values[i] = buffer.get(offset);
-                    offset += 1;
-                }
-                data.get(0).add(values);
-            }
-            break;
-        }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void parseBinaryScalarElement(byte[] bytes, Pair[] dataIndexList, PlyElement element, List<List> data,
-                                          ByteOrder order, List<PcuElement> pcuEles) throws IOException {
-        int offset = 0;
-        int originalSize = data.get(0).size();
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        buffer.order(order);
-        for (int i = 0; i < element.propertiesType.length; i ++) {
-            Pair<Integer, Integer> pair = dataIndexList[i];
-            if (pair == null) continue;
-            switch (element.propertiesType[i]) {
-                case TYPE_DOUBLE: {
-                    if (originalSize == data.get(pair.getKey()).size()) {
-                        data.get(pair.getKey()).add(new double[pcuEles.get(pair.getKey()).properties().length]);
-                    }
-                    List<double[]> vectors = data.get(pair.getKey());
-                    double val = buffer.getDouble(offset);
-                    vectors.get(vectors.size() - 1)[pair.getValue()] = val;
-                    offset += 8;
-                }
-                break;
-                case TYPE_FLOAT: {
-                    if (originalSize == data.get(pair.getKey()).size()) {
-                        data.get(pair.getKey()).add(new float[pcuEles.get(pair.getKey()).properties().length]);
-                    }
-                    List<float[]> vector = data.get(pair.getKey());
-                    float val = buffer.getFloat(offset);
-                    vector.get(vector.size() - 1)[pair.getValue()] = val;
-                    offset += 4;
-                }
-                break;
-                case TYPE_INT:
-                case TYPE_UINT:{
-                    if (originalSize == data.get(pair.getKey()).size()) {
-                        data.get(pair.getKey()).add(new int[pcuEles.get(pair.getKey()).properties().length]);
-                    }
-                    List<int[]> vector = data.get(pair.getKey());
-                    int val = buffer.getInt(offset);
-                    vector.get(vector.size() - 1)[pair.getValue()] = val;
-                    offset += 4;
-                }
-                break;
-                case TYPE_SHORT:
-                case TYPE_USHORT: {
-                    if (originalSize == data.get(pair.getKey()).size()) {
-                        data.get(pair.getKey()).add(new short[pcuEles.get(pair.getKey()).properties().length]);
-                    }
-                    List<short[]> vector = data.get(pair.getKey());
-                    short val = buffer.getShort(offset);
-                    vector.get(vector.size() - 1)[pair.getValue()] = val;
-                    offset += 2;
-                }
-                break;
-                case TYPE_CHAR:
-                case TYPE_UCHAR: {
-                    if (originalSize == data.get(pair.getKey()).size()) {
-                        data.get(pair.getKey()).add(new byte[pcuEles.get(pair.getKey()).properties().length]);
-                    }
-                    List<byte[]> vector = data.get(pair.getKey());
-                    byte val = buffer.get(offset);
-                    vector.get(vector.size() - 1)[pair.getValue()] = val;
-                    offset += 1;
-                }
-                break;
-            }
-        }
-
-    }
-
-    private void skipBinaryElement(int elementNum, PlyElement element, FileInputStream stream) throws IOException {
-        int totalSize = sizeOfElement(element) * elementNum;
-        stream.skip(totalSize);
-    }
-
-
-    /**
-     * @param element all data types in the element must be scalar type
-     * @return size of a element
-     */
-    private int sizeOfElement(PlyElement element) {
-        int size = 0;
-        if (element.listType1 == TYPE_NONTYPE) {
-            for (int type : element.propertiesType) {
-                size += TYPE_SIZE[type];
-            }
-        } else {
-            // list type
-        }
-        return size;
-    }
-
     private List<Method> findAllElementGetter(List<Method> methods) {
         List<Method> getters = new ArrayList<>();
         for (Method m : methods) {
@@ -500,197 +210,7 @@ public class PlyReader implements  MeshReader{
         return getters;
     }
 
-    private List<Method> findElementGetter(List<Method> methods, String elementName) {
-        List<Method> getters = new ArrayList<>();
-        for (Method m : methods) {
-//            if (! methodsust.()) continue;
-            PcuElement pcuEle = m.getAnnotation(PcuElement.class);
-            if (pcuEle == null) continue;
-            int position = PcuArrayUtil.find(pcuEle.alternativeNames(), elementName);
-            if (position < 0) continue;
-            getters.add(m);
-        }
-        return getters;
-    }
 
-    private void skipAsciiElement(int num, Scanner scanner) {
-        for (int i = 0; i < num; i ++) {
-            scanner.nextLine();
-        }
-    }
-
-    /** parse one line in ASCII-format ply file **/
-    @SuppressWarnings("unchecked")
-    private void parseAsciiScalarElement(String line, List<int[]> indicesList, PlyElement element, List<List> data) throws IOException {
-        String[] slices = line.split(" ");
-        if (slices.length != element.getPropertiesType().length) {
-            throw new IOException("Invalid ply file, error line no: " + ERR_LINE_NO);
-        }
-        for (int i = 0; i < data.size(); i ++) {
-            int[] indices = indicesList.get(i);
-            if (indices.length < 1) continue;
-            switch (element.propertiesType[indices[0]]) {
-                case TYPE_DOUBLE: {
-                    double[] values = new double[indices.length];
-                    for (int j = 0; j < indices.length; j ++) {
-                        values[j] = Double.valueOf(slices[indices[j]]);
-                    }
-                    data.get(i).add(values);
-                }
-                break;
-                case TYPE_FLOAT: {
-                    float[] values = new float[indices.length];
-                    for (int j = 0; j < indices.length; j ++) {
-                        values[j] = Float.valueOf(slices[indices[j]]);
-                    }
-                    data.get(i).add(values);
-                }
-                break;
-                case TYPE_INT:
-                case TYPE_UINT:{
-                    int[] values = new int[indices.length];
-                    for (int j = 0; j < indices.length; j ++) {
-                        values[j] = Integer.valueOf(slices[indices[j]]);
-                    }
-                    data.get(i).add(values);
-                }
-                break;
-                case TYPE_SHORT:
-                case TYPE_USHORT: {
-                    short[] values = new short[indices.length];
-                    for (int j = 0; j < indices.length; j ++) {
-                        values[j] = Short.valueOf(slices[indices[j]]);
-                    }
-                    data.get(i).add(values);
-                }
-                break;
-                case TYPE_CHAR:
-                case TYPE_UCHAR: {
-                    byte[] values = new byte[indices.length];
-                    for (int j = 0; j < indices.length; j ++) {
-                        values[j] = Byte.valueOf(slices[indices[j]]);
-                    }
-                    data.get(i).add(values);
-
-                }
-                break;
-
-            }
-        }
-    }
-
-    @SuppressWarnings({"unchecked", "Duplicates"})
-    private void readAsciiPly(PlyHeader header, FileInputStream stream, Object pointCloud, ReadListener listener) throws InvocationTargetException, IllegalAccessException, IOException {
-        Scanner scanner = new Scanner(stream);
-        List<Method> methods = PcuReflectUtil.fetchAllMethods(pointCloud);
-        for (int i = 0; i < header.elementsNumber.size(); i ++) {
-            String elementName = header.elementsNumber.get(i).getKey();
-            int elementNum = header.elementsNumber.get(i).getValue();
-            PlyElement element = header.elementTypes.get(elementName);
-            List<Method> getters = findElementGetter(methods, elementName);
-            List<List> data = new ArrayList<>();
-            List<PcuElement> userDefinedEles = new ArrayList<>();
-            List<int[]> indicesList = new ArrayList<>();
-
-            for (Method m : getters) {
-                Object listObj = m.invoke(pointCloud);
-                if (listObj != null && (listObj instanceof List)) {
-                    data.add((List) listObj);
-                    userDefinedEles.add(m.getAnnotation(PcuElement.class));
-                }
-            }
-
-            if (userDefinedEles.size() < 1) {
-                skipAsciiElement(elementNum, scanner);
-                continue;
-            }
-
-            for (PcuElement ele : userDefinedEles) {
-               int[] indices = new int[ele.properties().length];
-               for (int j = 0; j < ele.properties().length; j ++) {
-                   for (int k = 0; k < element.propertiesName.length; k ++) {
-                       if (ele.properties()[j].equals(element.propertiesName[k])) {
-                            indices[j] = k;
-                       }
-                   }
-               }
-               indicesList.add(indices);
-            }
-
-            /** scalar type **/
-            if (element.listType1 == TYPE_NONTYPE) {
-                for (int j = 0; j < elementNum; j ++) {
-                    String line = scanner.nextLine();
-                    ERR_LINE_NO += 1;
-                    parseAsciiScalarElement(line, indicesList, element, data);
-                }
-            } else {
-                for (int j = 0; j < elementNum; j ++) {
-                    String line = scanner.nextLine();
-                    ERR_LINE_NO += 1;
-                    parseAsciiListElement(line, element, data);
-                }
-            }
-        }
-        listener.onSucceed(pointCloud, header);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void parseAsciiListElement(String line, PlyElement element, List<List> data) throws IOException {
-        String[] slices = line.split(" ");
-        if (slices.length < 1) throw new IOException("Invalid ply file, error line no: " + ERR_LINE_NO);
-        if (element.propertiesType[0] != TYPE_LIST) return;
-        int num = Integer.valueOf(slices[0]);
-        if (slices.length < num + 1) throw new IOException("Invalid ply file. Too less values in a list, error line no: " + ERR_LINE_NO);
-
-        switch (element.listType2) {
-            case TYPE_DOUBLE: {
-                double[] values = new double[num];
-                for (int j = 0; j < num; j ++) {
-                    values[j] = Double.valueOf(slices[j]);
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_FLOAT: {
-                float[] values = new float[num];
-                for (int j = 0; j < num; j ++) {
-                    values[j] = Float.valueOf(slices[j]);
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_INT:
-            case TYPE_UINT:{
-                int[] values = new int[num];
-                for (int j = 0; j < num; j ++) {
-                    values[j] = Integer.valueOf(slices[j]);
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_SHORT:
-            case TYPE_USHORT: {
-                short[] values = new short[num];
-                for (int j = 0; j < num; j ++) {
-                    values[j] = Short.valueOf(slices[j]);
-                }
-                data.get(0).add(values);
-            }
-            break;
-            case TYPE_CHAR:
-            case TYPE_UCHAR: {
-                byte[] values = new byte[num];
-                for (int j = 0; j < num; j ++) {
-                    values[j] = Byte.valueOf(slices[j]);
-                }
-                data.get(0).add(values);
-            }
-            break;
-
-        }
-    }
 
     /**
      * generated from user-defined annotations
@@ -1073,8 +593,16 @@ public class PlyReader implements  MeshReader{
             this.callback = callback;
         }
 
+        private static final int STATE_READY = 0;
+        private static final int STATE_READING_SCALAR_VAL = 1;
+        private static final int STATE_READING_LIST_SIZE = 2;
+        private static final int STATE_READING_LIST_VAL = 3;
+        private static final int STATE_TO_READ_NEXT_PROPERTY = 6;
+        private static final int STATE_ERROR = 4;
+        private static final int STATE_COMPLETE = 5;
+
         public void readBinaryData(File file, ByteOrder order) throws IOException {
-            int state = STATE_ASCII_READY;
+            int state = STATE_READY;
 
             int expectedType = TYPE_NONTYPE;
             String currentElementName = null;
@@ -1093,16 +621,16 @@ public class PlyReader implements  MeshReader{
 
             while (loop) {
                 switch (state) {
-                    case STATE_ASCII_READY: {
+                    case STATE_READY: {
                         currentElementPtr = 0;
                         currentPropertyPtr = 0;
                         currentItemNumber = 0;
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        state = STATE_TO_READ_NEXT_PROPERTY;
                         break;
                     }
-                    case STATE_ASCII_TO_READ_NEXT_PROPERTY: {
+                    case STATE_TO_READ_NEXT_PROPERTY: {
                         if (currentElementPtr >= header.elementsNumber.size()) {
-                            state = STATE_ASCII_COMPLETE;
+                            state = STATE_COMPLETE;
                             break;
                         }
                         if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
@@ -1118,17 +646,17 @@ public class PlyReader implements  MeshReader{
                         } else {
                             expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
                             if (expectedType != TYPE_LIST) {
-                                state = STATE_ASCII_READING_SCALAR_VAL;
+                                state = STATE_READING_SCALAR_VAL;
                             } else {
-                                state = STATE_ASCII_READING_LIST_SIZE;
+                                state = STATE_READING_LIST_SIZE;
                             }
                         }
 
                         break;
                     }
-                    case STATE_ASCII_READING_SCALAR_VAL: {
+                    case STATE_READING_SCALAR_VAL: {
 //                        System.out.println("SCALAR VAL STATE");
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        state = STATE_TO_READ_NEXT_PROPERTY;
 //                        bytes = new byte[TYPE_SIZE[expectedType]];
 //                        stream.read(bytes);
                         ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[expectedType]);
@@ -1151,23 +679,23 @@ public class PlyReader implements  MeshReader{
                                 break;
                             case TYPE_CHAR:
                             case TYPE_UCHAR:
-                                callback.gotByte(currentElementName, currentPropertyPtr, buffer.get(0));
+                                callback.gotByte(currentElementName, currentPropertyPtr, buffer.get());
                                 break;
                             case TYPE_LIST:
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                         }
                         currentPropertyPtr += 1;
                         break;
                     }
-                    case STATE_ASCII_READING_LIST_SIZE: {
-                        state = STATE_ASCII_READING_LIST_VAL;
+                    case STATE_READING_LIST_SIZE: {
+                        state = STATE_READING_LIST_VAL;
                         PlyElement element = header.elementTypes.get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
-                            state = STATE_ASCII_ERROR;
+                            state = STATE_ERROR;
                             break;
                         }
 
@@ -1183,7 +711,7 @@ public class PlyReader implements  MeshReader{
                             case TYPE_FLOAT:
                             case TYPE_LIST:
                                 System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                             case TYPE_INT:
                             case TYPE_UINT:
@@ -1200,8 +728,8 @@ public class PlyReader implements  MeshReader{
                         }
                         break;
                     }
-                    case STATE_ASCII_READING_LIST_VAL: {
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                    case STATE_READING_LIST_VAL: {
+                        state = STATE_TO_READ_NEXT_PROPERTY;
 
                         PlyElement element = header.elementTypes.get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
@@ -1209,15 +737,12 @@ public class PlyReader implements  MeshReader{
 
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
-                            state = STATE_ASCII_ERROR;
+                            state = STATE_ERROR;
                             break;
                         }
                         int listItemType = listTypes[1];
 //                        bytes = new byte[TYPE_SIZE[listItemType] * currentListSize];
 //                        stream.read(bytes);
-                        if (currBytePtr == 1233159) {
-                            System.out.println("?");
-                        }
                         ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[listItemType] * currentListSize);
                         currBytePtr += TYPE_SIZE[listItemType] * currentListSize;
                         buffer.order(order);
@@ -1254,24 +779,24 @@ public class PlyReader implements  MeshReader{
                             case TYPE_UCHAR:
                                 byte[] byteList = new byte[currentListSize];
                                 for (int i = 0; i < currentListSize; i++) {
-                                    byteList[i] = buffer.get(0);
+                                    byteList[i] = buffer.get();
                                 }
                                 callback.gotByteArray(currentElementName, byteList);
                                 break;
                             case TYPE_LIST:
                                 System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                         }
                         currentPropertyPtr += 1;
                         break;
                     }
-                    case STATE_ASCII_COMPLETE: {
-//                        System.out.println("STATE_ASCII_COMPLETE, EXIT LOOP.");
+                    case STATE_COMPLETE: {
+//                        System.out.println("STATE_COMPLETE, EXIT LOOP.");
                         loop = false;
                         break;
                     }
-                    case STATE_ASCII_ERROR: {
+                    case STATE_ERROR: {
                         loop = false;
                         break;
                     }
@@ -1280,22 +805,17 @@ public class PlyReader implements  MeshReader{
 
         }
 
-        private static final int STATE_ASCII_READY = 0;
-        private static final int STATE_ASCII_READING_SCALAR_VAL = 1;
-        private static final int STATE_ASCII_READING_LIST_SIZE = 2;
-        private static final int STATE_ASCII_READING_LIST_VAL = 3;
-        private static final int STATE_ASCII_TO_READ_NEXT_PROPERTY = 6;
-        private static final int STATE_ASCII_ERROR = 4;
-        private static final int STATE_ASCII_COMPLETE = 5;
 
         /**
          * I design a state machine to parser ASCII ply file
-         * @param stream FileInputStream of ply file, head is omitted
+         * @param file ply file
          * @throws NoSuchElementException if scanner try to read next element, but reach the end of file, throw this exception
          */
-        public void readAsciiData(FileInputStream stream) throws NoSuchElementException {
+        public void readAsciiData(File file) throws NoSuchElementException, IOException {
+            byte[] bytes = Files.readAllBytes(file.toPath());
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.headerBytes, bytes.length - header.headerBytes);
             Scanner scanner = new Scanner(stream);
-            int state = STATE_ASCII_READY;
+            int state = STATE_READY;
 
             int expectedType = TYPE_NONTYPE;
             String currentElementName = null;
@@ -1311,16 +831,16 @@ public class PlyReader implements  MeshReader{
 
             while (loop) {
                 switch (state) {
-                    case STATE_ASCII_READY: {
+                    case STATE_READY: {
                         currentElementPtr = 0;
                         currentPropertyPtr = 0;
                         currentItemNumber = 0;
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        state = STATE_TO_READ_NEXT_PROPERTY;
                         break;
                     }
-                    case STATE_ASCII_TO_READ_NEXT_PROPERTY: {
+                    case STATE_TO_READ_NEXT_PROPERTY: {
                         if (currentElementPtr >= header.elementsNumber.size()) {
-                            state = STATE_ASCII_COMPLETE;
+                            state = STATE_COMPLETE;
                             break;
                         }
                         if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
@@ -1336,17 +856,17 @@ public class PlyReader implements  MeshReader{
                         } else {
                             expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
                             if (expectedType != TYPE_LIST) {
-                                state = STATE_ASCII_READING_SCALAR_VAL;
+                                state = STATE_READING_SCALAR_VAL;
                             } else {
-                                state = STATE_ASCII_READING_LIST_SIZE;
+                                state = STATE_READING_LIST_SIZE;
                             }
                         }
 
                         break;
                     }
-                    case STATE_ASCII_READING_SCALAR_VAL: {
+                    case STATE_READING_SCALAR_VAL: {
 //                        System.out.println("SCALAR VAL STATE");
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                        state = STATE_TO_READ_NEXT_PROPERTY;
                         switch (expectedType) {
                             case TYPE_DOUBLE:
                                 callback.gotDoubleVal(currentElementName, currentPropertyPtr, scanner.nextDouble());
@@ -1367,20 +887,20 @@ public class PlyReader implements  MeshReader{
                                 callback.gotByte(currentElementName, currentPropertyPtr, scanner.nextByte());
                                 break;
                             case TYPE_LIST:
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                         }
                         currentPropertyPtr += 1;
                         break;
                     }
-                    case STATE_ASCII_READING_LIST_SIZE: {
-                        state = STATE_ASCII_READING_LIST_VAL;
+                    case STATE_READING_LIST_SIZE: {
+                        state = STATE_READING_LIST_VAL;
                         PlyElement element = header.elementTypes.get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
-                            state = STATE_ASCII_ERROR;
+                            state = STATE_ERROR;
                             break;
                         }
 
@@ -1391,7 +911,7 @@ public class PlyReader implements  MeshReader{
                             case TYPE_FLOAT:
                             case TYPE_LIST:
                                 System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                             case TYPE_INT:
                             case TYPE_UINT:
@@ -1408,8 +928,8 @@ public class PlyReader implements  MeshReader{
                         }
                         break;
                     }
-                    case STATE_ASCII_READING_LIST_VAL: {
-                        state = STATE_ASCII_TO_READ_NEXT_PROPERTY;
+                    case STATE_READING_LIST_VAL: {
+                        state = STATE_TO_READ_NEXT_PROPERTY;
 
                         PlyElement element = header.elementTypes.get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
@@ -1417,7 +937,7 @@ public class PlyReader implements  MeshReader{
 
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
-                            state = STATE_ASCII_ERROR;
+                            state = STATE_ERROR;
                             break;
                         }
                         int listItemType = listTypes[1];
@@ -1460,18 +980,18 @@ public class PlyReader implements  MeshReader{
                                 break;
                             case TYPE_LIST:
                                 System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
-                                state = STATE_ASCII_ERROR;
+                                state = STATE_ERROR;
                                 break;
                         }
                         currentPropertyPtr += 1;
                         break;
                     }
-                    case STATE_ASCII_COMPLETE: {
-//                        System.out.println("STATE_ASCII_COMPLETE, EXIT LOOP.");
+                    case STATE_COMPLETE: {
+//                        System.out.println("STATE_COMPLETE, EXIT LOOP.");
                         loop = false;
                         break;
                     }
-                    case STATE_ASCII_ERROR: {
+                    case STATE_ERROR: {
                         loop = false;
                         break;
                     }
@@ -1486,9 +1006,8 @@ public class PlyReader implements  MeshReader{
      * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
      * @param pointCloud The point cloud object (with annotation PcuElement)
-     * @param listener The result of reading point cloud
      */
-    public <T> void readPointCloud(File file, T pointCloud, ReadListener<T> listener) {
+    public <T> void readPointCloud(File file, T pointCloud, ReadListener listener) {
         if (! file.exists()) {
             listener.onFail(Constants.ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
             return;
@@ -1500,8 +1019,6 @@ public class PlyReader implements  MeshReader{
             Scanner scanner = new Scanner(stream);
             header = readHeader(scanner);
             stream.close();
-            stream = new FileInputStream(file);
-            stream.skip(header.headerBytes);
         } catch (IOException e) {
             e.printStackTrace();
             listener.onFail(Constants.ERR_CODE_FILE_HEADER_FORMAT_ERROR, e.getMessage());
@@ -1515,27 +1032,19 @@ public class PlyReader implements  MeshReader{
         if (header == null) return;
 
         try {
+            DataContainer stager = generateParserCallback(pointCloud, header);
+            PlyBodyParser parser = new PlyBodyParser(header, stager);
             switch (header.plyFormat) {
                 case FORMAT_ASCII:
-                    readAsciiPly(header, stream, pointCloud, listener);
-//                    DataContainer stager = generateParserCallback(pointCloud, header);
-//                    PlyBodyParser parser = new PlyBodyParser(header, stager);
-//                    long t1 = System.currentTimeMillis();
-//                    parser.readAsciiData(stream);
-//                    long t2 = System.currentTimeMillis();
-//                    stager.release();
-//                    long t3 = System.currentTimeMillis();
-//                    System.out.println("t2 - t1: " + (t2 - t1));
-//                    System.out.println("t3 - t2: " + (t3 - t2));
+                    parser.readAsciiData(file);
+                    stager.release();
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
-                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.BIG_ENDIAN);
+                    parser.readBinaryData(file, ByteOrder.BIG_ENDIAN);
+                    stager.release();
                     break;
                 case FORMAT_BINARY_LITTLE_ENDIAN:
 //                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
-                    DataContainer stager = generateParserCallback(pointCloud, header);
-                    PlyBodyParser parser = new PlyBodyParser(header, stager);
-                    stream.close();
                     parser.readBinaryData(file, ByteOrder.LITTLE_ENDIAN);
                     stager.release();
                     break;
@@ -1554,9 +1063,6 @@ public class PlyReader implements  MeshReader{
 
     }
 
-    @Override
-    public void readMesh(String fileName, ReadMeshListener listener) {
-    }
 
     public static class PlyElement {
         /** eg. ["x", "y", "z", "red", "green", "blue"] **/
