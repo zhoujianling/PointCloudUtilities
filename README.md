@@ -50,18 +50,19 @@ Secondly, you need to declare a class to describe your point cloud. Decorate the
 class YourPointCloud {
     private List<float[]> points = new ArrayList<>();
 
-    @PcuElement(
+    @PcuPlyData(
         properties = {"x", "y", "z"},
-        alternativeNames = {"vertex"}
+        element = {"vertex"}
     )
     public List<float[]> getPoints() {
         return points;
     }
 }
 ```
+
 Thirdly, instantiate a PlyReader, use readPointCloud() to get your point cloud.
 ```java
-File file = ...;// ply file
+File file = new File("path of your ply file"); //ply file
 PlyReader plyReader = new PlyReader();
 YourPointCloud pc = plyReader.readPointCloud(file, YourPointCloud.class);
 ```

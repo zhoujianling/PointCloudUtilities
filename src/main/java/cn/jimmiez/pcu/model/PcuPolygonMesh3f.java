@@ -3,14 +3,13 @@ package cn.jimmiez.pcu.model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * a default entity class representing a point cloud
- */
-public class PcuPointCloud3f {
+public class PcuPolygonMesh3f {
     private List<float[]> point3ds;
+    private List<int[]> faces;
 
-    public PcuPointCloud3f() {
+    public PcuPolygonMesh3f() {
         point3ds = new ArrayList<>();
+        faces = new ArrayList<>();
     }
 
     @PcuPlyData(
@@ -21,4 +20,11 @@ public class PcuPointCloud3f {
         return point3ds;
     }
 
+    @PcuPlyData(
+            properties = {"vertex_indices"},
+            element = {"face"}
+    )
+    public List<int[]> getFaces() {
+        return faces;
+    }
 }

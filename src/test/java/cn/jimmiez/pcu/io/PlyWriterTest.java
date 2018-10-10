@@ -15,7 +15,7 @@ public class PlyWriterTest {
         pointCloud.getPoint3ds().add(new float[] {0, 1, 2});
         pointCloud.getPoint3ds().add(new float[] {1.4f, 10.2f, -2.1f});
         PlyWriter writer = new PlyWriter();
-        int code = writer.write(pointCloud, PcuPointCloud3f.class);
+        int code = writer.write(pointCloud, null );
         assertTrue(code == Constants.ERR_CODE_NO_ERROR);
     }
 }

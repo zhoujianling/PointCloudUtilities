@@ -1,8 +1,8 @@
 package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.io.ReadListener;
-import cn.jimmiez.pcu.model.PcuElement;
 import cn.jimmiez.pcu.Constants;
+import cn.jimmiez.pcu.model.PcuPlyData;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 import javafx.util.Pair;
@@ -202,7 +202,7 @@ public class PlyReader {
     private List<Method> findAllElementGetter(List<Method> methods) {
         List<Method> getters = new ArrayList<>();
         for (Method m : methods) {
-            PcuElement pcuEle = m.getAnnotation(PcuElement.class);
+            PcuPlyData pcuEle = m.getAnnotation(PcuPlyData.class);
             if (pcuEle == null) continue;
             getters.add(m);
         }
@@ -439,8 +439,8 @@ public class PlyReader {
             void release() throws InvocationTargetException, IllegalAccessException {
                 for (int i = 0; i < getters.size(); i ++) {
                     Method method = getters.get(i);
-                    PcuElement annotation = method.getAnnotation(PcuElement.class);
-                    String[] elementNames = annotation.alternativeNames();
+                    PcuPlyData annotation = method.getAnnotation(PcuPlyData.class);
+                    String[] elementNames = annotation.element();
                     String elementName = null;
                     int elementNumber = 0;
                     for (String elementNameInPly : header.getElementTypes().keySet()) {
@@ -791,12 +791,14 @@ public class PlyReader {
                         break;
                     }
                     case STATE_COMPLETE: {
-//                        System.out.println("STATE_COMPLETE, EXIT LOOP.");
                         loop = false;
                         break;
                     }
                     case STATE_ERROR: {
                         loop = false;
+                        System.err.println("Parse ply file failed, element: " + currentElementName + ", property: "
+                                + header.getElementTypes().get(currentElementName).propertiesName[currentPropertyPtr]);
+                        System.err.println("Parse stop at item: " + currentItemNumber);
                         break;
                     }
                 }
@@ -1004,7 +1006,7 @@ public class PlyReader {
      * It is supposed that the properties of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
-     * @param pointCloud The point cloud object (with annotation PcuElement)
+     * @param pointCloud The point cloud object (with annotation PcuPlyData)
      */
     public <T> void readPointCloud(File file, T pointCloud, ReadListener listener) {
         if (! file.exists()) {
@@ -1043,7 +1045,6 @@ public class PlyReader {
                     stager.release();
                     break;
                 case FORMAT_BINARY_LITTLE_ENDIAN:
-//                    readBinaryPointCloud(header, stream, pointCloud, listener, ByteOrder.LITTLE_ENDIAN);
                     parser.readBinaryData(file, ByteOrder.LITTLE_ENDIAN);
                     stager.release();
                     break;
