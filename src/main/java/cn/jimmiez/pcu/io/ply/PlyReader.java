@@ -1,5 +1,6 @@
-package cn.jimmiez.pcu.io;
+package cn.jimmiez.pcu.io.ply;
 
+import cn.jimmiez.pcu.io.ReadListener;
 import cn.jimmiez.pcu.model.PcuElement;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
@@ -83,7 +84,7 @@ public class PlyReader {
         if (headerLines.size() < 1) {
             throw new IOException("Invalid ply file: No data");
         }
-        header.headerBytes = byteCount;
+        header.setHeaderBytes(byteCount);
         ERR_LINE_NO = headerLines.size() + 1;
         String firstLine = headerLines.get(0);
         if (! firstLine.equals(Constants.MAGIC_STRING)) {
@@ -107,12 +108,10 @@ public class PlyReader {
                     if (propertySlices.length < 5) throw new IOException("Invalid ply file. Wrong list property.");
                     int[] types = new int[] {recognizeType(propertySlices[2]), recognizeType(propertySlices[3])};
                     element.getListTypes().put(element.propertiesName[i - propertyStartNo], types);
-                    element.listType1 = recognizeType(propertySlices[2]);
-                    element.listType2 = recognizeType(propertySlices[3]);
                 }
             }
-            header.elementTypes.put(pair.getKey(), element);
-            header.elementsNumber.add(pair);
+            header.getElementTypes().put(pair.getKey(), element);
+            header.getElementsNumber().add(pair);
         }
         return header;
     }
@@ -166,13 +165,13 @@ public class PlyReader {
         String[] formatSlices = line.split(" ");
         if (formatSlices.length == 3) {
             if (formatSlices[1].equals("ascii")) {
-                header.plyFormat = FORMAT_ASCII;
+                header.setPlyFormat(FORMAT_ASCII);
             } else if (formatSlices[1].equals("binary_little_endian")) {
-                header.plyFormat = FORMAT_BINARY_LITTLE_ENDIAN;
+                header.setPlyFormat(FORMAT_BINARY_LITTLE_ENDIAN);
             } else if (formatSlices[1].equals("binary_big_endian")) {
-                header.plyFormat = FORMAT_BINARY_BIG_ENDIAN;
+                header.setPlyFormat(FORMAT_BINARY_BIG_ENDIAN);
             }
-            header.plyVersion = Float.valueOf(formatSlices[2]);
+            header.setPlyVersion(Float.valueOf(formatSlices[2]));
         } else {
             throw new IOException("Invalid ply file: Wrong format ply in line");
         }
@@ -259,8 +258,8 @@ public class PlyReader {
             int intListDataLength = 0;
             int shortListDataLength = 0;
             int byteListDataLength = 0;
-            for (int i = 0; i < header.elementsNumber.size(); i ++) {
-                String plyElementName = header.elementsNumber.get(i).getKey();
+            for (int i = 0; i < header.getElementsNumber().size(); i ++) {
+                String plyElementName = header.getElementsNumber().get(i).getKey();
                 PlyElement element = header.getElementTypes().get(plyElementName);
 
                 int doubleCnt = 0;
@@ -331,17 +330,17 @@ public class PlyReader {
                             break;
                     }
                 }
-                doubleDataLength += (doublePeriod * header.elementsNumber.get(i).getValue());
-                floatDataLength += (floatPeriod * header.elementsNumber.get(i).getValue());
-                intDataLength += (intPeriod * header.elementsNumber.get(i).getValue());
-                shortDataLength += (shortPeriod * header.elementsNumber.get(i).getValue());
-                byteDataLength += (bytePeriod * header.elementsNumber.get(i).getValue());
+                doubleDataLength += (doublePeriod * header.getElementsNumber().get(i).getValue());
+                floatDataLength += (floatPeriod * header.getElementsNumber().get(i).getValue());
+                intDataLength += (intPeriod * header.getElementsNumber().get(i).getValue());
+                shortDataLength += (shortPeriod * header.getElementsNumber().get(i).getValue());
+                byteDataLength += (bytePeriod * header.getElementsNumber().get(i).getValue());
 
-                doubleListDataLength += (doubleCnt * header.elementsNumber.get(i).getValue());
-                floatListDataLength += (floatCnt * header.elementsNumber.get(i).getValue());
-                intListDataLength += (intCnt * header.elementsNumber.get(i).getValue());
-                shortListDataLength += (shortCnt * header.elementsNumber.get(i).getValue());
-                byteListDataLength += (byteCnt * header.elementsNumber.get(i).getValue());
+                doubleListDataLength += (doubleCnt * header.getElementsNumber().get(i).getValue());
+                floatListDataLength += (floatCnt * header.getElementsNumber().get(i).getValue());
+                intListDataLength += (intCnt * header.getElementsNumber().get(i).getValue());
+                shortListDataLength += (shortCnt * header.getElementsNumber().get(i).getValue());
+                byteListDataLength += (byteCnt * header.getElementsNumber().get(i).getValue());
             }
             this.doubleData = new double[doubleDataLength];
             this.floatData = new float[floatDataLength];
@@ -615,7 +614,7 @@ public class PlyReader {
             int currentListSize = 0;
 
             byte[] bytes = Files.readAllBytes(file.toPath());
-            int currBytePtr = header.headerBytes;
+            int currBytePtr = header.getHeaderBytes();
 
             boolean loop = true;
 
@@ -629,22 +628,22 @@ public class PlyReader {
                         break;
                     }
                     case STATE_TO_READ_NEXT_PROPERTY: {
-                        if (currentElementPtr >= header.elementsNumber.size()) {
+                        if (currentElementPtr >= header.getElementsNumber().size()) {
                             state = STATE_COMPLETE;
                             break;
                         }
-                        if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
+                        if (currentItemNumber >= header.getElementsNumber().get(currentElementPtr).getValue()) {
                             currentItemNumber = 0;
                             currentElementPtr += 1;
                             break;
                         }
-                        currentElementName = header.elementsNumber.get(currentElementPtr).getKey();
-                        if (currentPropertyPtr >= header.elementTypes.get(currentElementName).propertiesType.length) {
+                        currentElementName = header.getElementsNumber().get(currentElementPtr).getKey();
+                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.length) {
                             currentPropertyPtr = 0;
                             currentItemNumber += 1;
                             break;
                         } else {
-                            expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
+                            expectedType = header.getElementTypes().get(currentElementName).propertiesType[currentPropertyPtr];
                             if (expectedType != TYPE_LIST) {
                                 state = STATE_READING_SCALAR_VAL;
                             } else {
@@ -690,7 +689,7 @@ public class PlyReader {
                     }
                     case STATE_READING_LIST_SIZE: {
                         state = STATE_READING_LIST_VAL;
-                        PlyElement element = header.elementTypes.get(currentElementName);
+                        PlyElement element = header.getElementTypes().get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
@@ -731,7 +730,7 @@ public class PlyReader {
                     case STATE_READING_LIST_VAL: {
                         state = STATE_TO_READ_NEXT_PROPERTY;
 
-                        PlyElement element = header.elementTypes.get(currentElementName);
+                        PlyElement element = header.getElementTypes().get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
 
@@ -813,7 +812,7 @@ public class PlyReader {
          */
         public void readAsciiData(File file) throws NoSuchElementException, IOException {
             byte[] bytes = Files.readAllBytes(file.toPath());
-            ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.headerBytes, bytes.length - header.headerBytes);
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.getHeaderBytes(), bytes.length - header.getHeaderBytes());
             Scanner scanner = new Scanner(stream);
             int state = STATE_READY;
 
@@ -839,22 +838,22 @@ public class PlyReader {
                         break;
                     }
                     case STATE_TO_READ_NEXT_PROPERTY: {
-                        if (currentElementPtr >= header.elementsNumber.size()) {
+                        if (currentElementPtr >= header.getElementsNumber().size()) {
                             state = STATE_COMPLETE;
                             break;
                         }
-                        if (currentItemNumber >= header.elementsNumber.get(currentElementPtr).getValue()) {
+                        if (currentItemNumber >= header.getElementsNumber().get(currentElementPtr).getValue()) {
                             currentItemNumber = 0;
                             currentElementPtr += 1;
                             break;
                         }
-                        currentElementName = header.elementsNumber.get(currentElementPtr).getKey();
-                        if (currentPropertyPtr >= header.elementTypes.get(currentElementName).propertiesType.length) {
+                        currentElementName = header.getElementsNumber().get(currentElementPtr).getKey();
+                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.length) {
                             currentPropertyPtr = 0;
                             currentItemNumber += 1;
                             break;
                         } else {
-                            expectedType = header.elementTypes.get(currentElementName).propertiesType[currentPropertyPtr];
+                            expectedType = header.getElementTypes().get(currentElementName).propertiesType[currentPropertyPtr];
                             if (expectedType != TYPE_LIST) {
                                 state = STATE_READING_SCALAR_VAL;
                             } else {
@@ -895,7 +894,7 @@ public class PlyReader {
                     }
                     case STATE_READING_LIST_SIZE: {
                         state = STATE_READING_LIST_VAL;
-                        PlyElement element = header.elementTypes.get(currentElementName);
+                        PlyElement element = header.getElementTypes().get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
@@ -931,7 +930,7 @@ public class PlyReader {
                     case STATE_READING_LIST_VAL: {
                         state = STATE_TO_READ_NEXT_PROPERTY;
 
-                        PlyElement element = header.elementTypes.get(currentElementName);
+                        PlyElement element = header.getElementTypes().get(currentElementName);
                         String currentProperty = element.propertiesName[currentPropertyPtr];
                         int [] listTypes = element.listTypes.get(currentProperty);
 
@@ -1034,7 +1033,7 @@ public class PlyReader {
         try {
             DataContainer stager = generateParserCallback(pointCloud, header);
             PlyBodyParser parser = new PlyBodyParser(header, stager);
-            switch (header.plyFormat) {
+            switch (header.getPlyFormat()) {
                 case FORMAT_ASCII:
                     parser.readAsciiData(file);
                     stager.release();
@@ -1063,80 +1062,5 @@ public class PlyReader {
 
     }
 
-
-    public static class PlyElement {
-        /** eg. ["x", "y", "z", "red", "green", "blue"] **/
-        private String[] propertiesName;
-        /** eg. [float, float, float, uchar, uchar, uchar] **/
-        private int[] propertiesType;
-
-        PlyElement(int propertiesNum) {
-            this.propertiesName = new String [propertiesNum];
-            this.propertiesType = new int [propertiesNum];
-        }
-
-        /**
-         * because list will be the only property in a element
-         * we can use two type-field to describe list
-         **/
-        private int listType1 = TYPE_NONTYPE;
-        private int listType2 = TYPE_NONTYPE;
-
-        private Map<String, int[]> listTypes = new HashMap<>();
-
-        public String[] getPropertiesName() {
-            return propertiesName;
-        }
-
-        public int[] getPropertiesType() {
-            return propertiesType;
-        }
-
-        public int getListType1() {
-            return listType1;
-        }
-
-        public int getListType2() {
-            return listType2;
-        }
-
-        public Map<String, int[]> getListTypes() {
-            return listTypes;
-        }
-    }
-
-    public static class PlyHeader {
-        /** FORMAT_ASCII or FORMAT_BINARY **/
-        private int plyFormat = FORMAT_NON_FORMAT;
-
-        private float plyVersion = 0;
-
-        /** [("vertex", 12), ("face", 8)] **/
-        private List<Pair<String, Integer>> elementsNumber = new ArrayList<>();
-
-        private Map<String, PlyElement> elementTypes = new HashMap<>();
-
-        private int headerBytes = 0;
-
-        public int getPlyFormat() {
-            return plyFormat;
-        }
-
-        public float getPlyVersion() {
-            return plyVersion;
-        }
-
-        public List<Pair<String, Integer>> getElementsNumber() {
-            return elementsNumber;
-        }
-
-        public Map<String, PlyElement> getElementTypes() {
-            return elementTypes;
-        }
-
-        public int getHeaderBytes() {
-            return headerBytes;
-        }
-    }
 
 }
