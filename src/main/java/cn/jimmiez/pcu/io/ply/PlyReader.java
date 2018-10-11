@@ -25,7 +25,7 @@ public class PlyReader {
 
     public static final int FORMAT_NON_FORMAT = - 0x3001;
 
-    private static final int TYPE_LIST = 0x1001;
+    public static final int TYPE_LIST = 0x1001;
 
     private static final int TYPE_LOW_BOUNDS = 0x0000;
     private static final int TYPE_UPPER_BOUNDS = 0x000B;
@@ -98,16 +98,16 @@ public class PlyReader {
             lineNo += 1;
             int propertyStartNo = lineNo;
             while (lineNo < headerLines.size() && headerLines.get(lineNo).startsWith("property ")) lineNo++;
-            PlyElement element = new PlyElement(lineNo - propertyStartNo);
+            PlyElement element = new PlyElement();
             for (int i = propertyStartNo; i < lineNo; i ++) {
                 String[] propertySlices = headerLines.get(i).split(" ");
                 if (propertySlices.length < 3) throw new IOException("Invalid ply file.");
-                element.propertiesName[i - propertyStartNo] = propertySlices[propertySlices.length - 1];
-                element.propertiesType[i - propertyStartNo] = recognizeType(propertySlices[1]);
-                if (element.propertiesType[i - propertyStartNo] == TYPE_LIST) {
+                element.propertiesName.add(propertySlices[propertySlices.length - 1]);
+                element.propertiesType.add(recognizeType(propertySlices[1]));
+                if (element.propertiesType.get(i - propertyStartNo) == TYPE_LIST) {
                     if (propertySlices.length < 5) throw new IOException("Invalid ply file. Wrong list property.");
                     int[] types = new int[] {recognizeType(propertySlices[2]), recognizeType(propertySlices[3])};
-                    element.getListTypes().put(element.propertiesName[i - propertyStartNo], types);
+                    element.getListTypes().put(element.propertiesName.get(i - propertyStartNo), types);
                 }
             }
             header.getElementTypes().put(pair.getKey(), element);
@@ -274,9 +274,9 @@ public class PlyReader {
                 int shortPeriod = 0;
                 int bytePeriod = 0;
 
-                for (int j = 0; j < element.propertiesName.length; j ++) {
-                    boolean isList = element.propertiesType[j] == TYPE_LIST;
-                    int type = isList ? element.listTypes.get(element.propertiesName[j])[1] : element.propertiesType[j];
+                for (int j = 0; j < element.propertiesName.size(); j ++) {
+                    boolean isList = element.propertiesType.get(j) == TYPE_LIST;
+                    int type = isList ? element.listTypes.get(element.propertiesName.get(j))[1] : element.propertiesType.get(j);
                     switch (type) {
                         case TYPE_FLOAT:
                             floatPeriod += 1;
@@ -299,10 +299,10 @@ public class PlyReader {
                     }
                 }
 
-                for (int j = 0; j < element.propertiesName.length; j ++) {
-                    boolean isList = element.propertiesType[j] == TYPE_LIST;
-                    int type = isList ? element.listTypes.get(element.propertiesName[j])[1] : element.propertiesType[j];
-                    String propertyName = element.propertiesName[j];
+                for (int j = 0; j < element.propertiesName.size(); j ++) {
+                    boolean isList = element.propertiesType.get(j) == TYPE_LIST;
+                    int type = isList ? element.listTypes.get(element.propertiesName.get(j))[1] : element.propertiesType.get(j);
+                    String propertyName = element.propertiesName.get(j);
                     Pair<String, String> eleProNamePair = new Pair<>(plyElementName, propertyName);
                     switch (type) {
                         case TYPE_FLOAT:
@@ -466,11 +466,11 @@ public class PlyReader {
                     PlyElement plyElement = header.getElementTypes().get(elementName);
 
                     /** make an assumption that all field has same type **/
-                    int propertyPosition = PcuArrayUtil.find(plyElement.propertiesName, properties[0]);
+                    int propertyPosition = plyElement.propertiesName.indexOf(properties[0]);
                     if (propertyPosition == -1) {
                         throw new IllegalStateException("The property " + properties[0] + " for getter: " + method.getName() + " cannot be found in ply header!");
                     }
-                    int firstPropertyType = plyElement.propertiesType[propertyPosition];
+                    int firstPropertyType = plyElement.propertiesType.get(propertyPosition);
                     /** user may input "z", "y", "x" **/
                     int[] indices = new int[properties.length];
                     int period = 0;
@@ -638,12 +638,12 @@ public class PlyReader {
                             break;
                         }
                         currentElementName = header.getElementsNumber().get(currentElementPtr).getKey();
-                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.length) {
+                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.size()) {
                             currentPropertyPtr = 0;
                             currentItemNumber += 1;
                             break;
                         } else {
-                            expectedType = header.getElementTypes().get(currentElementName).propertiesType[currentPropertyPtr];
+                            expectedType = header.getElementTypes().get(currentElementName).propertiesType.get(currentPropertyPtr);
                             if (expectedType != TYPE_LIST) {
                                 state = STATE_READING_SCALAR_VAL;
                             } else {
@@ -690,7 +690,7 @@ public class PlyReader {
                     case STATE_READING_LIST_SIZE: {
                         state = STATE_READING_LIST_VAL;
                         PlyElement element = header.getElementTypes().get(currentElementName);
-                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
@@ -731,7 +731,7 @@ public class PlyReader {
                         state = STATE_TO_READ_NEXT_PROPERTY;
 
                         PlyElement element = header.getElementTypes().get(currentElementName);
-                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         int [] listTypes = element.listTypes.get(currentProperty);
 
                         if (listTypes == null || listTypes.length < 2) {
@@ -797,7 +797,7 @@ public class PlyReader {
                     case STATE_ERROR: {
                         loop = false;
                         System.err.println("Parse ply file failed, element: " + currentElementName + ", property: "
-                                + header.getElementTypes().get(currentElementName).propertiesName[currentPropertyPtr]);
+                                + header.getElementTypes().get(currentElementName).propertiesName.get(currentPropertyPtr));
                         System.err.println("Parse stop at item: " + currentItemNumber);
                         break;
                     }
@@ -850,12 +850,12 @@ public class PlyReader {
                             break;
                         }
                         currentElementName = header.getElementsNumber().get(currentElementPtr).getKey();
-                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.length) {
+                        if (currentPropertyPtr >= header.getElementTypes().get(currentElementName).propertiesType.size()) {
                             currentPropertyPtr = 0;
                             currentItemNumber += 1;
                             break;
                         } else {
-                            expectedType = header.getElementTypes().get(currentElementName).propertiesType[currentPropertyPtr];
+                            expectedType = header.getElementTypes().get(currentElementName).propertiesType.get(currentPropertyPtr);
                             if (expectedType != TYPE_LIST) {
                                 state = STATE_READING_SCALAR_VAL;
                             } else {
@@ -897,7 +897,7 @@ public class PlyReader {
                     case STATE_READING_LIST_SIZE: {
                         state = STATE_READING_LIST_VAL;
                         PlyElement element = header.getElementTypes().get(currentElementName);
-                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         int [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
                             System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
@@ -933,7 +933,7 @@ public class PlyReader {
                         state = STATE_TO_READ_NEXT_PROPERTY;
 
                         PlyElement element = header.getElementTypes().get(currentElementName);
-                        String currentProperty = element.propertiesName[currentPropertyPtr];
+                        String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         int [] listTypes = element.listTypes.get(currentProperty);
 
                         if (listTypes == null || listTypes.length < 2) {

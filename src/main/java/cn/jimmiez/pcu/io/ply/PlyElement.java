@@ -1,26 +1,30 @@
 package cn.jimmiez.pcu.io.ply;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PlyElement {
     /** eg. ["x", "y", "z", "red", "green", "blue"] **/
-    String[] propertiesName;
+    List<String> propertiesName;
     /** eg. [float, float, float, uchar, uchar, uchar] **/
-    int[] propertiesType;
+    List<Integer> propertiesType;
 
-    PlyElement(int propertiesNum) {
-        this.propertiesName = new String [propertiesNum];
-        this.propertiesType = new int [propertiesNum];
+    String elementName;
+
+    PlyElement() {
+        this.propertiesName = new ArrayList<>();
+        this.propertiesType = new ArrayList<>();
     }
 
     Map<String, int[]> listTypes = new HashMap<>();
 
-    public String[] getPropertiesName() {
+    public List<String> getPropertiesName() {
         return propertiesName;
     }
 
-    public int[] getPropertiesType() {
+    public List<Integer> getPropertiesType() {
         return propertiesType;
     }
 

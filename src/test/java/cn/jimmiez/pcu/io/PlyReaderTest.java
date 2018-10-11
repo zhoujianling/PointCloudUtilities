@@ -21,8 +21,8 @@ public class PlyReaderTest {
         PlyHeader header = reader.readHeaderThenCloseFile(file);
         assertTrue(header.getPlyFormat() == PlyReader.FORMAT_ASCII);
         assertEquals(header.getPlyVersion(), 1.0f, 1e-5);
-        assertTrue(header.getElementTypes().get("vertex").getPropertiesName().length == 3);
-        assertTrue(header.getElementTypes().get("vertex").getPropertiesType().length == 3);
+        assertTrue(header.getElementTypes().get("vertex").getPropertiesName().size() == 3);
+        assertTrue(header.getElementTypes().get("vertex").getPropertiesType().size() == 3);
         assertTrue(header.getElementTypes().get("face").getListTypes().get("vertex_indices")[0] == PlyReader.TYPE_UCHAR);
         assertTrue(header.getElementTypes().get("face").getListTypes().get("vertex_indices")[1] == PlyReader.TYPE_INT);
         for (Pair<String, Integer> pair : header.getElementsNumber()) {
