@@ -16,8 +16,33 @@ public class PlyWriter {
         return result;
     }
 
-    private int writeImpl(PlyWriterRequest request) throws FileNotFoundException {
-        File file = request.file;
+
+    private String typeString(PlyElement element, int position) {
+        int type = element.getPropertiesType().get(position);
+        String typeStr = PlyReader.TYPE_NAME[type];
+        if (type == PlyReader.TYPE_LIST) {
+            int[] typePair = element.listTypes.get(element.getPropertiesName().get(position));
+            typeStr += String.format(" %s %s", PlyReader.TYPE_NAME[typePair[0]], PlyReader.TYPE_NAME[typePair[1]]);
+        }
+        return typeStr;
+    }
+
+    private void writeImpl(PlyWriterRequest request) throws IOException {
+        StringBuffer buffer = generatePlyHeaderString(request);
+        if (request.format == PlyReader.FORMAT_ASCII) {
+           // write string
+            writeAsciiPlyImpl(buffer, request);
+        } else if (request.format == PlyReader.FORMAT_BINARY_BIG_ENDIAN) {
+           // write bytes
+            writeBinaryPlyImpl(buffer, request);
+        } else if (request.format == PlyReader.FORMAT_BINARY_LITTLE_ENDIAN) {
+            writeBinaryPlyImpl(buffer, request);
+        } else {
+            System.err.println("Warning: unsupported ply format.");
+        }
+    }
+
+    private StringBuffer generatePlyHeaderString(PlyWriterRequest request) {
         StringBuffer buffer = new StringBuffer("ply\n");
         buffer.append("format ");
         switch (request.format) {
@@ -38,33 +63,39 @@ public class PlyWriter {
                 System.err.println("This comment will be neglected. " + comment);
                 continue;
             }
-            buffer.append("buffer ").append(comment).append("\n");
+            buffer.append("comment ").append(comment).append("\n");
         }
         for (PlyElement element : request.elements) {
             buffer.append("element ").append(element.elementName);
             buffer.append(" ").append(request.elementData.get(element).size()).append("\n");
             for (int i = 0; i < element.propertiesName.size(); i ++) {
-//                buffer.append("property ").append()
+                buffer.append("property ").append(typeString(element, i)).append(" ").append(element.propertiesName.get(i)).append("\n");
             }
         }
         buffer.append("end_header\n");
-        if (request.format == PlyReader.FORMAT_ASCII) {
-           // write string
-        } else if (request.format == PlyReader.FORMAT_BINARY_BIG_ENDIAN) {
-           // write bytes
-        } else if (request.format == PlyReader.FORMAT_BINARY_LITTLE_ENDIAN) {
+        return buffer;
+    }
 
-        } else {
-            System.err.println("Warning: unsupported ply format.");
-        }
-        return 0;
+    private void writeAsciiPlyImpl(StringBuffer header, PlyWriterRequest pq) throws FileNotFoundException {
+        File file = pq.file;
+        PrintStream ps = new PrintStream(new FileOutputStream(file));
+        ps.print(header.toString());
+//        for (PlyElement element : pq.elements) {
+//            List data = pq.elementData.get(element);
+//            for (int i = 0; i < element.p)
+//        }
+        ps.close();
+    }
+
+    private void writeBinaryPlyImpl(StringBuffer buffer, PlyWriterRequest pq) {
+
     }
 
     public PlyWriterRequest prepare() {
         return new PlyWriterRequest();
     }
 
-    private class PlyWriterRequest {
+    public class PlyWriterRequest {
 
         List<PlyElement> elements = new ArrayList<>();
 
@@ -115,6 +146,7 @@ public class PlyWriter {
             }
             // check type
             // put data
+            elementData.put(element, data);
             return this;
         }
 
@@ -134,15 +166,18 @@ public class PlyWriter {
         }
 
         public int okay() {
-            //todo
             if (file == null) {
                 throw new IllegalStateException("writeTo() must be called before okay()");
             }
-            int result = 0;
+            int result = Constants.ERR_CODE_NO_ERROR;
             try {
-                result = writeImpl(this);
+                writeImpl(this);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
+                result = Constants.ERR_CODE_FILE_NOT_FOUND;
+            } catch (IOException e) {
+                e.printStackTrace();
+                result = Constants.ERR_CODE_FILE_NOT_FOUND;
             }
             return result;
         }

@@ -25,7 +25,6 @@ public class PlyReader {
 
     public static final int FORMAT_NON_FORMAT = - 0x3001;
 
-    public static final int TYPE_LIST = 0x1001;
 
     private static final int TYPE_LOW_BOUNDS = 0x0000;
     private static final int TYPE_UPPER_BOUNDS = 0x000B;
@@ -39,6 +38,7 @@ public class PlyReader {
     public static final int TYPE_UINT = 0x0006;
     public static final int TYPE_FLOAT = 0x0007;
     public static final int TYPE_DOUBLE = 0x0008;
+    public static final int TYPE_LIST = 0x000A;
 
 
     /**
@@ -48,6 +48,10 @@ public class PlyReader {
      **/
     private static final int[] TYPE_SIZE = new int[] {
             0, 1, 1, 2, 2, 4, 4, 4, 8, 0, 0
+    };
+
+    public static final String[] TYPE_NAME = new String[] {
+            "NaT", "char", "uchar", "short", "ushort", "int", "uint", "float", "double", "NaT", "list"
     };
 
     public static final Integer TYPE_NONTYPE =  0x0000;

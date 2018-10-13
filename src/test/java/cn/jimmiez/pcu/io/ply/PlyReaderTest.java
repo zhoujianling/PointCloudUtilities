@@ -1,7 +1,5 @@
-package cn.jimmiez.pcu.io;
+package cn.jimmiez.pcu.io.ply;
 
-import cn.jimmiez.pcu.io.ply.PlyHeader;
-import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.model.PcuPointCloud3f;
 import cn.jimmiez.pcu.model.PcuPolygonMesh3f;
 import javafx.util.Pair;
