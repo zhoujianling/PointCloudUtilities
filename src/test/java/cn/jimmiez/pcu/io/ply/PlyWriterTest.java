@@ -4,11 +4,11 @@ import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.Constants4Test;
 import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.io.ply.PlyWriter;
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
 import org.junit.*;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -29,7 +29,7 @@ public class PlyWriterTest {
         }
     }
 
-//    @AfterClass
+    @AfterClass
     public static void cleanTempDir() {
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
@@ -38,7 +38,8 @@ public class PlyWriterTest {
         assertTrue(file.exists() && file.isDirectory());
         if(!deleteDirectory(file)) {
             System.err.println("Warning: Cannot clean up temporary files for unit test.");
-            fail();
+            System.err.flush();
+//            fail();
         }
 
     }
@@ -47,7 +48,9 @@ public class PlyWriterTest {
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
-                deleteDirectory(file);
+                if (!deleteDirectory(file)) {
+                    return false;
+                }
             }
         }
         return directoryToBeDeleted.delete();
@@ -56,10 +59,21 @@ public class PlyWriterTest {
 
     @Test
     public void writeAsciiPlyTest() {
-        PcuPointCloud3f pointCloud = new PcuPointCloud3f();
-        pointCloud.getPoint3ds().add(new float[] {0, 1, 2});
-        pointCloud.getPoint3ds().add(new float[] {1.4f, 10.2f, -2.1f});
+        List vertexData = new Vector();
+        vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
+        vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
+        vertexData.add(Arrays.asList(2.101f, -3f, 1.1f));
+        vertexData.add(Arrays.asList(0.521f, -3f, 1.0f));
+        vertexData.add(Arrays.asList(2.104f, -3f, 1.1f));
         PlyWriter writer = new PlyWriter();
+
+        List faceData = new Vector();
+        List r1 = new Vector();
+        List r2 = new Vector();
+        r1.add(new int[] {0, 1, 2});
+        r2.add(new int[] {1, 0, 4});
+        faceData.add(r1);
+        faceData.add(r2);
 
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
@@ -75,10 +89,14 @@ public class PlyWriterTest {
                 .defineScalarProperty("x", PlyReader.TYPE_FLOAT)
                 .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
                 .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
-                .putData(pointCloud.getPoint3ds())
+                .putData(vertexData)
+                .defineElement("face")
+                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
+                .putData(faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
         assertTrue(code == Constants.ERR_CODE_NO_ERROR);
     }
+
 }

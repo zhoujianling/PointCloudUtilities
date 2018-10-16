@@ -80,11 +80,87 @@ public class PlyWriter {
         File file = pq.file;
         PrintStream ps = new PrintStream(new FileOutputStream(file));
         ps.print(header.toString());
-//        for (PlyElement element : pq.elements) {
-//            List data = pq.elementData.get(element);
-//            for (int i = 0; i < element.p)
-//        }
+        for (PlyElement element : pq.elements) {
+            List data = pq.elementData.get(element);
+            for (int i = 0; i < data.size(); i ++) {
+                List row = (List) data.get(i);
+                for (int j = 0; j < element.propertiesType.size(); j ++) {
+                    int type = element.propertiesType.get(j);
+                    String propertyName = element.propertiesName.get(j);
+                    switch (type) {
+                        case PlyReader.TYPE_CHAR:
+                        case PlyReader.TYPE_UCHAR:
+                        case PlyReader.TYPE_SHORT:
+                        case PlyReader.TYPE_USHORT:
+                        case PlyReader.TYPE_INT:
+                        case PlyReader.TYPE_UINT:
+                        case PlyReader.TYPE_FLOAT:
+                        case PlyReader.TYPE_DOUBLE:
+                            ps.print(row.get(j));
+                            break;
+                        case PlyReader.TYPE_LIST:
+                            printAsciiList(row.get(j), ps, element.listTypes.get(propertyName)[1]);
+                            break;
+                    }
+                    ps.print(' ');
+                }
+                ps.print('\n');
+            }
+        }
         ps.close();
+    }
+
+    private void printAsciiList(Object o, PrintStream ps, int valType) {
+        switch (valType) {
+            case PlyReader.TYPE_CHAR:
+            case PlyReader.TYPE_UCHAR:
+                byte[] ba = (byte[]) o;
+                ps.print(ba.length);
+                ps.print(' ');
+                for (byte b : ba) {
+                    ps.print(b);
+                    ps.print(' ');
+                }
+                break;
+            case PlyReader.TYPE_SHORT:
+            case PlyReader.TYPE_USHORT:
+                short[] sa = (short[]) o;
+                ps.print(sa.length);
+                ps.print(' ');
+                for (short s : sa) {
+                    ps.print(s);
+                    ps.print(' ');
+                }
+                break;
+            case PlyReader.TYPE_INT:
+            case PlyReader.TYPE_UINT:
+                int[] ia = (int[]) o;
+                ps.print(ia.length);
+                ps.print(' ');
+                for (int i : ia) {
+                    ps.print(i);
+                    ps.print(' ');
+                }
+                break;
+            case PlyReader.TYPE_FLOAT:
+                float[] fa = (float[]) o;
+                ps.print(fa.length);
+                ps.print(' ');
+                for (float f : fa) {
+                    ps.print(f);
+                    ps.print(' ');
+                }
+                break;
+            case PlyReader.TYPE_DOUBLE:
+                double[] da = (double[]) o;
+                ps.print(da.length);
+                ps.print(' ');
+                for (double d : da) {
+                    ps.print(d);
+                    ps.print(' ');
+                }
+                break;
+        }
     }
 
     private void writeBinaryPlyImpl(StringBuffer buffer, PlyWriterRequest pq) {
