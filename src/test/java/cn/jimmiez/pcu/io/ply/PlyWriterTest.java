@@ -56,6 +56,34 @@ public class PlyWriterTest {
         return directoryToBeDeleted.delete();
     }
 
+    @Test
+    public void writeBinaryPlyTest() {
+        List vertexData = new Vector();
+        String userDir = System.getProperty("user.home");
+        userDir += File.separator;
+        userDir += Constants4Test.OUTPUT_DIR;
+        File tempPlyFile = new File(userDir.concat(File.separator).concat("plyAscii.ply"));
+//        int code = writer.write(pointCloud, tempPlyFile);
+        PlyWriter writer = new PlyWriter();
+        int code = writer
+                .prepare()
+                .format(PlyReader.FORMAT_BINARY_LITTLE_ENDIAN)
+                .comment("this is test")
+                .comment("for Point Cloud Util v.0.0.3")
+                .defineElement("vertex")
+                .defineScalarProperty("x", PlyReader.TYPE_FLOAT)
+                .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
+                .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
+                .putData(vertexData)
+//                .defineElement("face")
+//                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
+//                .putData(faceData)
+                .writeTo(tempPlyFile)
+                .okay();
+
+        assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+
+    }
 
     @Test
     public void writeAsciiPlyTest() {
@@ -98,5 +126,6 @@ public class PlyWriterTest {
 
         assertTrue(code == Constants.ERR_CODE_NO_ERROR);
     }
+
 
 }

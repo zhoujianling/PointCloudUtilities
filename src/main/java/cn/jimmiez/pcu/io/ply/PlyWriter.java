@@ -1,8 +1,11 @@
 package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.Constants;
+import cn.jimmiez.pcu.io.BinaryWriter;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +37,9 @@ public class PlyWriter {
             writeAsciiPlyImpl(buffer, request);
         } else if (request.format == PlyReader.FORMAT_BINARY_BIG_ENDIAN) {
            // write bytes
-            writeBinaryPlyImpl(buffer, request);
+            writeBinaryPlyImpl(buffer, request, ByteOrder.BIG_ENDIAN);
         } else if (request.format == PlyReader.FORMAT_BINARY_LITTLE_ENDIAN) {
-            writeBinaryPlyImpl(buffer, request);
+            writeBinaryPlyImpl(buffer, request, ByteOrder.LITTLE_ENDIAN);
         } else {
             System.err.println("Warning: unsupported ply format.");
         }
@@ -163,7 +166,60 @@ public class PlyWriter {
         }
     }
 
-    private void writeBinaryPlyImpl(StringBuffer buffer, PlyWriterRequest pq) {
+    private void writeBinaryPlyImpl(StringBuffer buffer, PlyWriterRequest pq, ByteOrder order) throws IOException {
+        BinaryWriter writer = new BinaryWriter(pq.file, order);
+
+        writer.writeString(buffer.toString());
+        for (PlyElement element : pq.elements) {
+            List data = pq.elementData.get(element);
+            for (int i = 0; i < data.size(); i ++) {
+                List row = (List) data.get(i);
+                ByteBuffer byteBuffer = null;
+                for (int j = 0; j < element.propertiesType.size(); j ++) {
+                    int type = element.propertiesType.get(j);
+                    String propertyName = element.propertiesName.get(j);
+                    switch (type) {
+                        case PlyReader.TYPE_CHAR:
+                        case PlyReader.TYPE_UCHAR: {
+                            byte c = (byte) row.get(j);
+                            writer.writeByte(c);
+//                            writer.write;
+                            break;
+                        }
+                        case PlyReader.TYPE_SHORT:
+                        case PlyReader.TYPE_USHORT: {
+                            short s = (short) row.get(j);
+                            writer.writeShort(s);
+//                            writer.write(s);
+                            break;
+                        }
+                        case PlyReader.TYPE_INT:
+                        case PlyReader.TYPE_UINT: {
+                            int intVal = (int) row.get(j);
+                            writer.writeInt(intVal);
+                            break;
+                        }
+                        case PlyReader.TYPE_FLOAT: {
+                            float floatVal = (float) row.get(j);
+                            writer.writeFloat(floatVal);
+                            break;
+                        }
+                        case PlyReader.TYPE_DOUBLE: {
+                            double doubleVal = (double) row.get(j);
+                            writer.writeDouble(doubleVal);
+                            break;
+                        }
+                        case PlyReader.TYPE_LIST:
+                            writeBinaryList(row.get(j), writer, element.listTypes.get(propertyName)[1], order);
+                            break;
+                    }
+                }
+            }
+        }
+        writer.close();
+    }
+
+    private void writeBinaryList(Object o, BinaryWriter writer, int valType, ByteOrder order) {
 
     }
 
