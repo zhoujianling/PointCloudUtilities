@@ -174,7 +174,6 @@ public class PlyWriter {
             List data = pq.elementData.get(element);
             for (int i = 0; i < data.size(); i ++) {
                 List row = (List) data.get(i);
-                ByteBuffer byteBuffer = null;
                 for (int j = 0; j < element.propertiesType.size(); j ++) {
                     int type = element.propertiesType.get(j);
                     String propertyName = element.propertiesName.get(j);
@@ -209,9 +208,12 @@ public class PlyWriter {
                             writer.writeDouble(doubleVal);
                             break;
                         }
-                        case PlyReader.TYPE_LIST:
-                            writeBinaryList(row.get(j), writer, element.listTypes.get(propertyName)[1], order);
+                        case PlyReader.TYPE_LIST: {
+                            int sizeType = element.listTypes.get(propertyName)[0];
+                            int valType = element.listTypes.get(propertyName)[1];
+                            writeBinaryList(row.get(j), writer, valType, sizeType);
                             break;
+                        }
                     }
                 }
             }
@@ -219,7 +221,71 @@ public class PlyWriter {
         writer.close();
     }
 
-    private void writeBinaryList(Object o, BinaryWriter writer, int valType, ByteOrder order) {
+    private void writeListSize(int len, BinaryWriter writer, int sizeType) throws IOException {
+        switch (sizeType) {
+            case PlyReader.TYPE_CHAR:
+            case PlyReader.TYPE_UCHAR:
+                writer.writeByte((byte) len);
+                break;
+            case PlyReader.TYPE_SHORT:
+            case PlyReader.TYPE_USHORT:
+                writer.writeShort((short) len);
+                break;
+            case PlyReader.TYPE_INT:
+            case PlyReader.TYPE_UINT:
+                writer.writeInt(len);
+                break;
+            case PlyReader.TYPE_FLOAT:
+                writer.writeFloat(len);
+                break;
+            case PlyReader.TYPE_DOUBLE:
+                writer.writeDouble(len);
+                break;
+        }
+
+    }
+
+    private void writeBinaryList(Object o, BinaryWriter writer, int valType, int sizeType) throws IOException {
+        switch (valType) {
+            case PlyReader.TYPE_CHAR:
+            case PlyReader.TYPE_UCHAR:
+                byte[] ba = (byte[]) o;
+                writeListSize(ba.length, writer, sizeType);
+                for (byte b : ba) {
+                    writer.writeByte(b);
+                }
+                break;
+            case PlyReader.TYPE_SHORT:
+            case PlyReader.TYPE_USHORT:
+                short[] sa = (short[]) o;
+                writeListSize(sa.length, writer, sizeType);
+                for (short s : sa) {
+                    writer.writeShort(s);
+                }
+                break;
+            case PlyReader.TYPE_INT:
+            case PlyReader.TYPE_UINT:
+                int[] ia = (int[]) o;
+                writeListSize(ia.length, writer, sizeType);
+                for (int i : ia) {
+                    writer.writeInt(i);
+                }
+                break;
+            case PlyReader.TYPE_FLOAT:
+                float[] fa = (float[]) o;
+                writeListSize(fa.length, writer, sizeType);
+                for (float f : fa) {
+                    writer.writeFloat(f);
+                }
+                break;
+            case PlyReader.TYPE_DOUBLE:
+                double[] da = (double[]) o;
+                writeListSize(da.length, writer, sizeType);
+                for (double d : da) {
+                    writer.writeDouble(d);
+                }
+                break;
+        }
 
     }
 

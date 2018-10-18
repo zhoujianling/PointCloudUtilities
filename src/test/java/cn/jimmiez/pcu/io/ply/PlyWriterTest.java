@@ -29,7 +29,7 @@ public class PlyWriterTest {
         }
     }
 
-    @AfterClass
+//    @AfterClass
     public static void cleanTempDir() {
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
@@ -59,11 +59,25 @@ public class PlyWriterTest {
     @Test
     public void writeBinaryPlyTest() {
         List vertexData = new Vector();
+        vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
+        vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
+        vertexData.add(Arrays.asList(2.101f, -3f, 1.1f));
+        vertexData.add(Arrays.asList(0.521f, -3f, 1.0f));
+        vertexData.add(Arrays.asList(2.104f, -3f, 1.1f));
+
+        List faceData = new Vector();
+        List r1 = new Vector();
+        List r2 = new Vector();
+        r1.add(new int[] {0, 1, 2});
+        r2.add(new int[] {1, 0, 4});
+        faceData.add(r1);
+        faceData.add(r2);
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
-        File tempPlyFile = new File(userDir.concat(File.separator).concat("plyAscii.ply"));
-//        int code = writer.write(pointCloud, tempPlyFile);
+        File tempPlyFile = new File(userDir.concat(File.separator).concat("plyBinLittle.ply"));
+        File tempPlyFile2 = new File(userDir.concat(File.separator).concat("plyBinBig.ply"));
+
         PlyWriter writer = new PlyWriter();
         int code = writer
                 .prepare()
@@ -75,13 +89,31 @@ public class PlyWriterTest {
                 .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
                 .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
                 .putData(vertexData)
-//                .defineElement("face")
-//                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
-//                .putData(faceData)
+                .defineElement("face")
+                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
+                .putData(faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
         assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+
+        int code2 = writer
+                .prepare()
+                .format(PlyReader.FORMAT_BINARY_BIG_ENDIAN)
+                .comment("this is test")
+                .comment("for Point Cloud Util v.0.0.3")
+                .defineElement("vertex")
+                .defineScalarProperty("x", PlyReader.TYPE_FLOAT)
+                .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
+                .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
+                .putData(vertexData)
+                .defineElement("face")
+                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
+                .putData(faceData)
+                .writeTo(tempPlyFile2)
+                .okay();
+
+        assertTrue(code2 == Constants.ERR_CODE_NO_ERROR);
 
     }
 
