@@ -5,12 +5,14 @@
 
 ## Description
 
-This is a util for point cloud processing. Until recently few features have been added, so DO NOT watch this project :)
+This is a util for point cloud processing. 
 
 ## Features
-* Read a ply header from a file which follows the [standard](http://paulbourke.net/dataformats/ply/).
-* Read a ply file and acquire a point cloud structure.
-* Provide an octree for searching nearest neighbors
+* Read a ply file from a file which follows the [standard](http://paulbourke.net/dataformats/ply/).
+* Write a ply file.
+* Read an obj file.
+* Provide an octree for searching nearest neighbors.
+* Implement some algorithms (LOP, dijkstra ...)
 
 ## Build
 
