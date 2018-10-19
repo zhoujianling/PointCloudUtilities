@@ -9,6 +9,11 @@ import java.util.Set;
 
 public class Graphs {
 
+    public static List<List<Integer>> connectedComponents(Graph graph) {
+        //TODO  obtain connected components of a graph
+        return null;
+    }
+
     public static Graph fullConnectedGraph(final List<Point3d> vertices) {
         return new Graph() {
             @Override
