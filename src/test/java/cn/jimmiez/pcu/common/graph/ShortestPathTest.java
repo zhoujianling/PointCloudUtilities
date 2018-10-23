@@ -13,7 +13,6 @@ public class ShortestPathTest {
         Graph graph = genData();
         List<Pair<List<Integer>, Weight>> result = ShortestPath.dijkstra(graph, 0);
 
-
         assertEquals(0.0, result.get(0).getValue().val(), 1e-7);
         assertEquals(2.5, result.get(1).getValue().val(), 1e-7);
         assertEquals(2.0, result.get(2).getValue().val(), 1e-7);
@@ -22,8 +21,8 @@ public class ShortestPathTest {
 
     }
 
-    private Graph genData() {
 
+    private Graph genData() {
         final double N = Double.POSITIVE_INFINITY;
         final double[][] edges = new double[][] {
                 {0,   3,   2,   N,   4  },
@@ -39,21 +38,6 @@ public class ShortestPathTest {
                 {1, 2, 4},
                 {0, 1, 3}
         };
-        return new Graph() {
-            @Override
-            public double edgeWeight(int i, int j) {
-                return edges[i][j];
-            }
-
-            @Override
-            public int verticesCount() {
-                return 5;
-            }
-
-            @Override
-            public int[] adjacentVertices(int i) {
-                return adjacency[i];
-            }
-        };
+        return Graphs.graph(edges, adjacency);
     }
 }

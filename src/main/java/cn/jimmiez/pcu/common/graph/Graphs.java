@@ -7,6 +7,7 @@ import java.util.*;
 
 public class Graphs {
 
+
     public static List<List<Integer>> connectedComponents(Graph graph) {
         List<List<Integer>> subGraphs = new Vector<>();
         boolean[] visited = new boolean[graph.verticesCount()];
@@ -77,6 +78,44 @@ public class Graphs {
             @Override
             public int[] adjacentVertices(int i) {
                 return knnIndices.get(i);
+            }
+        };
+    }
+
+    public static Graph graph(final double[][]edges, final int[][]adjacency) {
+        return new Graph() {
+            @Override
+            public double edgeWeight(int i, int j) {
+                return edges[i][j];
+            }
+
+            @Override
+            public int verticesCount() {
+                return edges.length;
+            }
+
+            @Override
+            public int[] adjacentVertices(int i) {
+                return adjacency[i];
+            }
+        };
+    }
+
+    public static Graph empty() {
+        return new Graph() {
+            @Override
+            public double edgeWeight(int i, int j) {
+                return Graph.N;
+            }
+
+            @Override
+            public int verticesCount() {
+                return 0;
+            }
+
+            @Override
+            public int[] adjacentVertices(int i) {
+                return new int[0];
             }
         };
     }
