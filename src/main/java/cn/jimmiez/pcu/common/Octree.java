@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.common;
 
 import javafx.util.Pair;
 
+import javax.vecmath.Point3d;
 import java.util.*;
 import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
 import static java.lang.Math.*;
@@ -18,7 +19,7 @@ public class Octree {
      **/
     OctreeNode root = null;
 
-    private List<double[]> points = null;
+    private List<Point3d> points = null;
 
     /**
      * used to find an octree node by its index
@@ -41,7 +42,7 @@ public class Octree {
      * note that the length double array in List points must be 3
      * @param points the point cloud
      */
-    public void buildIndex(List<double[]> points) {
+    public void buildIndex(List<Point3d> points) {
         this.depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))) + 1);
         this.depth = min(this.depth, MAX_DEPTH);
         this.depth = max(this.depth, 1);
@@ -55,25 +56,25 @@ public class Octree {
             System.err.println("Warning: input for buildIndex() is empty list.");
             return;
         }
-        this.root.minX = points.get(0)[0];
-        this.root.maxX = points.get(0)[0];
-        this.root.minY = points.get(0)[1];
-        this.root.maxY = points.get(0)[1];
-        this.root.minZ = points.get(0)[2];
-        this.root.maxZ = points.get(0)[2];
-        for (double[] xyz: points) {
-            this.root.minX = min(xyz[0], this.root.minX);
-            this.root.maxX = max(xyz[0], this.root.maxX);
-            this.root.minY = min(xyz[1], this.root.minY);
-            this.root.maxY = max(xyz[1], this.root.maxY);
-            this.root.minZ = min(xyz[2], this.root.minZ);
-            this.root.maxZ = max(xyz[2], this.root.maxZ);
+        this.root.minX = points.get(0).x;
+        this.root.maxX = points.get(0).x;
+        this.root.minY = points.get(0).y;
+        this.root.maxY = points.get(0).y;
+        this.root.minZ = points.get(0).z;
+        this.root.maxZ = points.get(0).z;
+        for (Point3d xyz: points) {
+            this.root.minX = min(xyz.x, this.root.minX);
+            this.root.maxX = max(xyz.x, this.root.maxX);
+            this.root.minY = min(xyz.y, this.root.minY);
+            this.root.maxY = max(xyz.y, this.root.maxY);
+            this.root.minZ = min(xyz.z, this.root.minZ);
+            this.root.maxZ = max(xyz.z, this.root.maxZ);
         }
 
         createOctree(1, this.root);
 
         for (int i = 0; i < points.size(); i ++) {
-            double[] xyz = points.get(i);
+            Point3d xyz = points.get(i);
             this.root.addPoint(xyz, i);
         }
     }
@@ -123,7 +124,7 @@ public class Octree {
 
         List<Pair<Integer, Double>> nearest = new ArrayList<>();
 
-        double[] point = points.get(index);
+        Point3d point = points.get(index);
         long leafNode = locateOctreeNode(this.root, point);
         List<Long> adjacentLeaves = obtainAdjacent26Indices(leafNode);
         List<Long> candidateLeaves = new ArrayList<>();
@@ -139,8 +140,8 @@ public class Octree {
 //            System.out.println("x: " + coords[0] + " y: " + coords[1] + " z: " + coords[2]);
             for (int pointIndex : this.octreeIndices.get(leafIndex).indices) {
                 if (pointIndex == index) continue;
-                double[] p = this.points.get(pointIndex);
-                double distance = distance(p, point);
+                Point3d p = this.points.get(pointIndex);
+                double distance = p.distance(point);
                 if (nearest.size() < k) {
                     nearest.add(new Pair<>(pointIndex, distance));
                     if (nearest.size() == k) Collections.sort(nearest, new Comparator<Pair<Integer, Double>>() {
@@ -174,7 +175,7 @@ public class Octree {
      * @param point the target point
      * @return the index of leaf node
      */
-    protected Long locateOctreeNode(OctreeNode node, double[] point) {
+    protected Long locateOctreeNode(OctreeNode node, Point3d point) {
         if (node.children == null) {
             if (node.contains(point)) {
                 return node.index;
@@ -182,9 +183,9 @@ public class Octree {
                 throw new IllegalStateException("Search a point exceeding octree bounds.");
             }
         } else {
-            int xi = point[0] < (node.maxX + node.minX) / 2 ? 0 : 1;
-            int yj = point[1] < (node.maxY + node.minY) / 2 ? 0 : 1;
-            int zk = point[2] < (node.maxZ + node.minZ) / 2 ? 0 : 1;
+            int xi = point.x < (node.maxX + node.minX) / 2 ? 0 : 1;
+            int yj = point.y < (node.maxY + node.minY) / 2 ? 0 : 1;
+            int zk = point.z < (node.maxZ + node.minZ) / 2 ? 0 : 1;
             int childIndex = xi * 4 + yj * 2 + zk * 1;
             return locateOctreeNode(node.children[childIndex], point);
         }
@@ -316,24 +317,24 @@ public class Octree {
         double minZ = Double.NaN;
         double maxZ = Double.NaN;
 
-        void addPoint(double[] point, int index) {
+        void addPoint(Point3d point, int index) {
             if (children == null) {
                 if (contains(point)) {
                     indices.add(index);
                 }
             } else {
-                int xi = point[0] < (maxX + minX) / 2 ? 0 : 1;
-                int yj = point[1] < (maxY + minY) / 2 ? 0 : 1;
-                int zk = point[2] < (maxZ + minZ) / 2 ? 0 : 1;
+                int xi = point.x < (maxX + minX) / 2 ? 0 : 1;
+                int yj = point.y < (maxY + minY) / 2 ? 0 : 1;
+                int zk = point.z < (maxZ + minZ) / 2 ? 0 : 1;
                 int childIndex = xi * 4 + yj * 2 + zk * 1;
                 children[childIndex].addPoint(point, index);
             }
         }
 
-        boolean contains(double[] point) {
-            return point[0] >= minX && point[0] <= maxX &&
-                    point[1] >= minY && point[1] <= maxY &&
-                    point[2] >= minZ && point[2] <= maxZ;
+        boolean contains(Point3d point) {
+            return point.x >= minX && point.x <= maxX &&
+                    point.y >= minY && point.y <= maxY &&
+                    point.z >= minZ && point.z <= maxZ;
         }
 
         public List<Integer> getIndices() {

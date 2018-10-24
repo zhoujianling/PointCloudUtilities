@@ -1,7 +1,9 @@
 package cn.jimmiez.pcu.common;
 
+import javafx.geometry.Point3D;
 import org.junit.Test;
 
+import javax.vecmath.Point3d;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,14 +13,14 @@ import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
 
 public class OctreeTest {
 
-    private List<double[]> randomData(int number, double min, double max) {
-        List<double[]> list = new ArrayList<>();
+    private List<Point3d> randomData(int number, double min, double max) {
+        List<Point3d> list = new ArrayList<>();
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < number; i ++) {
-            double[] xyz = new double[3];
-            xyz[0] = random.nextDouble() * (max - min) + min;
-            xyz[1] = random.nextDouble() * (max - min) + min;
-            xyz[2] = random.nextDouble() * (max - min) + min;
+            Point3d xyz = new Point3d();
+            xyz.x = random.nextDouble() * (max - min) + min;
+            xyz.y = random.nextDouble() * (max - min) + min;
+            xyz.z = random.nextDouble() * (max - min) + min;
             list.add(xyz);
         }
 
@@ -30,7 +32,7 @@ public class OctreeTest {
         int dataSize = 10384;
         double min = 0;
         double max = 10;
-        List<double[]> data = randomData(dataSize, min, max);
+        List<Point3d> data = randomData(dataSize, min, max);
         Octree octree = new Octree();
         octree.buildIndex(data);
         int pointNum = 0;
@@ -47,10 +49,10 @@ public class OctreeTest {
         assertTrue(Math.abs(node.minY - 0) < 1e-1);
         assertTrue(Math.abs(node.minZ - 0) < 1e-1);
 
-        List<double[]> emptyData = new ArrayList<>();
+        List<Point3d> emptyData = new ArrayList<>();
         octree.buildIndex(emptyData);
         assertTrue(octree.getDepth() == 1);
-        List<double[]> data2 = randomData(129, 0, 1);
+        List<Point3d> data2 = randomData(129, 0, 1);
         octree.buildIndex(data2);
         assertTrue(octree.getDepth() == 2);
         assertTrue(octree.octreeIndices.size() == 8);
@@ -58,14 +60,14 @@ public class OctreeTest {
 
     @Test
     public void searchNearestNeighborsTest() {
-        List<double[]> data = randomData(42349, 1, 11.5);
+        List<Point3d> data = randomData(42349, 1, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
         int[] indices = octree.searchNearestNeighbors(5, 3);
         assertTrue(indices.length == 5);
-        double dis1 = distance(data.get(3), data.get(indices[0]));
-        double dis2 = distance(data.get(3), data.get(indices[1]));
-        double dis3 = distance(data.get(3), data.get(indices[2]));
+        double dis1 = data.get(3).distance(data.get(indices[0]));
+        double dis2 = data.get(3).distance(data.get(indices[1]));
+        double dis3 = data.get(3).distance(data.get(indices[2]));
         assertTrue(dis1 < dis2);
         assertTrue(dis2 < dis3);
 //        double[] target = data.get(3);
@@ -77,15 +79,15 @@ public class OctreeTest {
         indices = octree.searchNearestNeighbors(705, 90);
         assertTrue(indices.length == 705);
         for (int i = 1; i < 705; i ++) {
-            double distance1 = distance(data.get(90), data.get(indices[i - 1]));
-            double distance2 = distance(data.get(90), data.get(indices[i]));
+            double distance1 = data.get(90).distance(data.get(indices[i - 1]));
+            double distance2 = data.get(90).distance(data.get(indices[i]));
             assertTrue(distance1 < distance2);
         }
     }
 
     @Test
     public void bitsTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        List<double[]> data = randomData(90384, 0, 10);
+        List<Point3d> data = randomData(90384, 0, 10);
         Octree octree = new Octree();
         octree.buildIndex(data);
 
@@ -108,7 +110,7 @@ public class OctreeTest {
     @Test
     public void locateOctreeNodeTest() {
         int dataSize = 42349;
-        List<double[]> data = randomData(dataSize, 1, 11.5);
+        List<Point3d> data = randomData(dataSize, 1, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
         Random random = new Random(System.currentTimeMillis());
@@ -141,7 +143,7 @@ public class OctreeTest {
     @Test
     public void obtainAdjacent26IndicesTest() {
         int dataSize = 82940;
-        List<double[]> data = randomData(dataSize, 0.5, 11.5);
+        List<Point3d> data = randomData(dataSize, 0.5, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
         long nodeIndex = octree.coordinates2Index(new int[] {1, 2, 3});
