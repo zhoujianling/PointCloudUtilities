@@ -18,7 +18,7 @@ public class LevelSetSkeletonTest {
         PcuPointCloud3f pointCloud3f = reader.readPointCloud(file, PcuPointCloud3f.class);
         List<Point3d> vertices = PcuCommonUtil.arrayList2VecList(pointCloud3f.getPoint3ds());
         LevelSetSkeleton skeleton = new LevelSetSkeleton();
-        skeleton.setK(10);
+        skeleton.setN(10);
         Skeleton skel = skeleton.skeletonize(vertices);
     }
 }

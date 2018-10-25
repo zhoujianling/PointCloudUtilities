@@ -25,14 +25,17 @@ public class LevelSetSkeleton implements Skeletonization{
     /** the octree to speed up search nearest neighbors **/
     private Octree octree = null;
 
-    /** constructed by connecting k nearest neighbors of each vertex  **/
+    /** constructed by connecting n nearest neighbors of each vertex  **/
     private Graph neighborhoodGraph = null;
 
     /** composed of shortest paths from source point to each other vertex **/
     private Graph geodesicGraph = null;
 
-    /** each level set is composed of connected subgraphs  **/
+    /** each level set is composed of connected subGraphs  **/
     private List<LevelSet> levelSets = null;
+
+    /** the ith value in the list is the length of shortest path from source point to the ith point in the data set **/
+    private List<Double> distanceMap = null;
 
     /** the resulting curve skeleton **/
     private Skeleton skeleton = null;
@@ -46,35 +49,55 @@ public class LevelSetSkeleton implements Skeletonization{
     /** the heuristic strategy of choosing random point **/
     private static int RANDOM_SOURCE_INDEX = 0;
 
+    /** the default value of k **/
+    private static int DEFAULT_LEVEL_NUM = 30;
+
     /** the index of source point **/
     private int source = INVALID_INDEX;
 
-    /** k of neighborhood graph **/
-    private int k = 5;
+
+    /** parameter n of neighborhood graph **/
+    private int n = 5;
+
+    /** the number of level sets **/
+    private int k = DEFAULT_LEVEL_NUM;
+
+    /** controls the lower bound of distribution interval of k level sets **/
+    private double alpha = 0.03;
+
+    /** controls the upper bound of distribution interval of k level sets **/
+    private double beta = 0.97;
 
     private void init() {
         if (data.size() < MIN_DATA_SIZE) {
             throw new IllegalStateException("Too few points provided.");
         }
         skeleton = new Skeleton();
+        distanceMap = new Vector<>();
         octree = new Octree();
         octree.buildIndex(data);
-        k = Math.min(data.size(), k);
+        n = Math.min(data.size(), n);
     }
 
     private void clean() {
         octree = null;
+        distanceMap = null;
+        neighborhoodGraph = null;
+        geodesicGraph = null;
+        levelSets = null;
+
         source = INVALID_INDEX;
+
     }
 
     /**
      * build the neighborhood graph
-     * @param k connect k nearest neighbors
+     * @param n connect n nearest neighbors
      */
-    private void buildNeighborhoodGraph(int k) {
+    private void buildNeighborhoodGraph(int n) {
         List<int[]> nnIndices = new Vector<>();
         for (int i = 0; i < data.size(); i ++) {
-            int[] neighborIndices = octree.searchNearestNeighbors(k, i);
+            int[] neighborIndices = octree.searchNearestNeighbors(n, i);
             nnIndices.add(neighborIndices);
         }
         neighborhoodGraph = Graphs.knnGraph(data, nnIndices);
@@ -82,15 +105,15 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     /**
-     * a proper k should be chosen to guarantee that the neighborhood graph is
+     * a proper n should be chosen to guarantee that the neighborhood graph is
      * a connected graph
      */
     private void checkConnectivity() {
         List<List<Integer>> subGraphs = Graphs.connectedComponents(neighborhoodGraph);
         if (subGraphs.size() != 1) {
-            System.out.println("Current k is " + this.k);
+            System.out.println("Current n is " + this.n);
             throw new IllegalStateException("The neighborhood graph is not a connected graph." +
-                    " You can specify a larger k by calling setK().");
+                    " You can specify a larger n by calling setN().");
         }
     }
 
@@ -108,6 +131,7 @@ public class LevelSetSkeleton implements Skeletonization{
         for (int i = 0; i < data.size(); i ++) edges.add(new Vector<Integer>());
         for (int i = 0; i < paths.size(); i ++) {
             Pair<List<Integer>, Weight> pair = paths.get(i);
+            distanceMap.add(pair.getValue().val());
             List<Integer> path = pair.getKey();
             for (int j = 1; j < path.size(); j ++) {
                 int prevNodeIndex = path.get(j - 1);
@@ -143,11 +167,49 @@ public class LevelSetSkeleton implements Skeletonization{
         };
     }
 
+    /**
+     * in this procedure, all data points are divided into k level sets
+     * the parameter k should be given by user, here a default k = 30 is provided.
+     *
+     * the k level sets is uniformly distributed over the interval [dα， dβ],
+     * where d is the furthest geodesic distance
+     */
     private void divideLevelSets() {
-
+        int furthestPointIndex = 0;
+        for (int i = 0; i < data.size(); i ++) {
+            if (distanceMap.get(furthestPointIndex) > distanceMap.get(i)) {
+                furthestPointIndex = i;
+            }
+        }
+        computeEmpiricalK(furthestPointIndex);
+        // following code divides level sets
+        if (k < 1 || k >= data.size()) {
+            throw new IllegalStateException("Improper k is set.");
+        }
+        double intervalLowerBound = distanceMap.get(furthestPointIndex) * alpha;
+        double intervalUpperBound = distanceMap.get(furthestPointIndex) * beta;
+        double subInterval = (intervalUpperBound - intervalLowerBound) / k;
+        levelSets = new Vector<>();
+        for (int i = 0; i < k; i ++) {
+            levelSets.add(new LevelSet());
+        }
+        for (int i = 0; i < data.size(); i ++) {
+            double geodesicDistance = distanceMap.get(i);
+            if (geodesicDistance <= intervalLowerBound || geodesicDistance >= intervalUpperBound) continue;
+            int levelSetPosition = (int) ((geodesicDistance - intervalLowerBound) / subInterval);
+            levelSets.get(levelSetPosition).points.add(i);
+        }
     }
 
-    private void generateCurveSkeleton() {
+    /**
+     * in practice, k can be chosen as the ratio of the distances of the furthest
+     * point to the average edge length
+     */
+    private void computeEmpiricalK(int furthestPointIndex) {
+        //todo automatically compute k
+    }
+
+    private void generateResultingSkeleton() {
 
     }
 
@@ -171,7 +233,7 @@ public class LevelSetSkeleton implements Skeletonization{
 
     /**
      * after instantiate the LevelSetSkeleton, you can call this method to generate skeleton.
-     * The parameter k is set to 5 by default.
+     * The parameter n is set to 5 by default.
      * The source point can be specified by user before calling skeletonize().
      * @param pointCloud the scattered data points
      * @return the curve skeleton, represented as an undirected acyclic graph (UAG)
@@ -180,17 +242,35 @@ public class LevelSetSkeleton implements Skeletonization{
     public Skeleton skeletonize(List<Point3d> pointCloud) {
         this.data = pointCloud;
         init();
-        buildNeighborhoodGraph(k);
+        buildNeighborhoodGraph(n);
         determineSourcePoint();
         buildGeodesicGraph();
         divideLevelSets();
-        generateCurveSkeleton();
+        generateResultingSkeleton();
         clean();
         return skeleton;
     }
 
-    private static class LevelSet {
-        List<List<Integer>> subgraphs;
+    private class LevelSet {
+
+        List<Integer> points = new Vector<>();
+
+        List<List<Integer>> subGraphs = null;
+
+        /**
+         * a two-nearest neighbor graph is needed for partitioning level set
+         */
+        void construct2NNGraph() {
+
+        }
+
+        void removeEdges() {
+
+        }
+
+        void partition() {
+
+        }
     }
 
     public void setRoot(int p) {
@@ -201,11 +281,17 @@ public class LevelSetSkeleton implements Skeletonization{
         return source;
     }
 
-    public void setK(int k) {
+    public void setN(int n) {
+        this.n = n;
+    }
+
+    public int getN() {
+        return this.n;
+    }
+
+    public void setK(int k ) {
         this.k = k;
     }
 
-    public int getK() {
-        return this.k;
-    }
+    public int getK() {return this.k;}
 }

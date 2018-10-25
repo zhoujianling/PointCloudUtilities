@@ -113,11 +113,11 @@ Instantiate the Octree object, after calling *buildIndex()*, the nearest neighbo
 ```java
 List<float[]> points = new ArrayList();
 // ****
-int k = 5; // number of neighbors
+int n = 5; // number of neighbors
 int i = 6; // if you want to find the neighbors of the 6th point.
 Octree octree = new Octree();
 octree.buildIndex(points);
-int[] neighborIndices = octree.searchNearestNeighbors(k, i);
+int[] neighborIndices = octree.searchNearestNeighbors(n, i);
 ```
 ## TODO List
 * Add normal estimator for point cloud
