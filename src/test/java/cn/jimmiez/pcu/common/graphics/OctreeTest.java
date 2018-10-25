@@ -1,6 +1,5 @@
-package cn.jimmiez.pcu.common;
+package cn.jimmiez.pcu.common.graphics;
 
-import javafx.geometry.Point3D;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import static org.junit.Assert.*;
-import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
 
 public class OctreeTest {
 

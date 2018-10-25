@@ -4,6 +4,7 @@ import cn.jimmiez.pcu.common.graph.Graph;
 
 import javax.vecmath.Point3d;
 import java.util.List;
+import java.util.Vector;
 
 public class Skeleton implements Graph {
     private List<Point3d> skeletonNodes;
@@ -20,12 +21,7 @@ public class Skeleton implements Graph {
     }
 
     @Override
-    public int[] adjacentVertices(int i) {
-        int[] result = new int[edges.get(i).size()];
-        for (int ii = 0; ii < result.length; ii ++) {
-            int index = edges.get(i).get(ii);
-            result[ii] = index;
-        }
-        return result;
+    public List<Integer> adjacentVertices(int i) {
+        return edges.get(i);
     }
 }

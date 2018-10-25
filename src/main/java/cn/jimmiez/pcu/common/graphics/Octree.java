@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.common;
+package cn.jimmiez.pcu.common.graphics;
 
 
 import javafx.util.Pair;

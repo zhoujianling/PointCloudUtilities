@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.common.graph;
 import javafx.util.Pair;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 import java.util.*;
 
 public class Graphs {
@@ -32,8 +33,8 @@ public class Graphs {
     }
 
     public static Graph fullConnectedGraph(final List<Point3d> vertices) {
-        final int[] vt = new int[vertices.size()];
-        for (int i = 0; i < vertices.size(); i ++) vt[i] = i;
+        final List<Integer> vt = new Vector<>();
+        for (int i = 0; i < vertices.size(); i ++) vt.add(i);
         return new Graph() {
             @Override
             public double edgeWeight(int i, int j) {
@@ -46,7 +47,7 @@ public class Graphs {
             }
 
             @Override
-            public int[] adjacentVertices(int i) {
+            public List<Integer> adjacentVertices(int i) {
                 return vt;
             }
         };
@@ -60,6 +61,7 @@ public class Graphs {
                 knnEdges.add(new Pair<>(i, j));
             }
         }
+        final List<List<Integer>> knnIndicesList = adjacentMatrix2List(knnIndices);
         return new Graph() {
             @Override
             public double edgeWeight(int i, int j) {
@@ -76,13 +78,37 @@ public class Graphs {
             }
 
             @Override
-            public int[] adjacentVertices(int i) {
-                return knnIndices.get(i);
+            public List<Integer> adjacentVertices(int i) {
+                return knnIndicesList.get(i);
             }
         };
     }
 
+    @SuppressWarnings("Duplicates")
+    private static List<List<Integer>> adjacentMatrix2List(final int[][] adjacency) {
+        List<List<Integer>> adjacencies = new Vector<>();
+        for (int[] adjacencyArray : adjacency) {
+            List<Integer> vec = new Vector<>();
+            for (int index : adjacencyArray) vec.add(index);
+            adjacencies.add(vec);
+        }
+        return adjacencies;
+    }
+
+    @SuppressWarnings("Duplicates")
+    private static List<List<Integer>> adjacentMatrix2List(final List<int[]> adjacency) {
+        List<List<Integer>> adjacencies = new Vector<>();
+        for (int[] adjacencyArray : adjacency) {
+            List<Integer> vec = new Vector<>();
+            for (int index : adjacencyArray) vec.add(index);
+            adjacencies.add(vec);
+        }
+        return adjacencies;
+    }
+
+
     public static Graph graph(final double[][]edges, final int[][]adjacency) {
+        final List<List<Integer>> adjacencies = adjacentMatrix2List(adjacency);
         return new Graph() {
             @Override
             public double edgeWeight(int i, int j) {
@@ -95,8 +121,8 @@ public class Graphs {
             }
 
             @Override
-            public int[] adjacentVertices(int i) {
-                return adjacency[i];
+            public List<Integer> adjacentVertices(int i) {
+                return adjacencies.get(i);
             }
         };
     }
@@ -114,8 +140,8 @@ public class Graphs {
             }
 
             @Override
-            public int[] adjacentVertices(int i) {
-                return new int[0];
+            public List<Integer> adjacentVertices(int i) {
+                return new Vector<>();
             }
         };
     }

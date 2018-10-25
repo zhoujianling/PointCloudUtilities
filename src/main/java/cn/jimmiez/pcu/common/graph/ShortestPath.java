@@ -23,7 +23,9 @@ public class ShortestPath {
 
         for (int i = 0; i < graph.verticesCount(); i ++) {
             sExcluded.add(i);
-            result.add(new Pair<List<Integer>, Weight>(new Vector<Integer>(), new Weight(graph.edgeWeight(rootIndex, i))));
+            List<Integer> path = new Vector<>();
+            path.add(i); // add the index of start point
+            result.add(new Pair<>(path, new Weight(graph.edgeWeight(rootIndex, i))));
         }
 
         while (sSet.size() < graph.verticesCount()) {
