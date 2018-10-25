@@ -14,6 +14,7 @@ public class Graphs {
         boolean[] visited = new boolean[graph.verticesCount()];
         for (int i = 0; i < graph.verticesCount(); i ++) visited[i] = false;
         for (int i = 0; i < graph.verticesCount(); i ++) {
+//            System.out.println("i = " + i);
             if (visited[i]) continue;
             List<Integer> subGraph = new ArrayList<>();
 

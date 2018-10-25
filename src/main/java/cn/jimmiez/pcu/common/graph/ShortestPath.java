@@ -29,6 +29,7 @@ public class ShortestPath {
         }
 
         while (sSet.size() < graph.verticesCount()) {
+//            System.out.println("set size: " + sSet.size());
             int nearestVertexIndex = -1;
             double shortestPathLen = Double.POSITIVE_INFINITY;
             for (int index : sExcluded) {

@@ -1,5 +1,6 @@
 package cn.jimmiez.pcu.common.graph;
 
+import cn.jimmiez.pcu.common.graphics.Octree;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
@@ -12,6 +13,27 @@ import static cn.jimmiez.pcu.common.graph.Graph.N;
 import static org.junit.Assert.*;
 
 public class GraphsTest {
+
+    @Test
+    public void knnGraphTest() {
+        List<Point3d> vertices = new Vector<>();
+        vertices.add(new Point3d(0, 0, 0));
+        vertices.add(new Point3d(0, 0, 1));
+        vertices.add(new Point3d(0, 1, 0));
+        vertices.add(new Point3d(0, 1, 1));
+        vertices.add(new Point3d(1, 0, 0));
+        vertices.add(new Point3d(1, 0, 1));
+        vertices.add(new Point3d(1, 1, 0));
+        vertices.add(new Point3d(1, 1, 1));
+        Octree octree = new Octree();
+        octree.buildIndex(vertices);
+        List<int[]> nnIndices = new Vector<>();
+        for (int i = 0; i < vertices.size(); i ++)
+            nnIndices.add(octree.searchNearestNeighbors(2, i));
+        Graph knnGraph = Graphs.knnGraph(vertices, nnIndices);
+        assertEquals(1, knnGraph.edgeWeight(0, 1),1e-7);
+        assertEquals(Double.POSITIVE_INFINITY, knnGraph.edgeWeight(0, 7),1e-7);
+    }
 
     @Test
     public void connectedComponentTest() {

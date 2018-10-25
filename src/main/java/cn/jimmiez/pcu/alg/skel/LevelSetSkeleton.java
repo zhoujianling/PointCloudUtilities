@@ -11,10 +11,11 @@ import javax.vecmath.Point3d;
 import java.util.*;
 
 /**
- * The implementation of skeletonization method proposed in:
+ * The implementation of skeletonization method which is proposed in:
  * Verroust, A., & Lazarus, F. (2000). Extracting skeletal curves from 3D scattered data.
  * The Visual Computer, 16(1), 15-25.
  *
+ * This method can work on the point cloud of **TREE-LIKE** object.
  */
 public class LevelSetSkeleton implements Skeletonization{
 
@@ -50,10 +51,6 @@ public class LevelSetSkeleton implements Skeletonization{
 
     /** k of neighborhood graph **/
     private int k = 5;
-
-    public LevelSetSkeleton(List<Point3d> pointCloud) {
-        this.data = pointCloud;
-    }
 
     private void init() {
         if (data.size() < MIN_DATA_SIZE) {
@@ -112,8 +109,20 @@ public class LevelSetSkeleton implements Skeletonization{
         for (int i = 0; i < paths.size(); i ++) {
             Pair<List<Integer>, Weight> pair = paths.get(i);
             List<Integer> path = pair.getKey();
-            for (Integer nodeIndex : path) {
-                 
+            for (int j = 1; j < path.size(); j ++) {
+                int prevNodeIndex = path.get(j - 1);
+                int currNodeIndex = path.get(j);
+                if (prevNodeIndex == currNodeIndex) continue;
+                Pair<Integer, Integer> edge1 = new Pair<>(prevNodeIndex, currNodeIndex);
+                Pair<Integer, Integer> edge2 = new Pair<>(currNodeIndex, prevNodeIndex);
+                if (! edgesSet.contains(edge1)) {
+                    edges.get(prevNodeIndex).add(currNodeIndex);
+                    edgesSet.add(edge1);
+                }
+                if (! edgesSet.contains(edge2)) {
+                    edges.get(currNodeIndex).add(prevNodeIndex);
+                    edgesSet.add(edge2);
+                }
             }
         }
         geodesicGraph = new Graph() {
@@ -160,8 +169,16 @@ public class LevelSetSkeleton implements Skeletonization{
         }
     }
 
+    /**
+     * after instantiate the LevelSetSkeleton, you can call this method to generate skeleton.
+     * The parameter k is set to 5 by default.
+     * The source point can be specified by user before calling skeletonize().
+     * @param pointCloud the scattered data points
+     * @return the curve skeleton, represented as an undirected acyclic graph (UAG)
+     */
     @Override
     public Skeleton skeletonize(List<Point3d> pointCloud) {
+        this.data = pointCloud;
         init();
         buildNeighborhoodGraph(k);
         determineSourcePoint();
