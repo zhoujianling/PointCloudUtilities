@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.common.graph;
 
 /**
- * an abstract directed graph that support more operations
+ * an abstract graph that support more operations
  */
 public interface Graph extends GraphStatic {
 
@@ -11,8 +11,9 @@ public interface Graph extends GraphStatic {
 
     void updateEdge(int vi, int vj, double weight);
 
-    int addVertex();
+    void addVertex(int vi);
 
     void removeVertex(int vi);
 
+    Iterable<Integer> vertices();
 }

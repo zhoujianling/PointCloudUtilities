@@ -1,10 +1,8 @@
 package cn.jimmiez.pcu.alg.skel;
 
-import cn.jimmiez.pcu.common.graph.ShortestPath;
-import cn.jimmiez.pcu.common.graph.Weight;
+import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
-import cn.jimmiez.pcu.common.graph.GraphStatic;
-import cn.jimmiez.pcu.common.graph.Graphs;
+import cn.jimmiez.pcu.io.ply.PlyWriter;
 import javafx.util.Pair;
 
 import javax.vecmath.Point3d;
@@ -197,7 +195,7 @@ public class LevelSetSkeleton implements Skeletonization{
             double geodesicDistance = distanceMap.get(i);
             if (geodesicDistance <= intervalLowerBound || geodesicDistance >= intervalUpperBound) continue;
             int levelSetPosition = (int) ((geodesicDistance - intervalLowerBound) / subInterval);
-            levelSets.get(levelSetPosition).points.add(i);
+            levelSets.get(levelSetPosition).points.add(data.get(i));
         }
     }
 
@@ -210,7 +208,6 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     private void generateResultingSkeleton() {
-
     }
 
     /**
@@ -253,23 +250,53 @@ public class LevelSetSkeleton implements Skeletonization{
 
     private class LevelSet {
 
-        List<Integer> points = new Vector<>();
+        List<Point3d> points = new Vector<>();
 
         List<List<Integer>> subGraphs = null;
 
         /**
+         * edges longer than w_i will be removed
+         * in practice, w_i is computed using the median of the distribution of the
+         * distance values of the second nearest neighbor of each point inside level set
+         * @param graph 2-nearest neighbor graph
+         * @param sum the sum of distance between each point and its second nearest neighbor
+         */
+        void removeEdges(Graph graph, double sum) {
+            double wi = sum / graph.verticesCount();
+            List<int[]> edges = new Vector<>();
+            for (Integer vi : graph.vertices()) {
+                for (Integer vj : graph.adjacentVertices(vi)) {
+                    double weight = graph.edgeWeight(vi, vj);
+                    if (weight >= wi) {
+                        edges.add(new int[] {vi, vj});
+                        edges.add(new int[] {vj, vi});
+                    }
+                }
+            }
+            for (int[] edge : edges) {
+                graph.removeEdge(edge[0], edge[1]);
+            }
+        }
+
+        /**
          * a two-nearest neighbor graph is needed for partitioning level set
          */
-        void construct2NNGraph() {
-
-        }
-
-        void removeEdges() {
-
-        }
-
         void partition() {
-
+            Graph graph = new DirectedGraph();
+            double secondaryEdgeSum = 0.0;
+            for (int i = 0; i < points.size(); i ++) graph.addVertex(i);
+            for (int i = 0; i < points.size(); i ++) {
+                int[] indices = octree.searchNearestNeighbors(2, i);
+                for (int j = 0; j < indices.length; j ++) {
+                    int index = indices[j];
+                    double dis = points.get(i).distance(points.get(index));
+                    if (j == indices.length - 1) secondaryEdgeSum += dis;
+                    graph.addEdge(i, index, dis);
+                    graph.addEdge(index, i, dis);
+                }
+            }
+            removeEdges(graph, secondaryEdgeSum);
+            subGraphs = Graphs.connectedComponents(graph);
         }
     }
 

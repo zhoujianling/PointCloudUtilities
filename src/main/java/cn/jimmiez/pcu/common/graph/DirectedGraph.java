@@ -1,13 +1,11 @@
 package cn.jimmiez.pcu.common.graph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class GraphImpl implements Graph{
+public class DirectedGraph implements Graph{
 
-    private List<Map<Integer, Double>> edges = new ArrayList<>();
+    private Map<Integer, Map<Integer, Double>> edges = new HashMap<>();
 
 
     @Override
@@ -32,14 +30,18 @@ public class GraphImpl implements Graph{
     }
 
     @Override
-    public int addVertex() {
-        edges.add(new HashMap<Integer, Double>());
-        return edges.size();
+    public void addVertex(int vi) {
+        edges.put(vi, new HashMap<Integer, Double>());
     }
 
     @Override
     public void removeVertex(int vi) {
         edges.remove(vi);
+    }
+
+    @Override
+    public Iterable<Integer> vertices() {
+        return edges.keySet();
     }
 
     @Override

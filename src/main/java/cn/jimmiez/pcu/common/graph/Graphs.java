@@ -128,8 +128,8 @@ public class Graphs {
     }
 
     public static Graph knnGraph2(List<int[]> knnIndices, List<Point3d> data) {
-        GraphImpl graph = new GraphImpl();
-        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex();
+        DirectedGraph graph = new DirectedGraph();
+        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex(i);
         for (int i = 0; i < knnIndices.size(); i ++) {
             int[] indices = knnIndices.get(i);
             for (int index : indices) {
