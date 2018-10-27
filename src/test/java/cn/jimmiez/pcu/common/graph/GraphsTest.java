@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
-import static cn.jimmiez.pcu.common.graph.Graph.N;
+import static cn.jimmiez.pcu.common.graph.GraphStatic.N;
 
 import static org.junit.Assert.*;
 
@@ -30,30 +30,30 @@ public class GraphsTest {
         List<int[]> nnIndices = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++)
             nnIndices.add(octree.searchNearestNeighbors(2, i));
-        Graph knnGraph = Graphs.knnGraph(vertices, nnIndices);
+        GraphStatic knnGraph = Graphs.knnGraph(vertices, nnIndices);
         assertEquals(1, knnGraph.edgeWeight(0, 1),1e-7);
         assertEquals(Double.POSITIVE_INFINITY, knnGraph.edgeWeight(0, 7),1e-7);
     }
 
     @Test
     public void connectedComponentTest() {
-        Graph graph = genData();
+        GraphStatic graph = genData();
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
         assertTrue(conns.size() == 2);
 
-        Graph graph2 = genData2();
+        GraphStatic graph2 = genData2();
         conns = Graphs.connectedComponents(graph2);
         assertTrue(conns.size() == 3);
 
         conns = Graphs.connectedComponents(Graphs.empty());
         assertTrue(conns.size() == 0);
 
-        Graph fcg = genData3();
+        GraphStatic fcg = genData3();
         conns = Graphs.connectedComponents(fcg);
         assertTrue(conns.size() == 1);
     }
 
-    private Graph genData() {
+    private GraphStatic genData() {
         final double[][] edges = new double[][] {
                 {0,   3,   2,   N,   4,   N,   N},
                 {3,   0,   0.5, 2,   0.8, N,   N},
@@ -75,7 +75,7 @@ public class GraphsTest {
         return Graphs.graph(edges, adjacency);
     }
 
-    private Graph genData2() {
+    private GraphStatic genData2() {
         final double[][] edges = new double[][] {
                 {0,   N,  N},
                 {N,   0,  N},
@@ -89,7 +89,7 @@ public class GraphsTest {
         return Graphs.graph(edges, adjacency);
     }
 
-    private Graph genData3() {
+    private GraphStatic genData3() {
         Random random = new Random(System.currentTimeMillis());
         List<Point3d> vertices = new Vector<>();
         for (int i = 0; i < 3000; i ++) {

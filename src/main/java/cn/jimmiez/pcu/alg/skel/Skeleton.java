@@ -1,12 +1,11 @@
 package cn.jimmiez.pcu.alg.skel;
 
-import cn.jimmiez.pcu.common.graph.Graph;
+import cn.jimmiez.pcu.common.graph.GraphStatic;
 
 import javax.vecmath.Point3d;
 import java.util.List;
-import java.util.Vector;
 
-public class Skeleton implements Graph {
+public class Skeleton implements GraphStatic {
     private List<Point3d> skeletonNodes;
     private List<List<Integer>> edges;
 

@@ -3,13 +3,12 @@ package cn.jimmiez.pcu.common.graph;
 import javafx.util.Pair;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import java.util.*;
 
 public class Graphs {
 
 
-    public static List<List<Integer>> connectedComponents(Graph graph) {
+    public static List<List<Integer>> connectedComponents(GraphStatic graph) {
         List<List<Integer>> subGraphs = new Vector<>();
         boolean[] visited = new boolean[graph.verticesCount()];
         for (int i = 0; i < graph.verticesCount(); i ++) visited[i] = false;
@@ -33,10 +32,10 @@ public class Graphs {
         return subGraphs;
     }
 
-    public static Graph fullConnectedGraph(final List<Point3d> vertices) {
+    public static GraphStatic fullConnectedGraph(final List<Point3d> vertices) {
         final List<Integer> vt = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++) vt.add(i);
-        return new Graph() {
+        return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
                 return vertices.get(i).distance(vertices.get(j));
@@ -55,7 +54,7 @@ public class Graphs {
     }
 
 
-    public static Graph knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
+    public static GraphStatic knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
         final Set<Pair<Integer, Integer>> knnEdges = new HashSet<>();
         for (int i = 0; i < knnIndices.size(); i ++) {
             for (int j : knnIndices.get(i)) {
@@ -63,7 +62,7 @@ public class Graphs {
             }
         }
         final List<List<Integer>> knnIndicesList = adjacentMatrix2List(knnIndices);
-        return new Graph() {
+        return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
                 Pair<Integer, Integer> p = new Pair<>(i, j);
@@ -108,9 +107,9 @@ public class Graphs {
     }
 
 
-    public static Graph graph(final double[][]edges, final int[][]adjacency) {
+    public static GraphStatic graph(final double[][]edges, final int[][]adjacency) {
         final List<List<Integer>> adjacencies = adjacentMatrix2List(adjacency);
-        return new Graph() {
+        return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
                 return edges[i][j];
@@ -128,11 +127,25 @@ public class Graphs {
         };
     }
 
-    public static Graph empty() {
-        return new Graph() {
+    public static Graph knnGraph2(List<int[]> knnIndices, List<Point3d> data) {
+        GraphImpl graph = new GraphImpl();
+        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex();
+        for (int i = 0; i < knnIndices.size(); i ++) {
+            int[] indices = knnIndices.get(i);
+            for (int index : indices) {
+                double dis = data.get(i).distance(data.get(index));
+                graph.addEdge(i, index, dis);
+                graph.addEdge(index, i, dis);
+            }
+        }
+        return graph;
+    }
+
+    public static GraphStatic empty() {
+        return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
-                return Graph.N;
+                return GraphStatic.N;
             }
 
             @Override

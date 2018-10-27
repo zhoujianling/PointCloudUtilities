@@ -1,21 +1,18 @@
 package cn.jimmiez.pcu.common.graph;
 
-import java.util.List;
+/**
+ * an abstract directed graph that support more operations
+ */
+public interface Graph extends GraphStatic {
 
-public interface Graph {
+    void addEdge(int vi, int vj, double weight);
 
-    /** weight between two unreachable vertices **/
-    double N = Double.POSITIVE_INFINITY;
+    void removeEdge(int vi, int vj);
 
-    /**
-     * @param i the index of one vertex
-     * @param j the index of another vertex
-     * @return the weight of edge
-     */
-    double edgeWeight(int i, int j);
+    void updateEdge(int vi, int vj, double weight);
 
-    int verticesCount();
+    int addVertex();
 
-    List<Integer> adjacentVertices(int i);
+    void removeVertex(int vi);
 
 }

@@ -3,7 +3,7 @@ package cn.jimmiez.pcu.alg.skel;
 import cn.jimmiez.pcu.common.graph.ShortestPath;
 import cn.jimmiez.pcu.common.graph.Weight;
 import cn.jimmiez.pcu.common.graphics.Octree;
-import cn.jimmiez.pcu.common.graph.Graph;
+import cn.jimmiez.pcu.common.graph.GraphStatic;
 import cn.jimmiez.pcu.common.graph.Graphs;
 import javafx.util.Pair;
 
@@ -26,10 +26,10 @@ public class LevelSetSkeleton implements Skeletonization{
     private Octree octree = null;
 
     /** constructed by connecting n nearest neighbors of each vertex  **/
-    private Graph neighborhoodGraph = null;
+    private GraphStatic neighborhoodGraph = null;
 
     /** composed of shortest paths from source point to each other vertex **/
-    private Graph geodesicGraph = null;
+    private GraphStatic geodesicGraph = null;
 
     /** each level set is composed of connected subGraphs  **/
     private List<LevelSet> levelSets = null;
@@ -149,7 +149,7 @@ public class LevelSetSkeleton implements Skeletonization{
                 }
             }
         }
-        geodesicGraph = new Graph() {
+        geodesicGraph = new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
                 return data.get(i).distance(data.get(j));

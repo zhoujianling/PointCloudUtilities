@@ -10,7 +10,7 @@ public class ShortestPathTest {
 
     @Test
     public void dijkstraTest() {
-        Graph graph = genData();
+        GraphStatic graph = genData();
         List<Pair<List<Integer>, Weight>> result = ShortestPath.dijkstra(graph, 0);
 
         assertEquals(0.0, result.get(0).getValue().val(), 1e-7);
@@ -22,7 +22,7 @@ public class ShortestPathTest {
     }
 
 
-    private Graph genData() {
+    private GraphStatic genData() {
         final double N = Double.POSITIVE_INFINITY;
         final double[][] edges = new double[][] {
                 {0,   3,   2,   N,   4  },

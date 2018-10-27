@@ -2,7 +2,6 @@ package cn.jimmiez.pcu.common.graph;
 
 import javafx.util.Pair;
 
-import java.nio.DoubleBuffer;
 import java.util.*;
 
 public class ShortestPath {
@@ -13,7 +12,7 @@ public class ShortestPath {
      * @param rootIndex index of root vertex
      * @return list of pairs, for each pair, the key is the path, the value is length of shortest path
      */
-    public static List<Pair<List<Integer>, Weight>> dijkstra(Graph graph, int rootIndex) {
+    public static List<Pair<List<Integer>, Weight>> dijkstra(GraphStatic graph, int rootIndex) {
         List<Pair<List<Integer>, Weight>> result = new Vector<>();
         if (rootIndex < 0 || rootIndex >= graph.verticesCount()) {
             throw new IllegalArgumentException("Invalid root index");
