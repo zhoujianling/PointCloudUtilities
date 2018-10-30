@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class DirectedGraph implements Graph{
 
-    private Map<Integer, Map<Integer, Double>> edges = new HashMap<>();
+    protected Map<Integer, Map<Integer, Double>> edges = new HashMap<>();
 
 
     @Override

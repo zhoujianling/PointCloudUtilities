@@ -35,6 +35,9 @@ public class LevelSetSkeleton implements Skeletonization{
     /** the ith value in the list is the length of shortest path from source point to the ith point in the data set **/
     private List<Double> distanceMap = null;
 
+    /** the shortest paths and shortest distance **/
+    private List<Pair<List<Integer>, Weight>> paths;
+
     /** the resulting curve skeleton **/
     private Skeleton skeleton = null;
 
@@ -48,7 +51,7 @@ public class LevelSetSkeleton implements Skeletonization{
     private static int RANDOM_SOURCE_INDEX = 0;
 
     /** the default value of k **/
-    private static int DEFAULT_LEVEL_NUM = 30;
+    private static int DEFAULT_LEVEL_NUM = 20;
 
     /** the index of source point **/
     private int source = INVALID_INDEX;
@@ -72,6 +75,7 @@ public class LevelSetSkeleton implements Skeletonization{
         }
         skeleton = new Skeleton();
         distanceMap = new Vector<>();
+        paths = new Vector<>();
         octree = new Octree();
         octree.buildIndex(data);
         n = Math.min(data.size(), n);
@@ -82,6 +86,7 @@ public class LevelSetSkeleton implements Skeletonization{
         distanceMap = null;
         neighborhoodGraph = null;
         geodesicGraph = null;
+        paths = null;
         levelSets = null;
 
         source = INVALID_INDEX;
@@ -123,7 +128,7 @@ public class LevelSetSkeleton implements Skeletonization{
         if (source < 0 || source >= data.size()) {
             throw new IllegalStateException("The index of source point is invalid.");
         }
-        List<Pair<List<Integer>, Weight>> paths = ShortestPath.dijkstra(neighborhoodGraph, source);
+        paths = ShortestPath.dijkstra(neighborhoodGraph, source);
         final List<List<Integer>> edges = new Vector<>();
         final Set<Pair<Integer, Integer>> edgesSet = new HashSet<>();
         for (int i = 0; i < data.size(); i ++) edges.add(new Vector<Integer>());
@@ -175,7 +180,7 @@ public class LevelSetSkeleton implements Skeletonization{
     private void divideLevelSets() {
         int furthestPointIndex = 0;
         for (int i = 0; i < data.size(); i ++) {
-            if (distanceMap.get(furthestPointIndex) > distanceMap.get(i)) {
+            if (distanceMap.get(furthestPointIndex) < distanceMap.get(i)) {
                 furthestPointIndex = i;
             }
         }
@@ -195,7 +200,7 @@ public class LevelSetSkeleton implements Skeletonization{
             double geodesicDistance = distanceMap.get(i);
             if (geodesicDistance <= intervalLowerBound || geodesicDistance >= intervalUpperBound) continue;
             int levelSetPosition = (int) ((geodesicDistance - intervalLowerBound) / subInterval);
-            levelSets.get(levelSetPosition).points.add(data.get(i));
+            levelSets.get(levelSetPosition).addPoint(data.get(i), i);
         }
     }
 
@@ -208,7 +213,40 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     private void generateResultingSkeleton() {
+//        System.out.println("num of level set: " + levelSets.size());
+        // skeleton node -> ( level set, sub graph )
+        List<Pair<LevelSet, List<Integer>>> node2LS = new Vector<>();
+        for (LevelSet levelSet : levelSets) {
+            levelSet.partition();
+//            System.out.println("num of sub graphs: " + levelSet.subGraphs.size());
+            for (List<Integer> subGraph : levelSet.subGraphs) {
+                double x = 0;
+                double y = 0;
+                double z = 0;
+                for (Integer index : subGraph) {
+                    x += levelSet.points.get(index).x;
+                    y += levelSet.points.get(index).y;
+                    z += levelSet.points.get(index).z;
+                }
+                // the barycenter of each connected component is the skeleton node
+                Point3d skeletonNode = new Point3d(x / subGraph.size(), y / subGraph.size(), z / subGraph.size());
+                skeleton.addNode(skeletonNode);
+                node2LS.add(new Pair<>(levelSet, subGraph));
+            }
+        }
+        // connect the skeleton points
+        for (int nodeIndex = 0; nodeIndex < skeleton.getSkeletonNodes().size(); nodeIndex ++) {
+            LevelSet levelSet = node2LS.get(nodeIndex).getKey();
+            List<Integer> subGraph = node2LS.get(nodeIndex).getValue();
+            int randomPointIndex = levelSet.indexInPointCloud.get(subGraph.get(0));
+            List<Integer> path = paths.get(randomPointIndex).getKey();
+            for (int i = path.size() - 1; i >= 0; i --) {
+                int pointIndex = path.get(i);
+                // find S_j-1
+            }
+        }
     }
+
 
     /**
      * determine the source point according to two-step heuristic strategy in Section.3
@@ -248,11 +286,19 @@ public class LevelSetSkeleton implements Skeletonization{
         return skeleton;
     }
 
-    private class LevelSet {
+    private static class LevelSet {
 
-        List<Point3d> points = new Vector<>();
+        private List<Point3d> points = new Vector<>();
+
+        // the index of point in the point cloud
+        private List<Integer> indexInPointCloud = new Vector<>();
 
         List<List<Integer>> subGraphs = null;
+
+        public void addPoint(Point3d p, int i) {
+            points.add(p);
+            indexInPointCloud.add(i);
+        }
 
         /**
          * edges longer than w_i will be removed
@@ -282,11 +328,13 @@ public class LevelSetSkeleton implements Skeletonization{
          * a two-nearest neighbor graph is needed for partitioning level set
          */
         void partition() {
+            Octree octree = new Octree();
+            octree.buildIndex(points);
             Graph graph = new DirectedGraph();
             double secondaryEdgeSum = 0.0;
             for (int i = 0; i < points.size(); i ++) graph.addVertex(i);
             for (int i = 0; i < points.size(); i ++) {
-                int[] indices = octree.searchNearestNeighbors(2, i);
+                int[] indices = octree.searchNearestNeighbors(5, i);
                 for (int j = 0; j < indices.length; j ++) {
                     int index = indices[j];
                     double dis = points.get(i).distance(points.get(index));
@@ -295,7 +343,7 @@ public class LevelSetSkeleton implements Skeletonization{
                     graph.addEdge(index, i, dis);
                 }
             }
-            removeEdges(graph, secondaryEdgeSum);
+//            removeEdges(graph, secondaryEdgeSum);
             subGraphs = Graphs.connectedComponents(graph);
         }
     }
