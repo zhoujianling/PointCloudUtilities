@@ -2,10 +2,12 @@ package cn.jimmiez.pcu.alg.skel;
 
 import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
+import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.io.ply.PlyWriter;
 import javafx.util.Pair;
 
 import javax.vecmath.Point3d;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -213,38 +215,90 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     private void generateResultingSkeleton() {
-//        System.out.println("num of level set: " + levelSets.size());
-        // skeleton node -> ( level set, sub graph )
-        List<Pair<LevelSet, List<Integer>>> node2LS = new Vector<>();
+        // System.out.println("num of level set: " + levelSets.size());
+        // divide a level set into multiple connected components
         for (LevelSet levelSet : levelSets) {
             levelSet.partition();
-//            System.out.println("num of sub graphs: " + levelSet.subGraphs.size());
-            for (List<Integer> subGraph : levelSet.subGraphs) {
-                double x = 0;
-                double y = 0;
-                double z = 0;
-                for (Integer index : subGraph) {
-                    x += levelSet.points.get(index).x;
-                    y += levelSet.points.get(index).y;
-                    z += levelSet.points.get(index).z;
-                }
-                // the barycenter of each connected component is the skeleton node
-                Point3d skeletonNode = new Point3d(x / subGraph.size(), y / subGraph.size(), z / subGraph.size());
-                skeleton.addNode(skeletonNode);
-                node2LS.add(new Pair<>(levelSet, subGraph));
-            }
+            // System.out.println("num of sub graphs: " + levelSet.subGraphs.size());
         }
         // connect the skeleton points
-        for (int nodeIndex = 0; nodeIndex < skeleton.getSkeletonNodes().size(); nodeIndex ++) {
-            LevelSet levelSet = node2LS.get(nodeIndex).getKey();
-            List<Integer> subGraph = node2LS.get(nodeIndex).getValue();
-            int randomPointIndex = levelSet.indexInPointCloud.get(subGraph.get(0));
-            List<Integer> path = paths.get(randomPointIndex).getKey();
-            for (int i = path.size() - 1; i >= 0; i --) {
-                int pointIndex = path.get(i);
-                // find S_j-1
+        for (int levelSetIndex = 0; levelSetIndex < levelSets.size(); levelSetIndex ++) {
+            LevelSet levelSet = levelSets.get(levelSetIndex);
+            for (int subGraphIndex = 0; subGraphIndex < levelSet.subGraphs.size(); subGraphIndex ++) {
+                Pair<Integer, Integer> pair = searchAdjacentSkeletonPoint(levelSetIndex, subGraphIndex);
+                levelSet.adjacency.add(pair);
             }
         }
+        // compute position of skeleton point
+        for (int levelSetIndex = 0; levelSetIndex < levelSets.size(); levelSetIndex ++) {
+            LevelSet levelSet = levelSets.get(levelSetIndex);
+            for (int subGraphIndex = 0; subGraphIndex < levelSet.subGraphs.size(); subGraphIndex ++) {
+                List<Integer> subGraph = levelSet.subGraphs.get(subGraphIndex);
+                // the barycenter of each connected component is the skeleton node
+                skeleton.addNode(baryCenter(levelSet.points, subGraph));
+                levelSet.skeletonNodeIndices.add(skeleton.getSkeletonNodes().size() - 1);
+//                Point3d p = skeleton.getSkeletonNodes().get(skeleton.getSkeletonNodes().size() - 1);
+//                System.out.println("" + p.x + " " + p.y + " " + p.z);
+            }
+        }
+        for (int levelSetIndex = 0; levelSetIndex < levelSets.size(); levelSetIndex ++) {
+            LevelSet levelSet = levelSets.get(levelSetIndex);
+            for (int subGraphIndex = 0; subGraphIndex < levelSet.subGraphs.size(); subGraphIndex ++) {
+                // the barycenter of each connected component is the skeleton node
+                int v1 = levelSet.skeletonNodeIndices.get(subGraphIndex);
+                int adjacentLevelSetIndex = levelSet.adjacency.get(subGraphIndex).getKey();
+                int adjacentSubGraphIndex = levelSet.adjacency.get(subGraphIndex).getValue();
+                int v2 = levelSets.get(adjacentLevelSetIndex).skeletonNodeIndices.get(adjacentSubGraphIndex);
+                double weight = skeleton.getSkeletonNodes().get(v1).distance(skeleton.getSkeletonNodes().get(v2));
+                skeleton.addEdge(v1, v2, weight);
+            }
+        }
+    }
+
+    private Point3d baryCenter(List<Point3d> points, List<Integer> indices) {
+        double x = 0;
+        double y = 0;
+        double z = 0;
+        for (Integer index : indices) {
+            x += points.get(index).x;
+            y += points.get(index).y;
+            z += points.get(index).z;
+        }
+        return new Point3d(x / indices.size(), y / indices.size(), z / indices.size());
+    }
+
+    /**
+     * given a sub graph(connected component) in point cloud, search the next skeleton point along the shortest path
+     * @param levelSetIndex the index of level set where the data point is located
+     * @param subGraphIndex the index of subGraph
+     */
+    private Pair<Integer, Integer> searchAdjacentSkeletonPoint(int levelSetIndex, int subGraphIndex) {
+        if (levelSetIndex < 0) throw new IllegalArgumentException("Negative index of level set.");
+        if (levelSetIndex == 0) return new Pair<>(levelSetIndex, subGraphIndex);
+        LevelSet levelSet = levelSets.get(levelSetIndex);
+        List<Integer> subGraph = levelSet.subGraphs.get(subGraphIndex);
+        int randomPointIndex = levelSet.indexInPointCloud.get(subGraph.get(0));
+        List<Integer> path = paths.get(randomPointIndex).getKey();
+        for (int i = path.size() - 1; i >= 0; i --) {
+            int nextPointIndex = path.get(i);
+            Point3d nextPoint = data.get(nextPointIndex);
+            if (levelSet.indexInPointCloud.contains(nextPointIndex)) {
+                continue;
+            }
+            // search in S_j-1
+            LevelSet lowerLevelSet = levelSets.get(levelSetIndex - 1);
+            for (int j = 0; j < lowerLevelSet.subGraphs.size(); j ++) {
+                List<Integer> lowerSubGraph = lowerLevelSet.subGraphs.get(j);
+                for (int pointLocalIndex : lowerSubGraph) {
+                    if (lowerLevelSet.points.get(pointLocalIndex) == nextPoint) {
+                        return new Pair<>(levelSetIndex - 1, j);
+                    }
+                }
+            }
+        }
+        System.err.println("LevelSetSkeleton::searchAdjacentSkeletonPoint(): " +
+                "Cannot find a connected component containing the point on the shortest path.");
+        return new Pair<>(levelSetIndex, subGraphIndex);
     }
 
 
@@ -286,14 +340,61 @@ public class LevelSetSkeleton implements Skeletonization{
         return skeleton;
     }
 
+//    private void writeTestPly() {
+//        List vertexData = new Vector();
+//        for (Point3d p : skeleton.getSkeletonNodes()) {
+//            vertexData.add(Arrays.asList(p.x, p.y, p.z));
+//        }
+//        PlyWriter writer = new PlyWriter();
+//
+//        List faceData = new Vector();
+//        List r1 = new Vector();
+//        List r2 = new Vector();
+//        r1.add(new int[] {0, 1, 2});
+//        r2.add(new int[] {1, 0, 4});
+//        faceData.add(r1);
+//        faceData.add(r2);
+//        for ()
+//
+//        File tempPlyFile = new File("D:\\testSkel.ply");
+////        int code = writer.write(pointCloud, tempPlyFile);
+//        int code = writer
+//                .prepare()
+//                .format(PlyReader.FORMAT_ASCII)
+//                .comment("this is test")
+//                .comment("for Point Cloud Util v.0.0.3")
+//                .defineElement("vertex")
+//                .defineScalarProperty("x", PlyReader.TYPE_FLOAT)
+//                .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
+//                .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
+//                .putData(vertexData)
+//                .defineElement("face")
+//                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
+//                .putData(faceData)
+//                .writeTo(tempPlyFile)
+//                .okay();
+//
+//    }
+
     private static class LevelSet {
 
-        private List<Point3d> points = new Vector<>();
+        /** the points from point cloud **/
+        List<Point3d> points = new Vector<>();
 
-        // the index of point in the point cloud
-        private List<Integer> indexInPointCloud = new Vector<>();
+        /** the index of point in the point cloud **/
+        List<Integer> indexInPointCloud = new Vector<>();
 
+        /** index of point in LevelSet.points **/
         List<List<Integer>> subGraphs = null;
+
+        /**
+         * a subGraph in subGraphs correspond to a skeleton node, this list store the edges
+         * [ (levelSetIndex, subGraphIndex), ..., () ]
+         * adjacency.size() == subGraph.size() == skeletonNodeIndices.size()
+         **/
+        List<Pair<Integer, Integer>> adjacency = new Vector<>();
+
+        List<Integer> skeletonNodeIndices = new Vector<>();
 
         public void addPoint(Point3d p, int i) {
             points.add(p);
