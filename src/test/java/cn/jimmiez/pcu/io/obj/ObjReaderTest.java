@@ -1,6 +1,5 @@
-package cn.jimmiez.pcu.io;
+package cn.jimmiez.pcu.io.obj;
 
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
 import org.junit.Test;
 
 import java.io.File;

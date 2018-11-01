@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.model;
 
+import cn.jimmiez.pcu.io.ply.PcuPlyData;
+
 import java.util.ArrayList;
 import java.util.List;
 

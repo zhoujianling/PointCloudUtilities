@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.io;
+package cn.jimmiez.pcu.io.obj;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

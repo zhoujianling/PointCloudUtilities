@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.model;
+package cn.jimmiez.pcu.io.ply;
 
 
 import java.lang.annotation.ElementType;
