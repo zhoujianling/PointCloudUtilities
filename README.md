@@ -12,7 +12,6 @@ This is a util for point cloud processing.
 * Write a ply file.
 * Read an obj file.
 * Provide an octree for searching nearest neighbors.
-* Implement some algorithms (LOP, dijkstra ...)
 
 ## Build
 
@@ -119,8 +118,5 @@ Octree octree = new Octree();
 octree.buildIndex(points);
 int[] neighborIndices = octree.searchNearestNeighbors(n, i);
 ```
-## TODO List
-* Add normal estimator for point cloud
-* Add some common algorithms
 
 

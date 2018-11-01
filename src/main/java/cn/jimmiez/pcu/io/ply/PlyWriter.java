@@ -4,7 +4,6 @@ import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.io.BinaryWriter;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,11 +12,6 @@ import java.util.Map;
 
 public class PlyWriter {
 
-    public int write(Object object, File file) {
-        int result = Constants.ERR_CODE_NO_ERROR;
-
-        return result;
-    }
 
 
     private String typeString(PlyElement element, int position) {
