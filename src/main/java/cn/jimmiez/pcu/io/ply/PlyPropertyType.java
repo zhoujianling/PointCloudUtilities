@@ -2,23 +2,26 @@ package cn.jimmiez.pcu.io.ply;
 
 public enum PlyPropertyType {
 
-    NON_TYPE(0),
-    CHAR(1),
-    UCHAR(2),
-    SHORT(3),
-    USHORT(4),
-    INT(5),
-    UINT(6),
-    FLOAT(7),
-    DOUBLE(8),
-    LIST(10);
+    NON_TYPE(0, "NotType"),
+    CHAR(1, "char"),
+    UCHAR(1, "uchar"),
+    SHORT(2, "short"),
+    USHORT(2, "ushort"),
+    INT(4, "int"),
+    UINT(4, "uint"),
+    FLOAT(4, "float"),
+    DOUBLE(8, "double"),
+    LIST(0, "list");
 
-    private int val = 0;
+    private int size = 0;
+    private String typeName = "NotType";
 
-    PlyPropertyType(int val) {
-        this.val = val;
+    PlyPropertyType(int size, String tn) {
+        this.size = size;
+        this.typeName = tn;
     }
 
-    public int val() {return val;}
+    public int size() {return size;}
 
+    public String typeName() {return typeName;}
 }

@@ -22,10 +22,10 @@ public class PlyWriter {
 
     private String typeString(PlyElement element, int position) {
         PlyPropertyType type = element.getPropertiesType().get(position);
-        String typeStr = PlyReader.TYPE_NAME[type.val()];
+        String typeStr = type.typeName();
         if (type == PlyPropertyType.LIST) {
             PlyPropertyType[] typePair = element.listTypes.get(element.getPropertiesName().get(position));
-            typeStr += String.format(" %s %s", PlyReader.TYPE_NAME[typePair[0].val()], PlyReader.TYPE_NAME[typePair[1].val()]);
+            typeStr += String.format(" %s %s", typePair[0].typeName(), typePair[1].typeName());
         }
         return typeStr;
     }

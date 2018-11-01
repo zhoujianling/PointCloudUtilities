@@ -25,36 +25,6 @@ public class PlyReader {
 
     public static final int FORMAT_NON_FORMAT = - 0x3001;
 
-
-    private static final int TYPE_LOW_BOUNDS = 0x0000;
-    private static final int TYPE_UPPER_BOUNDS = 0x000B;
-
-//    /** scalar type **/
-//    public static final int TYPE_CHAR = 0x0001;
-//    public static final int TYPE_UCHAR = 0x0002;
-//    public static final int TYPE_SHORT = 0x0003;
-//    public static final int TYPE_USHORT = 0x0004;
-//    public static final int TYPE_INT = 0x0005;
-//    public static final int TYPE_UINT = 0x0006;
-//    public static final int TYPE_FLOAT = 0x0007;
-//    public static final int TYPE_DOUBLE = 0x0008;
-//    public static final int TYPE_LIST = 0x000A;
-
-
-    /**
-     * The size of type：
-     * NON_TYPE, CHAR, UCHAR, SHORT, USHORT, INT, UINT, FLOAT, DOUBLE, RESERVED, RESERVED
-     * the index of array TYPE_SIZE is the constant value of TYPE_*
-     **/
-    private static final int[] TYPE_SIZE = new int[] {
-            0, 1, 1, 2, 2, 4, 4, 4, 8, 0, 0
-    };
-
-    public static final String[] TYPE_NAME = new String[] {
-            "NaT", "char", "uchar", "short", "ushort", "int", "uint", "float", "double", "NaT", "list"
-    };
-
-    public static final Integer TYPE_NONTYPE =  0x0000;
     private int ERR_LINE_NO = 0;
 
     public PlyHeader readHeaderThenCloseFile(File file) throws IOException {
@@ -75,7 +45,7 @@ public class PlyReader {
         List<String> headerLines = new ArrayList<>();
         int byteCount = 0;
         try {
-            String line = null;
+            String line;
             while ((line = scanner.nextLine()) != null) {
                 byteCount += (line.getBytes().length + 1);
                 if (line.equals("end_header")) break;
@@ -120,6 +90,7 @@ public class PlyReader {
         return header;
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     private PlyPropertyType recognizeType(String type) {
         switch (type) {
             case "char":
@@ -168,12 +139,16 @@ public class PlyReader {
         }
         String[] formatSlices = line.split(" ");
         if (formatSlices.length == 3) {
-            if (formatSlices[1].equals("ascii")) {
-                header.setPlyFormat(FORMAT_ASCII);
-            } else if (formatSlices[1].equals("binary_little_endian")) {
-                header.setPlyFormat(FORMAT_BINARY_LITTLE_ENDIAN);
-            } else if (formatSlices[1].equals("binary_big_endian")) {
-                header.setPlyFormat(FORMAT_BINARY_BIG_ENDIAN);
+            switch (formatSlices[1]) {
+                case "ascii":
+                    header.setPlyFormat(FORMAT_ASCII);
+                    break;
+                case "binary_little_endian":
+                    header.setPlyFormat(FORMAT_BINARY_LITTLE_ENDIAN);
+                    break;
+                case "binary_big_endian":
+                    header.setPlyFormat(FORMAT_BINARY_BIG_ENDIAN);
+                    break;
             }
             header.setPlyVersion(Float.valueOf(formatSlices[2]));
         } else {
@@ -441,8 +416,7 @@ public class PlyReader {
         return new DataContainer(header) {
             @Override
             void release() throws InvocationTargetException, IllegalAccessException {
-                for (int i = 0; i < getters.size(); i ++) {
-                    Method method = getters.get(i);
+                for (Method method : getters) {
                     PcuPlyData annotation = method.getAnnotation(PcuPlyData.class);
                     String[] elementNames = annotation.element();
                     String elementName = null;
@@ -456,7 +430,7 @@ public class PlyReader {
                     if (elementName == null) {
                         throw new IllegalStateException("Cannot find the element in ply for your getter: " + method.getName());
                     }
-                    /** an ugly way to find number of items in current element **/
+                    // an ugly way to find number of items in current element
                     for (Pair<String, Integer> pair : header.getElementsNumber()) {
                         if (pair.getKey().equals(elementName)) {
                             elementNumber = pair.getValue();
@@ -469,16 +443,16 @@ public class PlyReader {
 
                     PlyElement plyElement = header.getElementTypes().get(elementName);
 
-                    /** make an assumption that all field has same type **/
+                    // make an assumption that all field has same type
                     int propertyPosition = plyElement.propertiesName.indexOf(properties[0]);
                     if (propertyPosition == -1) {
                         throw new IllegalStateException("The property " + properties[0] + " for getter: " + method.getName() + " cannot be found in ply header!");
                     }
                     PlyPropertyType firstPropertyType = plyElement.propertiesType.get(propertyPosition);
-                    /** user may input "z", "y", "x" **/
+                    //  user may input "z", "y", "x"
                     int[] indices = new int[properties.length];
                     int period = 0;
-                    for (int j = 0; j < indices.length; j ++) {
+                    for (int j = 0; j < indices.length; j++) {
                         String propertyName = properties[j];
                         int[] startIndexAndPeriod = positionRecord.get(new Pair<>(elementName, propertyName));
                         indices[j] = startIndexAndPeriod[0];
@@ -496,7 +470,7 @@ public class PlyReader {
                         case FLOAT: {
                             List<float[]> list = (List<float[]>) method.invoke(userDefinedObject);
                             if (isListType) {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     list.add(floatListData.get(indices[0] + j * period));
                                 }
                             } else {
@@ -513,13 +487,13 @@ public class PlyReader {
                         case DOUBLE: {
                             List<double[]> list = (List<double[]>) method.invoke(userDefinedObject);
                             if (isListType) {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     list.add(doubleListData.get(indices[0] + j * period));
                                 }
                             } else {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     double[] vector = new double[properties.length];
-                                    for (int k = 0; k < properties.length; k ++) {
+                                    for (int k = 0; k < properties.length; k++) {
                                         vector[k] = doubleData[indices[k] + j * period];
                                     }
                                     list.add(vector);
@@ -531,7 +505,7 @@ public class PlyReader {
                         case UINT: {
                             List<int[]> list = (List<int[]>) method.invoke(userDefinedObject);
                             if (isListType) {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     list.add(intListData.get(indices[0] + j * period));
                                 }
                             } else {
@@ -549,7 +523,7 @@ public class PlyReader {
                         case USHORT: {
                             List<short[]> list = (List<short[]>) method.invoke(userDefinedObject);
                             if (isListType) {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     list.add(shortListData.get(indices[0] + j * period));
                                 }
                             } else {
@@ -567,7 +541,7 @@ public class PlyReader {
                         case UCHAR: {
                             List<byte[]> list = (List<byte[]>) method.invoke(userDefinedObject);
                             if (isListType) {
-                                for (int j = 0; j < elementNumber; j ++) {
+                                for (int j = 0; j < elementNumber; j++) {
                                     list.add(byteListData.get(indices[0] + j * period));
                                 }
                             } else {
@@ -604,6 +578,7 @@ public class PlyReader {
         private static final int STATE_ERROR = 4;
         private static final int STATE_COMPLETE = 5;
 
+        @SuppressWarnings("Duplicates")
         public void readBinaryData(File file, ByteOrder order) throws IOException {
             int state = STATE_READY;
 
@@ -614,7 +589,7 @@ public class PlyReader {
             int currentPropertyPtr = 0;
             int currentItemNumber = 0;
 
-            /** when reading a list property, these two fields are to store current state **/
+            // when reading a list property, these two fields are to store current state **/
             int currentListSize = 0;
 
             byte[] bytes = Files.readAllBytes(file.toPath());
@@ -662,9 +637,9 @@ public class PlyReader {
                         state = STATE_TO_READ_NEXT_PROPERTY;
 //                        bytes = new byte[TYPE_SIZE[expectedType]];
 //                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[expectedType.val()]);
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, expectedType.size());
                         buffer.order(order);
-                        currBytePtr += TYPE_SIZE[expectedType.val()];
+                        currBytePtr += expectedType.size();
                         switch (expectedType) {
                             case DOUBLE:
                                 callback.gotDoubleVal(currentElementName, currentPropertyPtr, buffer.getDouble());
@@ -697,7 +672,7 @@ public class PlyReader {
                         String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         PlyPropertyType [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
-                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE. listSize too short.");
                             state = STATE_ERROR;
                             break;
                         }
@@ -705,15 +680,15 @@ public class PlyReader {
                         PlyPropertyType firstType = listTypes[0];
 //                        bytes = new byte[TYPE_SIZE[firstType]];
 //                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[firstType.val()]);
-                        currBytePtr += TYPE_SIZE[firstType.val()];
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, firstType.size());
+                        currBytePtr += firstType.size();
                         buffer.order(order);
 
                         switch (firstType) {
                             case DOUBLE:
                             case FLOAT:
                             case LIST:
-                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE.");
                                 state = STATE_ERROR;
                                 break;
                             case INT:
@@ -739,15 +714,15 @@ public class PlyReader {
                         PlyPropertyType [] listTypes = element.listTypes.get(currentProperty);
 
                         if (listTypes == null || listTypes.length < 2) {
-                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE. listSize too short.");
                             state = STATE_ERROR;
                             break;
                         }
                         PlyPropertyType listItemType = listTypes[1];
 //                        bytes = new byte[TYPE_SIZE[listItemType] * currentListSize];
 //                        stream.read(bytes);
-                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, TYPE_SIZE[listItemType.val()] * currentListSize);
-                        currBytePtr += TYPE_SIZE[listItemType.val()] * currentListSize;
+                        ByteBuffer buffer = ByteBuffer.wrap(bytes, currBytePtr, listItemType.size() * currentListSize);
+                        currBytePtr += listItemType.size() * currentListSize;
                         buffer.order(order);
                         switch (listItemType) {
                             case DOUBLE:
@@ -787,7 +762,7 @@ public class PlyReader {
                                 callback.gotByteArray(currentElementName, byteList);
                                 break;
                             case LIST:
-                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE.");
                                 state = STATE_ERROR;
                                 break;
                         }
@@ -816,6 +791,7 @@ public class PlyReader {
          * @param file ply file
          * @throws NoSuchElementException if scanner try to read next element, but reach the end of file, throw this exception
          */
+        @SuppressWarnings("Duplicates")
         public void readAsciiData(File file) throws NoSuchElementException, IOException {
             byte[] bytes = Files.readAllBytes(file.toPath());
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.getHeaderBytes(), bytes.length - header.getHeaderBytes());
@@ -829,7 +805,7 @@ public class PlyReader {
             int currentPropertyPtr = 0;
             int currentItemNumber = 0;
 
-            /** when reading a list property, these two fields are to store current state **/
+            // when reading a list property, these two fields are to store current state
             int currentListSize = 0;
 
             boolean loop = true;
@@ -904,7 +880,7 @@ public class PlyReader {
                         String currentProperty = element.propertiesName.get(currentPropertyPtr);
                         PlyPropertyType [] listTypes = element.listTypes.get(currentProperty);
                         if (listTypes == null || listTypes.length < 2) {
-                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE. listSize too short.");
                             state = STATE_ERROR;
                             break;
                         }
@@ -915,7 +891,7 @@ public class PlyReader {
                             case DOUBLE:
                             case FLOAT:
                             case LIST:
-                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE.");
                                 state = STATE_ERROR;
                                 break;
                             case INT:
@@ -941,7 +917,7 @@ public class PlyReader {
                         PlyPropertyType [] listTypes = element.listTypes.get(currentProperty);
 
                         if (listTypes == null || listTypes.length < 2) {
-                            System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE. listSize too short.");
+                            System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE. listSize too short.");
                             state = STATE_ERROR;
                             break;
                         }
@@ -984,7 +960,7 @@ public class PlyReader {
                                 callback.gotByteArray(currentElementName, byteList);
                                 break;
                             case LIST:
-                                System.err.println("PlyReader::readAsciiData(), STATE: READLING_LIST_SIZE.");
+                                System.err.println("PlyReader::readAsciiData(), STATE: READING_LIST_SIZE.");
                                 state = STATE_ERROR;
                                 break;
                         }
@@ -1017,7 +993,7 @@ public class PlyReader {
             listener.onFail(Constants.ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
             return;
         }
-        FileInputStream stream = null;
+        FileInputStream stream;
         PlyHeader header = null;
         try {
             stream = new FileInputStream(file);
@@ -1037,20 +1013,20 @@ public class PlyReader {
         if (header == null) return;
 
         try {
-            DataContainer stager = generateParserCallback(pointCloud, header);
-            PlyBodyParser parser = new PlyBodyParser(header, stager);
+            DataContainer container = generateParserCallback(pointCloud, header);
+            PlyBodyParser parser = new PlyBodyParser(header, container);
             switch (header.getPlyFormat()) {
                 case FORMAT_ASCII:
                     parser.readAsciiData(file);
-                    stager.release();
+                    container.release();
                     break;
                 case FORMAT_BINARY_BIG_ENDIAN:
                     parser.readBinaryData(file, ByteOrder.BIG_ENDIAN);
-                    stager.release();
+                    container.release();
                     break;
                 case FORMAT_BINARY_LITTLE_ENDIAN:
                     parser.readBinaryData(file, ByteOrder.LITTLE_ENDIAN);
-                    stager.release();
+                    container.release();
                     break;
             }
 
