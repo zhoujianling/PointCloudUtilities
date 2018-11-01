@@ -21,11 +21,11 @@ public class PlyWriter {
 
 
     private String typeString(PlyElement element, int position) {
-        int type = element.getPropertiesType().get(position);
-        String typeStr = PlyReader.TYPE_NAME[type];
-        if (type == PlyReader.TYPE_LIST) {
-            int[] typePair = element.listTypes.get(element.getPropertiesName().get(position));
-            typeStr += String.format(" %s %s", PlyReader.TYPE_NAME[typePair[0]], PlyReader.TYPE_NAME[typePair[1]]);
+        PlyPropertyType type = element.getPropertiesType().get(position);
+        String typeStr = PlyReader.TYPE_NAME[type.val()];
+        if (type == PlyPropertyType.LIST) {
+            PlyPropertyType[] typePair = element.listTypes.get(element.getPropertiesName().get(position));
+            typeStr += String.format(" %s %s", PlyReader.TYPE_NAME[typePair[0].val()], PlyReader.TYPE_NAME[typePair[1].val()]);
         }
         return typeStr;
     }
@@ -88,20 +88,20 @@ public class PlyWriter {
             for (int i = 0; i < data.size(); i ++) {
                 List row = (List) data.get(i);
                 for (int j = 0; j < element.propertiesType.size(); j ++) {
-                    int type = element.propertiesType.get(j);
+                    PlyPropertyType type = element.propertiesType.get(j);
                     String propertyName = element.propertiesName.get(j);
                     switch (type) {
-                        case PlyReader.TYPE_CHAR:
-                        case PlyReader.TYPE_UCHAR:
-                        case PlyReader.TYPE_SHORT:
-                        case PlyReader.TYPE_USHORT:
-                        case PlyReader.TYPE_INT:
-                        case PlyReader.TYPE_UINT:
-                        case PlyReader.TYPE_FLOAT:
-                        case PlyReader.TYPE_DOUBLE:
+                        case CHAR:
+                        case UCHAR:
+                        case SHORT:
+                        case USHORT:
+                        case INT:
+                        case UINT:
+                        case FLOAT:
+                        case DOUBLE:
                             ps.print(row.get(j));
                             break;
-                        case PlyReader.TYPE_LIST:
+                        case LIST:
                             printAsciiList(row.get(j), ps, element.listTypes.get(propertyName)[1]);
                             break;
                     }
@@ -113,10 +113,10 @@ public class PlyWriter {
         ps.close();
     }
 
-    private void printAsciiList(Object o, PrintStream ps, int valType) {
+    private void printAsciiList(Object o, PrintStream ps, PlyPropertyType valType) {
         switch (valType) {
-            case PlyReader.TYPE_CHAR:
-            case PlyReader.TYPE_UCHAR:
+            case CHAR:
+            case UCHAR:
                 byte[] ba = (byte[]) o;
                 ps.print(ba.length);
                 ps.print(' ');
@@ -125,8 +125,8 @@ public class PlyWriter {
                     ps.print(' ');
                 }
                 break;
-            case PlyReader.TYPE_SHORT:
-            case PlyReader.TYPE_USHORT:
+            case SHORT:
+            case USHORT:
                 short[] sa = (short[]) o;
                 ps.print(sa.length);
                 ps.print(' ');
@@ -135,8 +135,8 @@ public class PlyWriter {
                     ps.print(' ');
                 }
                 break;
-            case PlyReader.TYPE_INT:
-            case PlyReader.TYPE_UINT:
+            case INT:
+            case UINT:
                 int[] ia = (int[]) o;
                 ps.print(ia.length);
                 ps.print(' ');
@@ -145,7 +145,7 @@ public class PlyWriter {
                     ps.print(' ');
                 }
                 break;
-            case PlyReader.TYPE_FLOAT:
+            case FLOAT:
                 float[] fa = (float[]) o;
                 ps.print(fa.length);
                 ps.print(' ');
@@ -154,7 +154,7 @@ public class PlyWriter {
                     ps.print(' ');
                 }
                 break;
-            case PlyReader.TYPE_DOUBLE:
+            case DOUBLE:
                 double[] da = (double[]) o;
                 ps.print(da.length);
                 ps.print(' ');
@@ -175,42 +175,42 @@ public class PlyWriter {
             for (int i = 0; i < data.size(); i ++) {
                 List row = (List) data.get(i);
                 for (int j = 0; j < element.propertiesType.size(); j ++) {
-                    int type = element.propertiesType.get(j);
+                    PlyPropertyType type = element.propertiesType.get(j);
                     String propertyName = element.propertiesName.get(j);
                     switch (type) {
-                        case PlyReader.TYPE_CHAR:
-                        case PlyReader.TYPE_UCHAR: {
+                        case CHAR:
+                        case UCHAR: {
                             byte c = (byte) row.get(j);
                             writer.writeByte(c);
 //                            writer.write;
                             break;
                         }
-                        case PlyReader.TYPE_SHORT:
-                        case PlyReader.TYPE_USHORT: {
+                        case SHORT:
+                        case USHORT: {
                             short s = (short) row.get(j);
                             writer.writeShort(s);
 //                            writer.write(s);
                             break;
                         }
-                        case PlyReader.TYPE_INT:
-                        case PlyReader.TYPE_UINT: {
+                        case INT:
+                        case UINT: {
                             int intVal = (int) row.get(j);
                             writer.writeInt(intVal);
                             break;
                         }
-                        case PlyReader.TYPE_FLOAT: {
+                        case FLOAT: {
                             float floatVal = (float) row.get(j);
                             writer.writeFloat(floatVal);
                             break;
                         }
-                        case PlyReader.TYPE_DOUBLE: {
+                        case DOUBLE: {
                             double doubleVal = (double) row.get(j);
                             writer.writeDouble(doubleVal);
                             break;
                         }
-                        case PlyReader.TYPE_LIST: {
-                            int sizeType = element.listTypes.get(propertyName)[0];
-                            int valType = element.listTypes.get(propertyName)[1];
+                        case LIST: {
+                            PlyPropertyType sizeType = element.listTypes.get(propertyName)[0];
+                            PlyPropertyType valType = element.listTypes.get(propertyName)[1];
                             writeBinaryList(row.get(j), writer, valType, sizeType);
                             break;
                         }
@@ -221,64 +221,64 @@ public class PlyWriter {
         writer.close();
     }
 
-    private void writeListSize(int len, BinaryWriter writer, int sizeType) throws IOException {
+    private void writeListSize(int len, BinaryWriter writer, PlyPropertyType sizeType) throws IOException {
         switch (sizeType) {
-            case PlyReader.TYPE_CHAR:
-            case PlyReader.TYPE_UCHAR:
+            case CHAR:
+            case UCHAR:
                 writer.writeByte((byte) len);
                 break;
-            case PlyReader.TYPE_SHORT:
-            case PlyReader.TYPE_USHORT:
+            case SHORT:
+            case USHORT:
                 writer.writeShort((short) len);
                 break;
-            case PlyReader.TYPE_INT:
-            case PlyReader.TYPE_UINT:
+            case INT:
+            case UINT:
                 writer.writeInt(len);
                 break;
-            case PlyReader.TYPE_FLOAT:
+            case FLOAT:
                 writer.writeFloat(len);
                 break;
-            case PlyReader.TYPE_DOUBLE:
+            case DOUBLE:
                 writer.writeDouble(len);
                 break;
         }
 
     }
 
-    private void writeBinaryList(Object o, BinaryWriter writer, int valType, int sizeType) throws IOException {
+    private void writeBinaryList(Object o, BinaryWriter writer, PlyPropertyType valType, PlyPropertyType sizeType) throws IOException {
         switch (valType) {
-            case PlyReader.TYPE_CHAR:
-            case PlyReader.TYPE_UCHAR:
+            case CHAR:
+            case UCHAR:
                 byte[] ba = (byte[]) o;
                 writeListSize(ba.length, writer, sizeType);
                 for (byte b : ba) {
                     writer.writeByte(b);
                 }
                 break;
-            case PlyReader.TYPE_SHORT:
-            case PlyReader.TYPE_USHORT:
+            case SHORT:
+            case USHORT:
                 short[] sa = (short[]) o;
                 writeListSize(sa.length, writer, sizeType);
                 for (short s : sa) {
                     writer.writeShort(s);
                 }
                 break;
-            case PlyReader.TYPE_INT:
-            case PlyReader.TYPE_UINT:
+            case INT:
+            case UINT:
                 int[] ia = (int[]) o;
                 writeListSize(ia.length, writer, sizeType);
                 for (int i : ia) {
                     writer.writeInt(i);
                 }
                 break;
-            case PlyReader.TYPE_FLOAT:
+            case FLOAT:
                 float[] fa = (float[]) o;
                 writeListSize(fa.length, writer, sizeType);
                 for (float f : fa) {
                     writer.writeFloat(f);
                 }
                 break;
-            case PlyReader.TYPE_DOUBLE:
+            case DOUBLE:
                 double[] da = (double[]) o;
                 writeListSize(da.length, writer, sizeType);
                 for (double d : da) {
@@ -313,7 +313,7 @@ public class PlyWriter {
             return this;
         }
 
-        public PlyWriterRequest defineScalarProperty(String propertyName, int valType) {
+        public PlyWriterRequest defineScalarProperty(String propertyName, PlyPropertyType valType) {
             if (elements.size() < 1) {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperty()");
             }
@@ -323,14 +323,14 @@ public class PlyWriter {
             return this;
         }
 
-        public PlyWriterRequest defineListProperty(String propertyName, int sizeType, int valType) {
+        public PlyWriterRequest defineListProperty(String propertyName, PlyPropertyType sizeType, PlyPropertyType valType) {
             if (elements.size() < 1) {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperty()");
             }
             PlyElement element = elements.get(elements.size() - 1);
             element.propertiesName.add(propertyName);
-            element.propertiesType.add(PlyReader.TYPE_LIST);
-            element.listTypes.put(propertyName, new int[]{sizeType, valType});
+            element.propertiesType.add(PlyPropertyType.LIST);
+            element.listTypes.put(propertyName, new PlyPropertyType[]{sizeType, valType});
             return this;
         }
 

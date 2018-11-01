@@ -19,4 +19,6 @@ public enum PlyPropertyType {
         this.val = val;
     }
 
+    public int val() {return val;}
+
 }
