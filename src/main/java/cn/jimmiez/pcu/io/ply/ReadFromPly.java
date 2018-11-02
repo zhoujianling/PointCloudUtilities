@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PcuPlyData {
+public @interface ReadFromPly {
 
     /**
      * the properties describing the vertex

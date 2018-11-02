@@ -180,7 +180,7 @@ public class PlyReader {
     private List<Method> findAllElementGetter(List<Method> methods) {
         List<Method> getters = new ArrayList<>();
         for (Method m : methods) {
-            PcuPlyData pcuEle = m.getAnnotation(PcuPlyData.class);
+            ReadFromPly pcuEle = m.getAnnotation(ReadFromPly.class);
             if (pcuEle == null) continue;
             getters.add(m);
         }
@@ -416,7 +416,7 @@ public class PlyReader {
             @Override
             void release() throws InvocationTargetException, IllegalAccessException {
                 for (Method method : getters) {
-                    PcuPlyData annotation = method.getAnnotation(PcuPlyData.class);
+                    ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
                     String[] elementNames = annotation.element();
                     String elementName = null;
                     int elementNumber = 0;
@@ -985,7 +985,7 @@ public class PlyReader {
      * It is supposed that the properties of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
-     * @param pointCloud The point cloud object (with annotation PcuPlyData)
+     * @param pointCloud The point cloud object (with annotation ReadFromPly)
      */
     public <T> void readPointCloud(File file, T pointCloud, ReadListener listener) {
         if (! file.exists()) {
