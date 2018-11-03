@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg;
+package cn.jimmiez.pcu.alg.projector;
 
 import javax.vecmath.Point3d;
 import java.util.ArrayList;
@@ -14,9 +14,13 @@ import java.util.List;
 public class LocallyOptimalProjector {
 
     private List<Point3d> data;
-    // iterations
+
+    /** iterations **/
     private int k;
+
     private double h;
+
+    /** range of mu: [0, 0.5] **/
     private double miu = 0.4;
 
     public LocallyOptimalProjector(List<Point3d> data, int k) {
@@ -25,6 +29,13 @@ public class LocallyOptimalProjector {
         this.h = defaultH();
     }
 
+    /**
+     * compute default h, see paper:
+     * Huang, H., Li, D., Zhang, H., Ascher, U., & Cohen-Or, D. (2009).
+     * Consolidation of unorganized point clouds for surface reconstruction.
+     * ACM transactions on graphics (TOG), 28(5), 176.
+     * @return default h
+     */
     private double defaultH() {
         if (data == null || data.size() < 1) return 1;
         double minX =  data.get(0).x;
@@ -52,7 +63,7 @@ public class LocallyOptimalProjector {
         return Math.pow(Math.E, - 4 * distance * distance / h / h);
     }
 
-    private void firstIterate(List<Point3d> projectedResults, List<Point3d> tobeProjected) {
+    private void firstIteration(List<Point3d> projectedResults, List<Point3d> tobeProjected) {
         projectedResults.clear();
         for (int i1 = 0; i1 < tobeProjected.size(); i1 ++) {
             double x = 0;
@@ -86,7 +97,7 @@ public class LocallyOptimalProjector {
         return theta(normXi1Xi) / Math.pow(normXi1Xi, 5);
     }
 
-    private void successiveIterate(List<Point3d> projectedResults) {
+    private void successiveIteration(List<Point3d> projectedResults) {
         List<Point3d> nextIterPoints = new ArrayList<>();
         for (int i1 = 0; i1 < projectedResults.size(); i1 ++) {
             Point3d xi1k = projectedResults.get(i1);
@@ -131,12 +142,17 @@ public class LocallyOptimalProjector {
         nextIterPoints.clear();
     }
 
+    /**
+     * project tobeProjected onto data
+     * @param tobeProjected the list of points that is to be projected
+     * @return result
+     */
     public List<Point3d> project(List<Point3d> tobeProjected) {
         List<Point3d> projectedPoints = new ArrayList<>();
-        firstIterate(projectedPoints, tobeProjected);
+        firstIteration(projectedPoints, tobeProjected);
         for (int kIter = 0; kIter < k; kIter ++) {
 //            System.out.println("kiter: " + kIter);
-            successiveIterate(projectedPoints);
+            successiveIteration(projectedPoints);
         }
         return projectedPoints;
     }
