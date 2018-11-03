@@ -1,6 +1,6 @@
 package cn.jimmiez.pcu.model;
 
-import cn.jimmiez.pcu.io.ply.PcuPlyData;
+import cn.jimmiez.pcu.io.ply.ReadFromPly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public class PcuPointCloud3f {
         point3ds = new ArrayList<>();
     }
 
-    @PcuPlyData(
+    @ReadFromPly(
             properties = {"x", "y", "z"},
             element = {"vertex", "vertices"}
     )

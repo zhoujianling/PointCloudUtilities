@@ -52,7 +52,7 @@ Secondly, you need to declare a class to describe your point cloud. Decorate the
 class YourPointCloud {
     private List<float[]> points = new ArrayList<>();
 
-    @PcuPlyData(
+    @ReadFromPly(
         properties = {"x", "y", "z"},
         element = {"vertex"}
     )

@@ -1,6 +1,6 @@
 package cn.jimmiez.pcu.model;
 
-import cn.jimmiez.pcu.io.ply.PcuPlyData;
+import cn.jimmiez.pcu.io.ply.ReadFromPly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ public class PcuPolygonMesh3f {
         faces = new ArrayList<>();
     }
 
-    @PcuPlyData(
+    @ReadFromPly(
             properties = {"x", "y", "z"},
             element = {"vertex", "vertices"}
     )
@@ -22,7 +22,7 @@ public class PcuPolygonMesh3f {
         return point3ds;
     }
 
-    @PcuPlyData(
+    @ReadFromPly(
             properties = {"vertex_indices"},
             element = {"face"}
     )
