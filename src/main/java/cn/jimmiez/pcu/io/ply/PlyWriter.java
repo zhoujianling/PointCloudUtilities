@@ -2,21 +2,75 @@ package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.io.BinaryWriter;
+import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.*;
-import java.nio.ByteBuffer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PlyWriter {
 
     public int write(Object object, File file) {
         int result = Constants.ERR_CODE_NO_ERROR;
-
+        try {
+            writeWithObject(object, file);
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+            result = Constants.ERR_CODE_METHOD_NO_LIST;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
         return result;
+    }
+
+
+    private void writeWithObject(Object object, File file) throws InvocationTargetException, IllegalAccessException {
+        List<Method> allMethods = PcuReflectUtil.fetchAllMethods(object);
+        PlyWriterRequest request = new PlyWriterRequest();
+        request.format(PlyReader.FORMAT_ASCII);
+        request.comment("written by PointCloudUtil.");
+        final List<Method> getters = findScalarGetters(allMethods);
+        for (Method m : getters) {
+            WriteScalarToPly scalarToPly = m.getAnnotation(WriteScalarToPly.class);
+            request.defineElement(scalarToPly.element());
+            if (scalarToPly.properties().length != scalarToPly.typeNames().length) continue;
+            List data = (List) m.invoke(object);
+            for (int i = 0; i < scalarToPly.properties().length; i ++) {
+                String typeName = scalarToPly.typeNames()[i];
+                request.defineScalarProperty(scalarToPly.properties()[i], PlyReader.recognizeType(typeName));
+                request.putData(data);
+            }
+        }
+
+//        final List<Method> getters2 = findListGetters(allMethods);
+        //todo .....
+
+        request.writeTo(file);
+        request.okay();
+    }
+
+    private List<Method> findScalarGetters(List<Method> allMethods) {
+        List<Method> l = new Vector<>();
+        for (Method m : allMethods) {
+            WriteScalarToPly scalarToPly = m.getAnnotation(WriteScalarToPly.class);
+            if (scalarToPly != null) {
+                l.add(m);
+            }
+        }
+        return l;
+    }
+
+    private List<Method> findListGetters(List<Method> allMethods) {
+        List<Method> l = new Vector<>();
+        for (Method m : allMethods) {
+            WriteListToPly listToPly = m.getAnnotation(WriteListToPly.class);
+            if (listToPly != null) {
+                l.add(m);
+            }
+        }
+        return l;
     }
 
 

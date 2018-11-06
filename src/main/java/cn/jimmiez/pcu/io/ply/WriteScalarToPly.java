@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface WriteToPly {
+public @interface WriteScalarToPly {
 
     /**
      * @return the properties describing the vertex

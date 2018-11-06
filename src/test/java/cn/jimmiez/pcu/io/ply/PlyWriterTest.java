@@ -6,6 +6,7 @@ import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.io.ply.PlyWriter;
 import org.junit.*;
 
+import javax.vecmath.Point3d;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
@@ -57,7 +58,7 @@ public class PlyWriterTest {
     }
 
     @Test
-    public void writeBinaryPlyTest() {
+    public void prepareChainBinaryTest() {
         List vertexData = new Vector();
         vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
         vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
@@ -118,7 +119,20 @@ public class PlyWriterTest {
     }
 
     @Test
-    public void writeAsciiPlyTest() {
+    public void writeTest() {
+        String userDir = System.getProperty("user.home");
+        userDir += File.separator;
+        userDir += Constants4Test.OUTPUT_DIR;
+        File tempPlyFile = new File(userDir.concat(File.separator).concat("temp.ply"));
+        PlyEntity entity = new PlyEntity(10);
+        PlyWriter writer = new PlyWriter();
+        int code = writer.write(entity, tempPlyFile);
+
+        assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+    }
+
+    @Test
+    public void prepareChainAsciiTest() {
         List vertexData = new Vector();
         vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
         vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
@@ -159,5 +173,28 @@ public class PlyWriterTest {
         assertTrue(code == Constants.ERR_CODE_NO_ERROR);
     }
 
+    private static class PlyEntity {
+
+        List<Point3d> ps = new ArrayList<>();
+
+        public PlyEntity(int n) {
+            Random r = new Random(System.currentTimeMillis());
+            for (int i = 0; i < n; i ++) {
+                ps.add(new Point3d(r.nextDouble(), r.nextDouble(), r.nextDouble()));
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeNames = {"double", "double", "double"})
+        public List vertices() {
+            List<List> result = new ArrayList<>();
+            for (Point3d p : ps) {
+                result.add(Arrays.asList(p.x, p.y, p.z));
+//            result.add(new double[] {p.x, p.y, p.z});
+            }
+            return result;
+        }
+
+    }
 
 }

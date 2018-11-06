@@ -90,7 +90,7 @@ public class PlyReader {
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-    private PlyPropertyType recognizeType(String type) {
+    public static PlyPropertyType recognizeType(String type) {
         switch (type) {
             case "char":
             case "int8":
