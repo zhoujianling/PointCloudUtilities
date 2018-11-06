@@ -124,7 +124,7 @@ public class PlyWriterTest {
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
         File tempPlyFile = new File(userDir.concat(File.separator).concat("temp.ply"));
-        PlyEntity entity = new PlyEntity(10);
+        PlyEntity entity = new PlyEntity(100);
         PlyWriter writer = new PlyWriter();
         int code = writer.write(entity, tempPlyFile);
 
@@ -176,11 +176,20 @@ public class PlyWriterTest {
     private static class PlyEntity {
 
         List<Point3d> ps = new ArrayList<>();
+        List<int[]> vertexIndices = new ArrayList<>();
 
         public PlyEntity(int n) {
             Random r = new Random(System.currentTimeMillis());
             for (int i = 0; i < n; i ++) {
                 ps.add(new Point3d(r.nextDouble(), r.nextDouble(), r.nextDouble()));
+            }
+            int l = Math.min(3, n / 2);
+            for (int i = 0; i < n; i ++) {
+                int[] face = new int[l];
+                for (int j = 0; j < l; j ++) {
+                    face[j] = (i + j) % n;
+                }
+                vertexIndices.add(face);
             }
         }
 
@@ -190,9 +199,14 @@ public class PlyWriterTest {
             List<List> result = new ArrayList<>();
             for (Point3d p : ps) {
                 result.add(Arrays.asList(p.x, p.y, p.z));
-//            result.add(new double[] {p.x, p.y, p.z});
             }
             return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        @WriteListToPly(element = "face", properties = "vertex_index")
+        public List<int[]> edges() {
+            return vertexIndices;
         }
 
     }

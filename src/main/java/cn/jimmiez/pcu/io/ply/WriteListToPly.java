@@ -12,7 +12,7 @@ public @interface WriteListToPly {
     /**
      * @return the properties describing the vertex
      */
-    String[] properties() default {};
+    String properties() default "list";
 
     /**
      * @return the type of list size, e.g., "uchar"

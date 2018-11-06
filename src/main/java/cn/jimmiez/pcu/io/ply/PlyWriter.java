@@ -44,8 +44,22 @@ public class PlyWriter {
             }
         }
 
-//        final List<Method> getters2 = findListGetters(allMethods);
-        //todo .....
+        final List<Method> getters2 = findListGetters(allMethods);
+        for (Method m : getters2) {
+            WriteListToPly listToPly = m.getAnnotation(WriteListToPly.class);
+            PlyPropertyType sizeType = PlyReader.recognizeType(listToPly.sizeType());
+            PlyPropertyType valType = PlyReader.recognizeType(listToPly.valType());
+            List listData = (List) m.invoke(object);
+            List<List> data = new ArrayList<>();
+            for (Object o : listData) {
+                List l = new ArrayList();
+                l.add(o);
+                data.add(l);
+            }
+            request.defineElement(listToPly.element());
+            request.defineListProperty(listToPly.properties(), sizeType, valType);
+            request.putData(data);
+        }
 
         request.writeTo(file);
         request.okay();

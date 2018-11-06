@@ -111,7 +111,7 @@ int result = writer
 ### Octree
 Instantiate the Octree object, after calling *buildIndex()*, the nearest neighbors of certain point can be found in *O(n)* time.
 ```java
-List<float[]> points = new ArrayList();
+List<Point3d> points = new ArrayList();
 // ****
 int n = 5; // number of neighbors
 int i = 6; // if you want to find the neighbors of the 6th point.

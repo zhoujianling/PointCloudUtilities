@@ -58,7 +58,7 @@ public class Skeleton extends DirectedGraph{
         return result;
     }
 
-    @WriteListToPly(element = "edges", properties = {"node_index"})
+    @WriteListToPly(element = "edges", properties = "node_index")
     public List<int[]> edges4Ply() {
         List<int[]> result = new ArrayList<>();
         for (int vi = 0; vi < skeletonNodes.size(); vi ++) {
