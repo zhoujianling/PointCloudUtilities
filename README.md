@@ -72,37 +72,29 @@ YourPointCloud pc = plyReader.readPointCloud(file, YourPointCloud.class);
 ### PlyWriter
 Firstly, prepare your vertices data and face data.
 ```java
-List vertexData = new Vector();
-vertexData.add(Arrays.asList(0.1f, -3.0f, 0.7f));
-vertexData.add(Arrays.asList(0.3f, +3.0f, 0.9f));
-vertexData.add(Arrays.asList(2.1f, -3.0f, 1.1f));
-vertexData.add(Arrays.asList(0.5f, -3.0f, 1.0f));
-vertexData.add(Arrays.asList(2.1f, -3.0f, 1.1f));
-PlyWriter writer = new PlyWriter();
+List<float[]> vertexData = new Vector<>();
+vertexData.add(new float[] {0.1f, -3.0f, 0.7f});
+vertexData.add(new float[] {0.3f, +3.0f, 0.9f});
+vertexData.add(new float[] {2.1f, -3.0f, 1.1f});
+vertexData.add(new float[] {0.5f, -3.0f, 1.0f});
+vertexData.add(new float[] {2.1f, -3.0f, 1.1f});
 
-List faceData = new Vector();
-List r1 = new Vector();
-List r2 = new Vector();
-r1.add(new int[] {0, 1, 2});
-r2.add(new int[] {1, 0, 4});
-faceData.add(r1);
-faceData.add(r2);
+List<int[]> faceData = new Vector<>();
+faceData.add(new int[] {0, 1, 2});
+faceData.add(new int[] {1, 0, 4});
+
 ```
 
 Secondly, use one line code to write the ply.
 ```java
-int result = writer
+int result = new PlyWriter()
         .prepare()
         .format(PlyReader.FORMAT_ASCII)
         .comment("this is test")
         .defineElement("vertex")
-        .defineScalarProperty("x", PlyReader.TYPE_FLOAT)
-        .defineScalarProperty("y", PlyReader.TYPE_FLOAT)
-        .defineScalarProperty("z", PlyReader.TYPE_FLOAT)
-        .putData(vertexData)
+        .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
         .defineElement("face")
-        .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
-        .putData(faceData)
+        .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
         .writeTo(new File("yourModel.ply"))
         .okay();
 
