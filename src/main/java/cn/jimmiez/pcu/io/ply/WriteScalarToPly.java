@@ -10,14 +10,14 @@ import java.lang.annotation.Target;
 public @interface WriteScalarToPly {
 
     /**
-     * @return the properties describing the vertex
+     * @return the property describing the vertex
      */
     String[] properties() default {};
 
     /**
-     * @return the type of properties, e.g., {"uint", "uint", "uint"}
+     * @return the type of property, e.g., "float"
      */
-    String[] typeNames() default {};
+    String typeName() default "uint";
 
     /**
      * once you specify the name of element, the ply reader will extract data of this element from ply file.

@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 public @interface WriteListToPly {
 
     /**
-     * @return the properties describing the vertex
+     * @return the property describing the vertex
      */
-    String properties() default "list";
+    String property() default "list";
 
     /**
      * @return the type of list size, e.g., "uchar"

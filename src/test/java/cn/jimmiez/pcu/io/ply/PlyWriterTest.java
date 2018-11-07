@@ -2,13 +2,10 @@ package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.Constants4Test;
-import cn.jimmiez.pcu.io.ply.PlyReader;
-import cn.jimmiez.pcu.io.ply.PlyWriter;
 import org.junit.*;
 
 import javax.vecmath.Point3d;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -59,20 +56,16 @@ public class PlyWriterTest {
 
     @Test
     public void prepareChainBinaryTest() {
-        List vertexData = new Vector();
-        vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
-        vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
-        vertexData.add(Arrays.asList(2.101f, -3f, 1.1f));
-        vertexData.add(Arrays.asList(0.521f, -3f, 1.0f));
-        vertexData.add(Arrays.asList(2.104f, -3f, 1.1f));
+        List<float[]> vertexData = new Vector<>();
+        vertexData.add(new float[] {0.101f, -3f, 0.7f});
+        vertexData.add(new float[] {0.301f, +3f, 0.9f});
+        vertexData.add(new float[] {2.101f, -3f, 1.1f});
+        vertexData.add(new float[] {0.521f, -3f, 1.0f});
+        vertexData.add(new float[] {2.104f, -3f, 1.1f});
 
-        List faceData = new Vector();
-        List r1 = new Vector();
-        List r2 = new Vector();
-        r1.add(new int[] {0, 1, 2});
-        r2.add(new int[] {1, 0, 4});
-        faceData.add(r1);
-        faceData.add(r2);
+        List<int[]> faceData = new Vector<>();
+        faceData.add(new int[] {0, 1, 2});
+        faceData.add(new int[] {1, 0, 4});
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
@@ -86,13 +79,9 @@ public class PlyWriterTest {
                 .comment("this is test")
                 .comment("for Point Cloud Util v.0.0.3")
                 .defineElement("vertex")
-                .defineScalarProperty("x", PlyPropertyType.FLOAT)
-                .defineScalarProperty("y", PlyPropertyType.FLOAT)
-                .defineScalarProperty("z", PlyPropertyType.FLOAT)
-                .putData(vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT)
-                .putData(faceData)
+                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
@@ -104,13 +93,9 @@ public class PlyWriterTest {
                 .comment("this is test")
                 .comment("for Point Cloud Util v.0.0.3")
                 .defineElement("vertex")
-                .defineScalarProperty("x", PlyPropertyType.FLOAT)
-                .defineScalarProperty("y", PlyPropertyType.FLOAT)
-                .defineScalarProperty("z", PlyPropertyType.FLOAT)
-                .putData(vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT)
-                .putData(faceData)
+                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
                 .writeTo(tempPlyFile2)
                 .okay();
 
@@ -124,7 +109,7 @@ public class PlyWriterTest {
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
         File tempPlyFile = new File(userDir.concat(File.separator).concat("temp.ply"));
-        PlyEntity entity = new PlyEntity(100);
+        PlyEntity entity = new PlyEntity(1000);
         PlyWriter writer = new PlyWriter();
         int code = writer.write(entity, tempPlyFile);
 
@@ -133,21 +118,17 @@ public class PlyWriterTest {
 
     @Test
     public void prepareChainAsciiTest() {
-        List vertexData = new Vector();
-        vertexData.add(Arrays.asList(0.101f, -3f, 0.7f));
-        vertexData.add(Arrays.asList(0.301f, +3f, 0.9f));
-        vertexData.add(Arrays.asList(2.101f, -3f, 1.1f));
-        vertexData.add(Arrays.asList(0.521f, -3f, 1.0f));
-        vertexData.add(Arrays.asList(2.104f, -3f, 1.1f));
+        List<float[]> vertexData = new Vector<>();
+        vertexData.add(new float[] {0.101f, -3f, 0.7f});
+        vertexData.add(new float[] {0.301f, +3f, 0.9f});
+        vertexData.add(new float[] {2.101f, -3f, 1.1f});
+        vertexData.add(new float[] {0.521f, -3f, 1.0f});
+        vertexData.add(new float[] {2.104f, -3f, 1.1f});
         PlyWriter writer = new PlyWriter();
 
-        List faceData = new Vector();
-        List r1 = new Vector();
-        List r2 = new Vector();
-        r1.add(new int[] {0, 1, 2});
-        r2.add(new int[] {1, 0, 4});
-        faceData.add(r1);
-        faceData.add(r2);
+        List<int[]> faceData = new Vector<>();
+        faceData.add(new int[] {0, 1, 2});
+        faceData.add(new int[] {1, 0, 4});
 
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
@@ -160,13 +141,9 @@ public class PlyWriterTest {
                 .comment("this is test")
                 .comment("for Point Cloud Util v.0.0.3")
                 .defineElement("vertex")
-                .defineScalarProperty("x", PlyPropertyType.FLOAT)
-                .defineScalarProperty("y", PlyPropertyType.FLOAT)
-                .defineScalarProperty("z", PlyPropertyType.FLOAT)
-                .putData(vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT)
-                .putData(faceData)
+                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
@@ -194,17 +171,17 @@ public class PlyWriterTest {
         }
 
         @SuppressWarnings("unchecked")
-        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeNames = {"double", "double", "double"})
-        public List vertices() {
-            List<List> result = new ArrayList<>();
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeName = "double")
+        public List<double[]> vertices() {
+            List<double[]> result = new ArrayList<>();
             for (Point3d p : ps) {
-                result.add(Arrays.asList(p.x, p.y, p.z));
+                result.add(new double[]{p.x, p.y, p.z});
             }
             return result;
         }
 
         @SuppressWarnings("unchecked")
-        @WriteListToPly(element = "face", properties = "vertex_index")
+        @WriteListToPly(element = "face", property = "vertex_index")
         public List<int[]> edges() {
             return vertexIndices;
         }

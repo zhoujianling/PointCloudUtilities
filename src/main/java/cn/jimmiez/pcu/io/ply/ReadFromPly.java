@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 public @interface ReadFromPly {
 
     /**
-     * the properties describing the vertex
+     * the property describing the vertex
      */
     String[] properties() default {};
 

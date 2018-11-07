@@ -982,7 +982,7 @@ public class PlyReader {
 
     /**
      * read a 3d point cloud from a ply file.
-     * It is supposed that the properties of vertex is listed in such order:
+     * It is supposed that the property of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
      * @param file The point cloud file(ply)
      * @param pointCloud The point cloud object (with annotation ReadFromPly)

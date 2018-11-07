@@ -3,7 +3,6 @@ package cn.jimmiez.pcu.alg.skel;
 
 import javax.vecmath.Point3d;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -48,17 +47,16 @@ public class Skeleton extends DirectedGraph{
 
 
     @SuppressWarnings("unchecked")
-    @WriteScalarToPly(element = "nodes", properties = {"x", "y", "z"}, typeNames = {"double", "double", "double"})
-    public List nodes4Ply() {
-        List<List> result = new ArrayList<>();
+    @WriteScalarToPly(element = "nodes", properties = {"x", "y", "z"}, typeName = "double")
+    public List<double[]> nodes4Ply() {
+        List<double[]> result = new ArrayList<>();
         for (Point3d p : skeletonNodes) {
-            result.add(Arrays.asList(p.x, p.y, p.z));
-//            result.add(new double[] {p.x, p.y, p.z});
+            result.add(new double[] {p.x, p.y, p.z});
         }
         return result;
     }
 
-    @WriteListToPly(element = "edges", properties = "node_index")
+    @WriteListToPly(element = "edges", property = "node_index")
     public List<int[]> edges4Ply() {
         List<int[]> result = new ArrayList<>();
         for (int vi = 0; vi < skeletonNodes.size(); vi ++) {
