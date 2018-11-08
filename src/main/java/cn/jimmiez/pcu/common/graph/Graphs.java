@@ -1,12 +1,12 @@
 package cn.jimmiez.pcu.common.graph;
 
+
 import javafx.util.Pair;
 
 import javax.vecmath.Point3d;
 import java.util.*;
 
 public class Graphs {
-
 
     public static List<List<Integer>> connectedComponents(GraphStatic graph) {
         List<List<Integer>> subGraphs = new Vector<>();

@@ -1,8 +1,8 @@
 package cn.jimmiez.pcu.io.ply;
 
+import cn.jimmiez.pcu.model.Pair;
 import cn.jimmiez.pcu.model.PcuPointCloud3f;
 import cn.jimmiez.pcu.model.PcuPolygonMesh3f;
-import javafx.util.Pair;
 import org.junit.Test;
 
 import java.io.File;

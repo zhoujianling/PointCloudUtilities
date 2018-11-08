@@ -2,9 +2,7 @@ package cn.jimmiez.pcu.alg.skel;
 
 import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
-import cn.jimmiez.pcu.io.ply.PlyReader;
-import cn.jimmiez.pcu.io.ply.PlyWriter;
-import javafx.util.Pair;
+import cn.jimmiez.pcu.model.Pair;
 
 import javax.vecmath.Point3d;
 import java.io.File;
