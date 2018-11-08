@@ -9,6 +9,7 @@ import java.util.*;
 import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
 import static java.lang.Math.*;
 
+
 /**
  * An octree can be used to build spatial index for point cloud.
  */
