@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * The iterative implementation of Locally Optimal Projector, see paper:
- * Lipman, Y., Cohen-Or, D., Levin, D., & Tal-Ezer, H. (2007).
+ * Lipman, Y., Cohen-Or, D., Levin, D., &amp; Tal-Ezer, H. (2007).
  * Parameterization-free projection for geometry reconstruction.
  * ACM Transactions on Graphics (TOG), 26(3), 22.
  *
@@ -31,7 +31,7 @@ public class LocallyOptimalProjector {
 
     /**
      * compute default h, see paper:
-     * Huang, H., Li, D., Zhang, H., Ascher, U., & Cohen-Or, D. (2009).
+     * Huang, H., Li, D., Zhang, H., Ascher, U., &amp; Cohen-Or, D. (2009).
      * Consolidation of unorganized point clouds for surface reconstruction.
      * ACM transactions on graphics (TOG), 28(5), 176.
      * @return default h

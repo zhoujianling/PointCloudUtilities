@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  * The implementation of skeletonization method which is proposed in:
- * Verroust, A., & Lazarus, F. (2000). Extracting skeletal curves from 3D scattered data.
+ * Verroust, A., &amp; Lazarus, F. (2000). Extracting skeletal curves from 3D scattered data.
  * The Visual Computer, 16(1), 15-25.
  *
  * This method can work on the point cloud of **TREE-LIKE** object.
