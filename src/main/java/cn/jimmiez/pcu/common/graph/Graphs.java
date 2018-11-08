@@ -1,7 +1,8 @@
 package cn.jimmiez.pcu.common.graph;
 
 
-import javafx.util.Pair;
+
+import cn.jimmiez.pcu.model.Pair;
 
 import javax.vecmath.Point3d;
 import java.util.*;
