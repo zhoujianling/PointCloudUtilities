@@ -15,12 +15,12 @@ import java.lang.annotation.Target;
 public @interface PcuPlyData {
 
     /**
-     * the properties describing the vertex
+     * @return the properties describing the vertex
      */
     String[] properties() default {};
 
     /**
-     * once you specify the name of element, the ply reader will extract data of this element from ply file.
+     * @return once you specify the name of element, the ply reader will extract data of this element from ply file.
      * Vertices data will be added into the List as an array by default,
      */
     String[] element() default {};

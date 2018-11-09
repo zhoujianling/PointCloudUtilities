@@ -15,7 +15,9 @@ public interface GraphStatic {
      */
     double edgeWeight(int i, int j);
 
-    /** number of vertices **/
+    /**
+     * @return number of vertices
+     */
     int verticesCount();
 
     /**

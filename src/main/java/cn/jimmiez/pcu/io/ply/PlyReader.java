@@ -984,8 +984,10 @@ public class PlyReader {
      * read a 3d point cloud from a ply file.
      * It is supposed that the properties of vertex is listed in such order:
      * [ x, y, z, other data types ... ]
+     * @param <T> the type of point cloud class in which @PcuPlyData is used
      * @param file The point cloud file(ply)
      * @param pointCloud The point cloud object (with annotation PcuPlyData)
+     * @param listener callback
      */
     public <T> void readPointCloud(File file, T pointCloud, ReadListener listener) {
         if (! file.exists()) {
