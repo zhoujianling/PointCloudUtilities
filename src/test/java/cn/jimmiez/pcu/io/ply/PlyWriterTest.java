@@ -152,13 +152,13 @@ public class PlyWriterTest {
 
     private static class PlyEntity {
 
-        List<Point3d> ps = new ArrayList<>();
+        List<Point3d> vertices = new ArrayList<>();
         List<int[]> vertexIndices = new ArrayList<>();
 
         public PlyEntity(int n) {
             Random r = new Random(System.currentTimeMillis());
             for (int i = 0; i < n; i ++) {
-                ps.add(new Point3d(r.nextDouble(), r.nextDouble(), r.nextDouble()));
+                vertices.add(new Point3d(r.nextDouble(), r.nextDouble(), r.nextDouble()));
             }
             int l = Math.min(3, n / 2);
             for (int i = 0; i < n; i ++) {
@@ -170,19 +170,17 @@ public class PlyWriterTest {
             }
         }
 
-        @SuppressWarnings("unchecked")
         @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeName = "double")
         public List<double[]> vertices() {
             List<double[]> result = new ArrayList<>();
-            for (Point3d p : ps) {
+            for (Point3d p : vertices) {
                 result.add(new double[]{p.x, p.y, p.z});
             }
             return result;
         }
 
-        @SuppressWarnings("unchecked")
         @WriteListToPly(element = "face", property = "vertex_index")
-        public List<int[]> edges() {
+        public List<int[]> faces() {
             return vertexIndices;
         }
 

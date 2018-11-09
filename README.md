@@ -71,6 +71,39 @@ YourPointCloud pc = plyReader.readPointCloud(file, YourPointCloud.class);
 ```
 
 ### PlyWriter
+There are two choices for writing a ply file.
+#### Use annotation
+Firstly, declare a class for your PointCloud/Mesh using annotation WriteScalarToPly and WriteListToPly.
+```java
+    private class PlyEntity {
+
+        List<Point3d> vertices = new ArrayList<>();
+        List<int[]> vertexIndices = new ArrayList<>();
+
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeName = "double")
+        public List<double[]> vertices() {
+            List<double[]> result = new ArrayList<>();
+            for (Point3d p : vertices) {
+                result.add(new double[]{p.x, p.y, p.z});
+            }
+            return result;
+        }
+
+        @WriteListToPly(element = "face", property = "vertex_index")
+        public List<int[]> faces() {
+            return vertexIndices;
+        }
+
+    }
+```
+Secondly, use following code to write a ply:
+```java
+PlyEntity entity = new PlyEntity();
+// put your data into entity 
+PlyWriter writer = new PlyWriter();
+writer.write(entity, new File("ply path"));
+```
+#### Use prepare()
 Firstly, prepare your vertices data and face data.
 ```java
 List<float[]> vertexData = new Vector<>();
