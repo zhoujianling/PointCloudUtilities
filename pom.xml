@@ -65,6 +65,14 @@
       <artifactId>vecmath</artifactId>
       <version>1.5.2</version>
     </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.mkobos/pca_transform -->
+    <dependency>
+      <groupId>com.mkobos</groupId>
+      <artifactId>pca_transform</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
