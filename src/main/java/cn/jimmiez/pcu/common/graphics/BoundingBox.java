@@ -33,9 +33,18 @@ public class BoundingBox {
     }
 
     public double minX() {return minX;}
+
     public double maxX() {return maxX;}
+
     public double minY() {return minY;}
+
     public double maxY() {return maxY;}
+
     public double minZ() {return minZ;}
+
     public double maxZ() {return maxZ;}
+
+    public double diagonalLength() {
+        return Math.sqrt((maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) + (maxZ - minZ) * (maxZ - minZ));
+    }
 }

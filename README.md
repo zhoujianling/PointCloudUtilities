@@ -6,15 +6,15 @@
 
 
 ## Description
-
 This is a util for point cloud processing. 
+![](https://jimmie00x0000.github.io/img/Normals.png)
 
 ## Features
-* Read a ply file from a file which follows the [standard](http://paulbourke.net/dataformats/ply/).
-* Write a ply file.
+* Read and write a ply file.
 * Read an obj file.
 * Provide an octree for searching nearest neighbors.
-* Implement some algorithms about point cloud(normal estimator, projector, skeleton extraction, ...)
+* Estimate normals
+* Other point-cloud-based algorithms ...
 
 ## Build 
 Make sure maven has been installed and directory of maven has been added into PATH. Run following command:
@@ -149,8 +149,15 @@ Octree octree = new Octree();
 octree.buildIndex(points);
 int[] neighborIndices = octree.searchNearestNeighbors(n, i);
 ```
+
+## How to Visualize Point Cloud
+This library only provide api to operate 3d point cloud. 
+If you need to visualize point cloud in Java, you can refer to [PointCloudUtilSample](https://github.com/Jimmie00x0000/PointCloudUtilSample);
+
 ## TODO List
-* Add normal estimator for point cloud
-* Add some common algorithms
+* Delaunay triangulation
+* off reader
+* vtk reader 
+* more unit tests
 
 
