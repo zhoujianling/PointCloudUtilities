@@ -14,14 +14,17 @@ This is a util for point cloud processing.
 * Write a ply file.
 * Read an obj file.
 * Provide an octree for searching nearest neighbors.
-* Implement some algorithms (LOP, dijkstra ...)
+* Implement some algorithms about point cloud(normal estimator, projector, skeleton extraction, ...)
 
-## Build
-
+## Build 
 Make sure maven has been installed and directory of maven has been added into PATH. Run following command:
 ```shell
-mvn package
+mvn package -X
 ```
+
+## Download
+* Download the release via [Maven Central](https://mvnrepository.com/artifact/cn.jimmiez/pcutil).
+* Obtain **SNAPSHOT** release from [this page](https://oss.sonatype.org/content/repositories/snapshots/cn/jimmiez/pcutil/)
 
 ## How to Use It
 ### PlyReader

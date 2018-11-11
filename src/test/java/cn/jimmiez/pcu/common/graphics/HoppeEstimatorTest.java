@@ -12,7 +12,7 @@ import java.util.Vector;
 
 public class HoppeEstimatorTest {
 
-    private static double THRESHOLD = Math.PI / 5;
+    private static double THRESHOLD = Math.PI / 4;
 
     @Test
     public void estimateNormalsTest() {
