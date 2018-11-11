@@ -19,9 +19,10 @@ public class HoppeEstimatorTest {
         HoppeEstimator estimator = new HoppeEstimator();
         List<Point3d> data = generatePlaneData();
         List<Vector3d> normals = estimator.estimateNormals(data);
-        Vector3d thereticalNormal = new Vector3d(0, 0, 1);
+        Vector3d theoreticalNormal = new Vector3d(0, 0, 1);
+        assertTrue(normals.size() == data.size());
         for (Vector3d normal : normals) {
-            double angle = normal.angle(thereticalNormal);
+            double angle = normal.angle(theoreticalNormal);
 //            System.out.println("angle: " + angle);
             assertTrue(angle < THRESHOLD || Math.abs(angle - Math.PI) < THRESHOLD);
         }
