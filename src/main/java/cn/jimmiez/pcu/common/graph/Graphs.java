@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.common.graph;
 
 
 import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;
 import java.util.*;
@@ -11,9 +12,9 @@ public class Graphs {
 
     public static List<List<Integer>> connectedComponents(GraphStatic graph) {
         List<List<Integer>> subGraphs = new Vector<>();
-        boolean[] visited = new boolean[graph.verticesCount()];
-        for (int i = 0; i < graph.verticesCount(); i ++) visited[i] = false;
-        for (int i = 0; i < graph.verticesCount(); i ++) {
+        boolean[] visited = new boolean[graph.vertices().size()];
+        for (int i = 0; i < graph.vertices().size(); i ++) visited[i] = false;
+        for (int i = 0; i < graph.vertices().size(); i ++) {
 //            System.out.println("i = " + i);
             if (visited[i]) continue;
             List<Integer> subGraph = new ArrayList<>();
@@ -33,6 +34,19 @@ public class Graphs {
         return subGraphs;
     }
 
+    /**
+     * compute the number of edges in a graph
+     * @param graph a graph
+     * @return number of edges( e_ij e_ji are seen as two different edges )
+     */
+    public static int edgesCountOf(GraphStatic graph) {
+        int result = 0;
+        for (int vertexIndex : graph.vertices()) {
+            result += graph.adjacentVertices(vertexIndex).size();
+        }
+        return result;
+    }
+
     public static GraphStatic fullConnectedGraph(final List<Point3d> vertices) {
         final List<Integer> vt = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++) vt.add(i);
@@ -43,12 +57,12 @@ public class Graphs {
             }
 
             @Override
-            public int verticesCount() {
-                return vertices.size();
+            public List<Integer> adjacentVertices(int i) {
+                return vt;
             }
 
             @Override
-            public List<Integer> adjacentVertices(int i) {
+            public Collection<Integer> vertices() {
                 return vt;
             }
         };
@@ -57,7 +71,9 @@ public class Graphs {
 
     public static GraphStatic knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
         final Set<Pair<Integer, Integer>> knnEdges = new HashSet<>();
+        final List<Integer> verticesIndices = new ArrayList<>();
         for (int i = 0; i < knnIndices.size(); i ++) {
+            verticesIndices.add(i);
             for (int j : knnIndices.get(i)) {
                 knnEdges.add(new Pair<>(i, j));
             }
@@ -74,13 +90,13 @@ public class Graphs {
             }
 
             @Override
-            public int verticesCount() {
-                return vertices.size();
+            public List<Integer> adjacentVertices(int i) {
+                return knnIndicesList.get(i);
             }
 
             @Override
-            public List<Integer> adjacentVertices(int i) {
-                return knnIndicesList.get(i);
+            public Collection<Integer> vertices() {
+                return verticesIndices;
             }
         };
     }
@@ -110,6 +126,7 @@ public class Graphs {
 
     public static GraphStatic graph(final double[][]edges, final int[][]adjacency) {
         final List<List<Integer>> adjacencies = adjacentMatrix2List(adjacency);
+        final List<Integer> vertices = PcuCommonUtil.incrementalIntegerList(edges.length);
         return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
@@ -117,13 +134,13 @@ public class Graphs {
             }
 
             @Override
-            public int verticesCount() {
-                return edges.length;
+            public List<Integer> adjacentVertices(int i) {
+                return adjacencies.get(i);
             }
 
             @Override
-            public List<Integer> adjacentVertices(int i) {
-                return adjacencies.get(i);
+            public Collection<Integer> vertices() {
+                return vertices;
             }
         };
     }
@@ -143,6 +160,7 @@ public class Graphs {
     }
 
     public static GraphStatic empty() {
+        final List<Integer> vertices = new ArrayList<>();
         return new GraphStatic() {
             @Override
             public double edgeWeight(int i, int j) {
@@ -150,13 +168,13 @@ public class Graphs {
             }
 
             @Override
-            public int verticesCount() {
-                return 0;
+            public List<Integer> adjacentVertices(int i) {
+                return new Vector<>();
             }
 
             @Override
-            public List<Integer> adjacentVertices(int i) {
-                return new Vector<>();
+            public Collection<Integer> vertices() {
+                return vertices;
             }
         };
     }

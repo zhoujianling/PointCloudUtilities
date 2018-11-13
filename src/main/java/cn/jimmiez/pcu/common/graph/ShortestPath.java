@@ -15,20 +15,20 @@ public class ShortestPath {
      */
     public static List<Pair<List<Integer>, Weight>> dijkstra(GraphStatic graph, int rootIndex) {
         List<Pair<List<Integer>, Weight>> result = new Vector<>();
-        if (rootIndex < 0 || rootIndex >= graph.verticesCount()) {
+        if (rootIndex < 0 || rootIndex >= graph.vertices().size()) {
             throw new IllegalArgumentException("Invalid root index");
         }
         Set<Integer> sSet = new HashSet<>();
         Set<Integer> sExcluded = new HashSet<>();
 
-        for (int i = 0; i < graph.verticesCount(); i ++) {
+        for (int i = 0; i < graph.vertices().size(); i ++) {
             sExcluded.add(i);
             List<Integer> path = new Vector<>();
             path.add(i); // add the index of start point
             result.add(new Pair<>(path, new Weight(graph.edgeWeight(rootIndex, i))));
         }
 
-        while (sSet.size() < graph.verticesCount()) {
+        while (sSet.size() < graph.vertices().size()) {
 //            System.out.println("set size: " + sSet.size());
             int nearestVertexIndex = -1;
             double shortestPathLen = Double.POSITIVE_INFINITY;

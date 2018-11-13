@@ -1,7 +1,6 @@
 package cn.jimmiez.pcu.util;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +12,14 @@ public class PcuCommonUtil {
             result.add(new Point3d(point[0], point[1], point[2]));
         }
         return result;
+    }
+
+    public static ArrayList<Integer> incrementalIntegerList(int n) {
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int i = 0; i < n; i ++) {
+            list.add(i);
+        }
+        return list;
     }
 
 }

@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.common.graph;
 
+import java.util.Collection;
+
 /**
  * a read-only graph interface
  */
@@ -16,14 +18,13 @@ public interface GraphStatic {
     double edgeWeight(int i, int j);
 
     /**
-     * @return number of vertices
-     */
-    int verticesCount();
-
-    /**
      * @param i ith vertex
      * @return the index of adjacent vertices of ith vertex, i excluded
      */
-    Iterable<Integer> adjacentVertices(int i);
+    Collection<Integer> adjacentVertices(int i);
 
+    /**
+     * @return the collection of indices of vertex
+     */
+    Collection<Integer> vertices();
 }

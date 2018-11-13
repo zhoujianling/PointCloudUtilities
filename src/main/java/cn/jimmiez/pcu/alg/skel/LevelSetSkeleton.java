@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.alg.skel;
 import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
 import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;
 import java.io.File;
@@ -130,6 +131,7 @@ public class LevelSetSkeleton implements Skeletonization{
         }
         paths = ShortestPath.dijkstra(neighborhoodGraph, source);
         final List<List<Integer>> edges = new Vector<>();
+        final List<Integer> vertices = PcuCommonUtil.incrementalIntegerList(data.size());
         final Set<Pair<Integer, Integer>> edgesSet = new HashSet<>();
         for (int i = 0; i < data.size(); i ++) edges.add(new Vector<Integer>());
         for (int i = 0; i < paths.size(); i ++) {
@@ -159,13 +161,13 @@ public class LevelSetSkeleton implements Skeletonization{
             }
 
             @Override
-            public int verticesCount() {
-                return data.size();
+            public List<Integer> adjacentVertices(int i) {
+                return edges.get(i);
             }
 
             @Override
-            public List<Integer> adjacentVertices(int i) {
-                return edges.get(i);
+            public Collection<Integer> vertices() {
+                return vertices;
             }
         };
     }
@@ -407,7 +409,7 @@ public class LevelSetSkeleton implements Skeletonization{
          * @param sum the sum of distance between each point and its second nearest neighbor
          */
         void removeEdges(Graph graph, double sum) {
-            double wi = sum / graph.verticesCount();
+            double wi = sum / graph.vertices().size();
             List<int[]> edges = new Vector<>();
             for (Integer vi : graph.vertices()) {
                 for (Integer vj : graph.adjacentVertices(vi)) {

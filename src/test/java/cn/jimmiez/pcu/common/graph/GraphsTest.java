@@ -36,8 +36,14 @@ public class GraphsTest {
     }
 
     @Test
+    public void edgesCountTest() {
+        GraphStatic graph = generateGraph();
+        assertTrue(Graphs.edgesCountOf(graph) == 18);
+    }
+
+    @Test
     public void connectedComponentTest() {
-        GraphStatic graph = genData();
+        GraphStatic graph = generateGraph();
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
         assertTrue(conns.size() == 2);
 
@@ -53,7 +59,7 @@ public class GraphsTest {
         assertTrue(conns.size() == 1);
     }
 
-    private GraphStatic genData() {
+    private GraphStatic generateGraph() {
         final double[][] edges = new double[][] {
                 {0,   3,   2,   N,   4,   N,   N},
                 {3,   0,   0.5, 2,   0.8, N,   N},
