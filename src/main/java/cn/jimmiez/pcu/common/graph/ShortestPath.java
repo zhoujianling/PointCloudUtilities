@@ -42,7 +42,7 @@ public class ShortestPath {
             result.get(nearestVertexIndex).getKey().add(nearestVertexIndex);
             for (int index : sExcluded) {
                 double weightSum = shortestPathLen + graph.edgeWeight(nearestVertexIndex, index);
-                if (weightSum < result.get(index).getValue().val()) {
+                if (weightSum < result.get(index).getValue().val() || result.get(index).getValue().val() == Double.POSITIVE_INFINITY) {
                     result.get(index).getKey().add(nearestVertexIndex);
                     result.get(index).getValue().set(weightSum);
                 }
