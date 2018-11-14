@@ -24,7 +24,7 @@ public class ShortestPath {
         for (int i = 0; i < graph.vertices().size(); i ++) {
             sExcluded.add(i);
             List<Integer> path = new Vector<>();
-            path.add(i); // add the index of start point
+            path.add(rootIndex); // add the index of start point
             result.add(new Pair<>(path, new Weight(graph.edgeWeight(rootIndex, i))));
         }
 
@@ -43,7 +43,7 @@ public class ShortestPath {
             result.get(nearestVertexIndex).getKey().add(nearestVertexIndex);
             for (int index : sExcluded) {
                 double weightSum = shortestPathLen + graph.edgeWeight(nearestVertexIndex, index);
-                if (weightSum < result.get(index).getValue().val()) {
+                if (weightSum < result.get(index).getValue().val() || result.get(index).getValue().val() == Double.POSITIVE_INFINITY) {
                     result.get(index).getKey().add(nearestVertexIndex);
                     result.get(index).getValue().set(weightSum);
                 }

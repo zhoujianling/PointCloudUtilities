@@ -187,6 +187,7 @@ public class LevelSetSkeleton implements Skeletonization{
             }
         }
         computeEmpiricalK(furthestPointIndex);
+//        System.out.println("k is " + k);
         // following code divides level sets
         if (k < 1 || k >= data.size()) {
             throw new IllegalStateException("Improper k is set.");
@@ -195,14 +196,19 @@ public class LevelSetSkeleton implements Skeletonization{
         double intervalUpperBound = distanceMap.get(furthestPointIndex) * beta;
         double subInterval = (intervalUpperBound - intervalLowerBound) / k;
         levelSets = new Vector<>();
-        for (int i = 0; i < k; i ++) {
+        for (int i = 0; i < k + 2; i ++) {
             levelSets.add(new LevelSet());
         }
         for (int i = 0; i < data.size(); i ++) {
             double geodesicDistance = distanceMap.get(i);
-            if (geodesicDistance <= intervalLowerBound || geodesicDistance >= intervalUpperBound) continue;
-            int levelSetPosition = (int) ((geodesicDistance - intervalLowerBound) / subInterval);
-            levelSets.get(levelSetPosition).addPoint(data.get(i), i);
+            if (geodesicDistance <= intervalLowerBound) {
+                levelSets.get(0).addPoint(data.get(i), i);
+            } else if (geodesicDistance >= intervalUpperBound) {
+                levelSets.get(k + 1).addPoint(data.get(i), i);
+            } else {
+                int levelSetPosition = (int) ((geodesicDistance - intervalLowerBound) / subInterval) + 1;
+                levelSets.get(levelSetPosition).addPoint(data.get(i), i);
+            }
         }
     }
 
@@ -278,6 +284,7 @@ public class LevelSetSkeleton implements Skeletonization{
         LevelSet levelSet = levelSets.get(levelSetIndex);
         List<Integer> subGraph = levelSet.subGraphs.get(subGraphIndex);
         int randomPointIndex = levelSet.indexInPointCloud.get(subGraph.get(0));
+
         List<Integer> path = paths.get(randomPointIndex).getKey();
         for (int i = path.size() - 1; i >= 0; i --) {
             int nextPointIndex = path.get(i);
@@ -311,10 +318,11 @@ public class LevelSetSkeleton implements Skeletonization{
     private void determineSourcePoint() {
         if (source != INVALID_INDEX) return;
         List<Pair<List<Integer>, Weight>> paths = ShortestPath.dijkstra(neighborhoodGraph, RANDOM_SOURCE_INDEX);
-        double maximalDistance = Double.NEGATIVE_INFINITY;
+        double maximalDistance = Double.MIN_VALUE;
         for (int i = 0; i < paths.size(); i ++) {
             Pair<List<Integer>, Weight> pair = paths.get(i);
             if (pair.getValue().val() > maximalDistance) {
+                maximalDistance = pair.getValue().val();
                 source = i;
             }
         }
@@ -340,41 +348,6 @@ public class LevelSetSkeleton implements Skeletonization{
         return skeleton;
     }
 
-//    private void writeTestPly() {
-//        List vertexData = new Vector();
-//        for (Point3d p : skeleton.getSkeletonNodes()) {
-//            vertexData.add(Arrays.asList(p.x, p.y, p.z));
-//        }
-//        PlyWriter writer = new PlyWriter();
-//
-//        List faceData = new Vector();
-//        List r1 = new Vector();
-//        List r2 = new Vector();
-//        r1.add(new int[] {0, 1, 2});
-//        r2.add(new int[] {1, 0, 4});
-//        faceData.add(r1);
-//        faceData.add(r2);
-//        for ()
-//
-//        File tempPlyFile = new File("D:\\testSkel.ply");
-////        int code = writer.write(pointCloud, tempPlyFile);
-//        int code = writer
-//                .prepare()
-//                .format(PlyReader.FORMAT_ASCII)
-//                .comment("this is test")
-//                .comment("for Point Cloud Util v.0.0.3")
-//                .defineElement("vertex")
-//                .defineScalarProperties("x", PlyReader.TYPE_FLOAT)
-//                .defineScalarProperties("y", PlyReader.TYPE_FLOAT)
-//                .defineScalarProperties("z", PlyReader.TYPE_FLOAT)
-//                .putData(vertexData)
-//                .defineElement("face")
-//                .defineListProperty("vertex_indices", PlyReader.TYPE_UCHAR, PlyReader.TYPE_INT)
-//                .putData(faceData)
-//                .writeTo(tempPlyFile)
-//                .okay();
-//
-//    }
 
     private static class LevelSet {
 
@@ -435,7 +408,7 @@ public class LevelSetSkeleton implements Skeletonization{
             double secondaryEdgeSum = 0.0;
             for (int i = 0; i < points.size(); i ++) graph.addVertex(i);
             for (int i = 0; i < points.size(); i ++) {
-                int[] indices = octree.searchNearestNeighbors(5, i);
+                int[] indices = octree.searchNearestNeighbors(10, i);
                 for (int j = 0; j < indices.length; j ++) {
                     int index = indices[j];
                     double dis = points.get(i).distance(points.get(index));

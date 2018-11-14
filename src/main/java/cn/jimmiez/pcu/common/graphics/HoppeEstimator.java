@@ -92,6 +92,6 @@ public class HoppeEstimator implements NormalEstimator{
 
     private int defaultNeighborhoodSize(List<Point3d> data) {
         //// TODO: 2018/11/10 Automatic determine k
-        return Math.min(MINIMAL_POINTS - 1, 16);
+        return Math.max(MINIMAL_POINTS - 1, 16);
     }
 }
