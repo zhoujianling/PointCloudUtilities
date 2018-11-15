@@ -19,9 +19,9 @@ public class Octree {
      * the root node of the octree,
      * the size of root node is the bounding box of point cloud
      **/
-    OctreeNode root = null;
+    protected OctreeNode root = null;
 
-    private List<Point3d> points = null;
+    protected List<Point3d> points = null;
 
     /**
      * used to find an octree node by its index
@@ -30,7 +30,7 @@ public class Octree {
     protected Map<Long, OctreeNode> octreeIndices = new HashMap<>();
 
     /** the depth of this tree **/
-    private int depth = 1;
+    protected int depth = 1;
 
     /**
      * the max depth of this tree,
@@ -39,25 +39,49 @@ public class Octree {
      **/
     private static final int MAX_DEPTH = 10;
 
-    /**
-     * build spatial index for point cloud
-     * note that the length double array in List points must be 3
-     * @param points the point cloud
-     */
-    public void buildIndex(List<Point3d> points) {
-        this.depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))) + 1);
-        this.depth = min(this.depth, MAX_DEPTH);
-        this.depth = max(this.depth, 1);
+    public void buildIndex(List<Point3d> points, int depth) {
+        if (depth < 1) {
+            throw new IllegalArgumentException("Depth should be larger than 0.");
+        }
+        this.depth = depth;
+
+        if (points.size() < 1) {
+            System.err.println("Warning: input for buildIndex() is an empty list.");
+            return;
+        }
 
         this.octreeIndices.clear();
 
         this.points = points;
         this.root = new OctreeNode();
 
-        if (points.size() < 1) {
-            System.err.println("Warning: input for buildIndex() is empty list.");
-            return;
+        determineBox();
+        createOctree(1, this.root);
+
+        for (int i = 0; i < points.size(); i ++) {
+            Point3d xyz = points.get(i);
+            this.root.addPoint(xyz, i);
         }
+
+    }
+
+    /**
+     * build spatial index for point cloud
+     * note that the length double array in List points must be 3
+     * @param points the point cloud
+     */
+    public void buildIndex(List<Point3d> points) {
+        int depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))) + 1);
+        depth = min(depth, MAX_DEPTH);
+        depth = max(depth, 1);
+
+        this.buildIndex(points, depth);
+    }
+
+    /**
+     * determine bounding box of data points, expand the box to make it cubic
+     */
+    private void determineBox() {
         this.root.minX = points.get(0).x;
         this.root.maxX = points.get(0).x;
         this.root.minY = points.get(0).y;
@@ -73,14 +97,20 @@ public class Octree {
             this.root.maxZ = max(xyz.z, this.root.maxZ);
         }
 
-        createOctree(1, this.root);
-
-        for (int i = 0; i < points.size(); i ++) {
-            Point3d xyz = points.get(i);
-            this.root.addPoint(xyz, i);
-        }
+        double maxLength = Math.max(this.root.maxX - this.root.minX, Math.max(this.root.maxY - this.root.minY, this.root.maxZ - this.root.minZ)) + 1e-4;
+        this.root.minX = (this.root.minX + this.root.maxX) / 2 - maxLength / 2;
+        this.root.maxX = (this.root.minX + this.root.maxX) / 2 + maxLength / 2;
+        this.root.minY = (this.root.minY + this.root.maxY) / 2 - maxLength / 2;
+        this.root.maxY = (this.root.minY + this.root.maxY) / 2 + maxLength / 2;
+        this.root.minZ = (this.root.minZ + this.root.maxZ) / 2 - maxLength / 2;
+        this.root.maxZ = (this.root.minZ + this.root.maxZ) / 2 + maxLength / 2;
     }
 
+    /**
+     * partition the space recursively
+     * @param currentDepth  the depth of current octree node
+     * @param currentNode current octree node
+     */
     private void createOctree(int currentDepth, OctreeNode currentNode) {
         if (currentDepth == this.depth) {
             currentNode.indices = new ArrayList<>();
@@ -341,6 +371,34 @@ public class Octree {
 
         public List<Integer> getIndices() {
             return indices;
+        }
+
+        public OctreeNode[] getChildren() {
+            return children;
+        }
+
+        public double getMaxX() {
+            return maxX;
+        }
+
+        public double getMinX() {
+            return minX;
+        }
+
+        public double getMaxY() {
+            return maxY;
+        }
+
+        public double getMinY() {
+            return minY;
+        }
+
+        public double getMaxZ() {
+            return maxZ;
+        }
+
+        public double getMinZ() {
+            return minZ;
         }
     }
 
