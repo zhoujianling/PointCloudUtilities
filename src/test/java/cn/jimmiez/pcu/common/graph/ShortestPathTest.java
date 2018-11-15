@@ -1,9 +1,11 @@
 package cn.jimmiez.pcu.common.graph;
 
-import javafx.util.Pair;
+import cn.jimmiez.pcu.model.Pair;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
+
 import static org.junit.Assert.*;
 
 public class ShortestPathTest {
@@ -11,13 +13,13 @@ public class ShortestPathTest {
     @Test
     public void dijkstraTest() {
         GraphStatic graph = genData();
-        List<Pair<List<Integer>, Weight>> result = ShortestPath.dijkstra(graph, 0);
+        Map<Integer, Pair<List<Integer>, Double>> result = ShortestPath.dijkstra(graph, 0);
 
-        assertEquals(0.0, result.get(0).getValue().val(), 1e-7);
-        assertEquals(2.5, result.get(1).getValue().val(), 1e-7);
-        assertEquals(2.0, result.get(2).getValue().val(), 1e-7);
-        assertEquals(3.0, result.get(3).getValue().val(), 1e-7);
-        assertEquals(3.3, result.get(4).getValue().val(), 1e-7);
+        assertEquals(0.0, result.get(0).getValue(), 1e-7);
+        assertEquals(2.5, result.get(1).getValue(), 1e-7);
+        assertEquals(2.0, result.get(2).getValue(), 1e-7);
+        assertEquals(3.0, result.get(3).getValue(), 1e-7);
+        assertEquals(3.3, result.get(4).getValue(), 1e-7);
 
     }
 

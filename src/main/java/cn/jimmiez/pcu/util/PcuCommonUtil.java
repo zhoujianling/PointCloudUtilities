@@ -15,4 +15,11 @@ public class PcuCommonUtil {
         return result;
     }
 
+    public static List<Integer> incrementalIntegerList(int length) {
+        List<Integer> array = new ArrayList<>();
+        for (int i = 0; i < length; i ++) {
+            array.add(i);
+        }
+        return array;
+    }
 }

@@ -1,5 +1,6 @@
 package cn.jimmiez.pcu.common.graph;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class DirectedGraph implements Graph{
     }
 
     @Override
-    public Iterable<Integer> vertices() {
+    public Collection<Integer> vertices() {
         return edges.keySet();
     }
 
@@ -54,12 +55,7 @@ public class DirectedGraph implements Graph{
     }
 
     @Override
-    public int verticesCount() {
-        return edges.size();
-    }
-
-    @Override
-    public Iterable<Integer> adjacentVertices(int i) {
+    public Collection<Integer> adjacentVertices(int i) {
         return edges.get(i).keySet();
     }
 }

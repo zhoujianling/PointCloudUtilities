@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.common.graph;
 
+import java.util.Collection;
+
 /**
  * an abstract graph that support more operations
  */
@@ -15,5 +17,4 @@ public interface Graph extends GraphStatic {
 
     void removeVertex(int vi);
 
-    Iterable<Integer> vertices();
 }
