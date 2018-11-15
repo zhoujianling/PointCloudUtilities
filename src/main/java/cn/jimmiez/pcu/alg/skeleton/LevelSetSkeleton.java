@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg.skel;
+package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
@@ -6,7 +6,6 @@ import cn.jimmiez.pcu.model.Pair;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;
-import java.io.File;
 import java.util.*;
 
 /**
@@ -37,7 +36,7 @@ public class LevelSetSkeleton implements Skeletonization{
     private List<Double> distanceMap = null;
 
     /** the shortest paths and shortest distance **/
-    private List<Pair<List<Integer>, Weight>> paths;
+    private Map<Integer, Pair<List<Integer>, Double>> paths;
 
     /** the resulting curve skeleton **/
     private Skeleton skeleton = null;
@@ -76,7 +75,7 @@ public class LevelSetSkeleton implements Skeletonization{
         }
         skeleton = new Skeleton();
         distanceMap = new Vector<>();
-        paths = new Vector<>();
+        paths = new HashMap<>();
         octree = new Octree();
         octree.buildIndex(data);
         n = Math.min(data.size(), n);
@@ -135,8 +134,8 @@ public class LevelSetSkeleton implements Skeletonization{
         final Set<Pair<Integer, Integer>> edgesSet = new HashSet<>();
         for (int i = 0; i < data.size(); i ++) edges.add(new Vector<Integer>());
         for (int i = 0; i < paths.size(); i ++) {
-            Pair<List<Integer>, Weight> pair = paths.get(i);
-            distanceMap.add(pair.getValue().val());
+            Pair<List<Integer>, Double> pair = paths.get(i);
+            distanceMap.add(pair.getValue());
             List<Integer> path = pair.getKey();
             for (int j = 1; j < path.size(); j ++) {
                 int prevNodeIndex = path.get(j - 1);
@@ -317,12 +316,12 @@ public class LevelSetSkeleton implements Skeletonization{
      */
     private void determineSourcePoint() {
         if (source != INVALID_INDEX) return;
-        List<Pair<List<Integer>, Weight>> paths = ShortestPath.dijkstra(neighborhoodGraph, RANDOM_SOURCE_INDEX);
+        Map<Integer, Pair<List<Integer>, Double>> paths = ShortestPath.dijkstra(neighborhoodGraph, RANDOM_SOURCE_INDEX);
         double maximalDistance = Double.MIN_VALUE;
         for (int i = 0; i < paths.size(); i ++) {
-            Pair<List<Integer>, Weight> pair = paths.get(i);
-            if (pair.getValue().val() > maximalDistance) {
-                maximalDistance = pair.getValue().val();
+            Pair<List<Integer>, Double> pair = paths.get(i);
+            if (pair.getValue() > maximalDistance) {
+                maximalDistance = pair.getValue();
                 source = i;
             }
         }

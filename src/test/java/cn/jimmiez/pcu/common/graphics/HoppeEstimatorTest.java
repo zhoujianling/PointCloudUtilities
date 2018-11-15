@@ -1,9 +1,9 @@
 package cn.jimmiez.pcu.common.graphics;
 
+import cn.jimmiez.pcu.alg.normal.HoppeEstimator;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import javax.swing.text.html.HTMLEditorKit;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import java.util.List;

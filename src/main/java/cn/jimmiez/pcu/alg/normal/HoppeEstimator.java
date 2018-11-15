@@ -1,7 +1,8 @@
-package cn.jimmiez.pcu.common.graphics;
+package cn.jimmiez.pcu.alg.normal;
 
 import Jama.Matrix;
-import com.mkobos.pca_transform.PCA;
+import cn.jimmiez.pcu.alg.normal.NormalEstimator;
+import cn.jimmiez.pcu.common.graphics.Octree;
 import com.mkobos.pca_transform.covmatrixevd.EVD;
 
 import javax.vecmath.Point3d;
@@ -17,7 +18,7 @@ import java.util.Vector;
  * Surface reconstruction from unorganized points
  * (Vol. 26, No. 2, pp. 71-78). ACM.
  */
-public class HoppeEstimator implements NormalEstimator{
+public class HoppeEstimator implements NormalEstimator {
 
     private final int MINIMAL_POINTS = 5;
 

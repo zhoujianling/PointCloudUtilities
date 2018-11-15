@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg.skel;
+package cn.jimmiez.pcu.alg.skeleton;
 
 import javax.vecmath.Point3d;
 import java.util.List;

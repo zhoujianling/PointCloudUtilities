@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg.skel;
+package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.model.PcuPointCloud3f;

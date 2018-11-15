@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.common.graphics;
+package cn.jimmiez.pcu.alg.normal;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
