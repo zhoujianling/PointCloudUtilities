@@ -156,7 +156,7 @@ public class Octree {
 
         List<Pair<Integer, Double>> nearest = new ArrayList<>();
 
-        Point3d point = points.get(index);
+        final Point3d point = points.get(index);
         long leafNode = locateOctreeNode(this.root, point);
         List<Long> adjacentLeaves = obtainAdjacent26Indices(leafNode);
         List<Long> candidateLeaves = new ArrayList<>();
@@ -167,36 +167,23 @@ public class Octree {
         adjacentOctreeNodesIndices(candidateLeaves, k);
 //        System.out.println("candidate leaves: " + candidateLeaves.size());
 
-        for (long leafIndex : candidateLeaves) {
-            int[] coords = index2Coordinates(leafIndex);
-//            System.out.println("x: " + coords[0] + " y: " + coords[1] + " z: " + coords[2]);
-            for (int pointIndex : this.octreeIndices.get(leafIndex).indices) {
-                if (pointIndex == index) continue;
-                Point3d p = this.points.get(pointIndex);
-                double distance = p.distance(point);
-                if (nearest.size() < k) {
-                    nearest.add(new Pair<>(pointIndex, distance));
-                    if (nearest.size() == k) Collections.sort(nearest, new Comparator<Pair<Integer, Double>>() {
-                        @Override
-                        public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
-                            return o1.getValue() > o2.getValue() ? 1 : -1;
-                        }
-                    });
-                } else if (distance < nearest.get(k - 1).getValue()){
-                    int nearestIndex;
-                    for (nearestIndex = k - 1; nearestIndex >= 1; nearestIndex --) {
-                        if (distance > nearest.get(nearestIndex - 1).getValue()) break;
-                    }
-                    nearest.add(nearestIndex, new Pair<>(pointIndex, distance));
-                    nearest.remove(k);
-                }
+        int capacity = 0;
+        for (long leafIndex : candidateLeaves) capacity += this.octreeIndices.get(leafIndex).indices.size();
+        PriorityQueue<Integer> queue = new PriorityQueue<>(capacity, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer pointIndex1, Integer pointIndex2) {
+                Point3d p1 = points.get(pointIndex1);
+                Point3d p2 = points.get(pointIndex2);
+                return Double.compare(p1.distance(point), p2.distance(point));
             }
+        });
+        for (long leafIndex : candidateLeaves) {
+            queue.addAll(this.octreeIndices.get(leafIndex).indices);
         }
 
         int[] indices = new int[k];
         for (int i = 0; i < k; i ++) {
-            indices[i] = nearest.get(i).getKey();
-//            System.out.println("distance: " + nearest.get(i).getValue());
+            indices[i] = queue.poll();
         }
         return indices;
     }

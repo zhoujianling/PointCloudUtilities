@@ -4,9 +4,8 @@ import org.junit.Test;
 
 import javax.vecmath.Point3d;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+
 import static org.junit.Assert.*;
 
 public class OctreeTest {
