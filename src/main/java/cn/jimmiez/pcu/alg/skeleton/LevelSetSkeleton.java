@@ -84,7 +84,7 @@ public class LevelSetSkeleton implements Skeletonization{
     private void clean() {
         octree = null;
         distanceMap = null;
-        neighborhoodGraph = null;
+//        neighborhoodGraph = null;
         geodesicGraph = null;
         paths = null;
         levelSets = null;
@@ -442,4 +442,8 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     public int getK() {return this.k;}
+
+    public GraphStatic getNeighborhoodGraph() {
+        return neighborhoodGraph;
+    }
 }

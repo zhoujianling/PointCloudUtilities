@@ -22,4 +22,11 @@ public class PcuCommonUtil {
         return list;
     }
 
+    public static double max(double... ds) {
+        double result = ds[0];
+        for (double d : ds) {
+            result = Math.max(d, result);
+        }
+        return result;
+    }
 }
