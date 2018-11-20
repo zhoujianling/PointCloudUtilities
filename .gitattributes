@@ -1,3 +1,4 @@
 *.ply binary
 *.obj binary
 *.pcd binary
+*.off binary

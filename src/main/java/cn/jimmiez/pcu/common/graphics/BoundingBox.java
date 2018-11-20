@@ -12,6 +12,28 @@ public class BoundingBox {
     private double minZ = Double.NaN;
     private double maxZ = Double.NaN;
 
+    public BoundingBox() {
+        this(0, 1, 0, 1, 0, 1);
+    }
+
+    public BoundingBox(double minx, double maxx, double miny, double maxy, double minz, double maxz) {
+        if (minx > maxx) {
+            throw new IllegalArgumentException("minX larger than maxX");
+        }
+        if (miny > maxy) {
+            throw new IllegalArgumentException("minY larger than maxY");
+        }
+        if (minz > maxz) {
+            throw new IllegalArgumentException("minZ larger than maxZ");
+        }
+        this.minX = minx;
+        this.maxX = maxx;
+        this.minY = miny;
+        this.maxY = maxy;
+        this.minZ = minz;
+        this.maxZ = maxz;
+    }
+
     public static BoundingBox of(List<Point3d> data) {
         BoundingBox box = new BoundingBox();
         if (data.size() < 1) return box;

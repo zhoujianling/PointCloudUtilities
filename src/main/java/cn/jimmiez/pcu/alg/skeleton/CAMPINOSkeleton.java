@@ -10,7 +10,7 @@ public class CAMPINOSkeleton implements Skeletonization {
 
 
     private void generateOctree() {
-
+        // // TODO: 2018/11/20 a particular octree need to be implemented ...
     }
 
     private void extractGraph() {

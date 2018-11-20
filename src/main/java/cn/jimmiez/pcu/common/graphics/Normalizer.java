@@ -23,4 +23,8 @@ public class Normalizer {
         double ratio = length / maxLength;
         for (Point3d p : data) p.scale(ratio);
     }
+
+    public double getLength() {
+        return length;
+    }
 }
