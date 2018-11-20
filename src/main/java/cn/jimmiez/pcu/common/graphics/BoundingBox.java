@@ -34,9 +34,13 @@ public class BoundingBox {
         this.maxZ = maxz;
     }
 
+    private static BoundingBox empty() {
+        return new BoundingBox(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+    }
+
     public static BoundingBox of(List<Point3d> data) {
+        if (data.size() < 1) return empty();
         BoundingBox box = new BoundingBox();
-        if (data.size() < 1) return box;
         box.minX =  data.get(0).x;
         box.maxX =  data.get(0).x;
         box.minY =  data.get(0).y;

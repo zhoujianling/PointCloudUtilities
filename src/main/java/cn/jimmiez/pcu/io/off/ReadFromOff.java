@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * This getter should return a list composed of some arrays, where each
  * array should have three floats by default. e.g.
  *
- * public List&ltfloat[]&lt points() { ... }
+ * public List&lt;float[]&lt; points() { ... }
  *
  * More details about OFF file format can be found in:
  * https://people.sc.fsu.edu/~jburkardt/data/off/off.html
