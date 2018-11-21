@@ -36,8 +36,8 @@ public class PlyReaderTest {
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
         assertNotNull(pointCloud);
-        assertTrue(pointCloud.getPoint3ds().size() == 4770);
-        assertTrue(pointCloud.getPoint3ds().get(1000).length == 3);
+        assertTrue(pointCloud.getPoints().size() == 4770);
+        assertTrue(pointCloud.getPoints().get(1000).length == 3);
     }
 
 
@@ -47,8 +47,8 @@ public class PlyReaderTest {
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
         PcuPolygonMesh3f pointCloud = reader.readPointCloud(file, PcuPolygonMesh3f.class);
         assertNotNull(pointCloud);
-        assertTrue(pointCloud.getPoint3ds().size() == 881);
-        assertTrue(pointCloud.getPoint3ds().get(200).length == 3);
+        assertTrue(pointCloud.getPoints().size() == 881);
+        assertTrue(pointCloud.getPoints().get(200).length == 3);
         assertTrue(pointCloud.getFaces().size() == 1288);
     }
 
@@ -62,7 +62,7 @@ public class PlyReaderTest {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
         PcuPolygonMesh3f pointCloud = reader.readPointCloud(file, PcuPolygonMesh3f.class);
-        assertTrue(pointCloud.getPoint3ds().size() == 27788);
+        assertTrue(pointCloud.getPoints().size() == 27788);
         assertTrue(pointCloud.getFaces().size() == 52113);
     }
 

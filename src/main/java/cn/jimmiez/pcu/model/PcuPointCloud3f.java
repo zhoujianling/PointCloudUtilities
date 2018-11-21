@@ -10,10 +10,10 @@ import java.util.List;
  * a default entity class representing a point cloud
  */
 public class PcuPointCloud3f {
-    private List<float[]> point3ds;
+    private List<float[]> points;
 
     public PcuPointCloud3f() {
-        point3ds = new ArrayList<>();
+        points = new ArrayList<>();
     }
 
     @ReadFromOff
@@ -21,8 +21,8 @@ public class PcuPointCloud3f {
             properties = {"x", "y", "z"},
             element = {"vertex", "vertices"}
     )
-    public List<float[]> getPoint3ds() {
-        return point3ds;
+    public List<float[]> getPoints() {
+        return points;
     }
 
 }

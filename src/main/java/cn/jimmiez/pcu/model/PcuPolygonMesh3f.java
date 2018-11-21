@@ -1,27 +1,30 @@
 package cn.jimmiez.pcu.model;
 
+import cn.jimmiez.pcu.io.off.ReadFromOff;
 import cn.jimmiez.pcu.io.ply.ReadFromPly;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PcuPolygonMesh3f {
-    private List<float[]> point3ds;
+    private List<float[]> points;
     private List<int[]> faces;
 
     public PcuPolygonMesh3f() {
-        point3ds = new ArrayList<>();
+        points = new ArrayList<>();
         faces = new ArrayList<>();
     }
 
+    @ReadFromOff
     @ReadFromPly(
             properties = {"x", "y", "z"},
             element = {"vertex", "vertices"}
     )
-    public List<float[]> getPoint3ds() {
-        return point3ds;
+    public List<float[]> getPoints() {
+        return points;
     }
 
+    @ReadFromOff(dataType = ReadFromOff.FACES)
     @ReadFromPly(
             properties = {"vertex_indices"},
             element = {"face"}

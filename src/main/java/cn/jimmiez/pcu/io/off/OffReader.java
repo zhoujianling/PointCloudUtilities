@@ -1,7 +1,12 @@
 package cn.jimmiez.pcu.io.off;
 
+import cn.jimmiez.pcu.util.PcuReflectUtil;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -77,19 +82,69 @@ public class OffReader {
                         state = STATE_ERROR;
                         break;
                     }
+                    boolean success = true;
                     for (int i = 0; i < data.verticesNum; i ++) {
+
                         String line = fetchNextLine(scanner);
                         if (line == null) {
+                            System.err.println("Fewer vertices than expected.");
+                            success = false;
+                            break;
+                        }
 
+                        String[] values = line.trim().split("(\\s)+");
+                        float[] xyz = new float[3];
+                        int j;
+                        for (j = 0; j < 3; j ++) xyz[j] = Float.valueOf(values[j]);
+                        data.vertices.add(xyz);
+
+                        if (values.length >= 7) {
+                            float[] rgba = new float[4];
+                            for (; j < 7; j ++) rgba[j - 3] = Float.valueOf(values[j]);
+                            data.vertexColors.add(rgba);
                         }
 
                     }
-                    state = STATE_READING_FACES;
+                    if (success) {
+                        state = STATE_READING_FACES;
+                    } else {
+                        state = STATE_ERROR;
+                    }
                     break;
                 }
                 case STATE_READING_FACES: {
+                    if (data.facesNum == OffData.UNSET) {
+                        System.err.println("Invalid number of faces.");
+                        state = STATE_ERROR;
+                        break;
+                    }
+                    boolean success = true;
+                    for (int i = 0; i < data.facesNum; i ++) {
+                        String line = fetchNextLine(scanner);
+                        if (line == null) {
+                            System.err.println("Fewer faces than expected.");
+                            success = false;
+                            break;
+                        }
+                        String[] values = line.trim().split("(\\s)+");
+                        int arrayLength = Integer.valueOf(values[0]);
+                        int[] indices = new int[arrayLength];
+                        int j;
+                        for (j = 1; j < arrayLength + 1; j ++) indices[j - 1] = Integer.valueOf(values[j]);
+                        data.faces.add(indices);
 
-                    state = STATE_COMPLETE;
+                        if (values.length >= arrayLength + 5) {
+                            float[] rgba = new float[4];
+                            for (; j < arrayLength + 5; j ++) rgba[j - arrayLength - 1] = Float.valueOf(values[j]);
+                            data.faceColors.add(rgba);
+                        }
+                    }
+
+                    if (success) {
+                        state = STATE_COMPLETE;
+                    } else {
+                        state = STATE_ERROR;
+                    }
                     break;
                 }
                 case STATE_COMPLETE: {
@@ -112,18 +167,73 @@ public class OffReader {
         return data;
     }
 
-    public void read(File file, Object object) throws FileNotFoundException {
+    private void injectData(OffData data, Object object) {
+        List<Method> methods = PcuReflectUtil.fetchAllMethods(object);
+        try {
+            for (Method method : methods) {
+                ReadFromOff annotation = method.getAnnotation(ReadFromOff.class);
+                if (annotation != null) {
+                    if (annotation.dataType() == ReadFromOff.VERTICES) {
+                        injectVerticesData(method, data, object);
+                    } else if (annotation.dataType() == ReadFromOff.FACES) {
+                        injectFacesData(method, data, object);
+                    } else if (annotation.dataType() == ReadFromOff.VERTEX_COLORS) {
+                        injectVertexColorsData(method, data, object);
+                    } else if (annotation.dataType() == ReadFromOff.FACE_COLORS) {
+                        injectFaceColorsData(method, data, object);
+                    }
+                }
+            }
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            System.err.println("Privater getter with ReadFromOff annotation.");
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void injectVerticesData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
+        List<float[]> list = (List<float[]>) method.invoke(object);
+        list.addAll(data.vertices);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void injectFacesData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
+        List<int[]> list = (List<int[]>) method.invoke(object);
+        list.addAll(data.faces);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void injectVertexColorsData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
+        List<float[]> list = (List<float[]>) method.invoke(object);
+        list.addAll(data.vertexColors);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void injectFaceColorsData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
+        List<float[]> list = (List<float[]>) method.invoke(object);
+        list.addAll(data.faceColors);
+    }
+
+    public <T> T read(File file, Class<T> clazz) throws FileNotFoundException {
         OffData data = read(file);
         // inject into object ....
+        T object = null;
+        try {
+            object= clazz.newInstance();
+            injectData(data, object);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return object;
     }
 
     public static class OffData {
 
         private static final int UNSET = -1;
-
-        private static final String MODE_XYZ_FACE = "xyz_face";
-        private static final String MODE_XYZ_RGBA_FACE = "xyz_rgba_face";
-        private static final String MODE_XYZ_FACE_RGBA = "xyz_face_rgba";
 
         /** number of vertices **/
         private int verticesNum = UNSET;
@@ -140,7 +250,11 @@ public class OffReader {
         /** face data, each array is composed of indices of vertices **/
         private List<int[]> faces = new ArrayList<>();
 
-        private String mode = null;
+        /** optional face colors **/
+        private List<float[]> faceColors = new ArrayList<>();
+
+        /** optional vertex colors **/
+        private List<float[]> vertexColors = new ArrayList<>();
 
         public int getVerticesNum() {
             return verticesNum;
@@ -160,6 +274,14 @@ public class OffReader {
 
         public List<int[]> getFaces() {
             return faces;
+        }
+
+        public List<float[]> getFaceColors() {
+            return faceColors;
+        }
+
+        public List<float[]> getVertexColors() {
+            return vertexColors;
         }
     }
 

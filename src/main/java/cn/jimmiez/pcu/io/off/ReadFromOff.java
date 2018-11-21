@@ -20,11 +20,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ReadFromOff {
 
-    /**
-     * a vertex in mesh is an x-y-z point by default
-     * if enableRGBA() returns true, the vertex is x-y-z-r-g-b-a
-     * @return if RGBA info is added to vertex
-     */
-    boolean enableRGBA() default false;
+    int dataType() default VERTICES;
+
+    int VERTICES = 0;
+    int FACES = 1;
+    int VERTEX_COLORS = 2;
+    int FACE_COLORS = 3;
 
 }
