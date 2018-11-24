@@ -10,23 +10,22 @@ import java.lang.annotation.Target;
 public @interface WriteListToPly {
 
     /**
-     * @return the property describing the vertex
+     * @return the name of this list-type property
      */
-    String property() default "list";
+    String property() default "vertex_index";
 
     /**
-     * @return the type of list size, e.g., "uchar"
+     * @return the type of list size, see {@link PlyPropertyType}.
      */
-    String sizeType() default "uchar";
+    PlyPropertyType sizeType() default PlyPropertyType.UCHAR;
 
     /**
-     * @return the type of values in the list, e.g., "uint"
+     * @return the type of values in the list, see {@link PlyPropertyType}.
      */
-    String valType() default "int";
+    PlyPropertyType valType() default PlyPropertyType.INT;
 
     /**
-     * once you specify the name of element, the ply reader will extract data of this element from ply file.
-     * Vertices data will be added into the List as an array by default,
+     * @return the name of current ply-element
      */
     String element() default "null";
 

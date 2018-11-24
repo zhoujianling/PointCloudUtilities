@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.jimmiez.pcu.common.graph.DirectedGraph;
+import cn.jimmiez.pcu.io.ply.PlyPropertyType;
 import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import cn.jimmiez.pcu.io.ply.WriteListToPly;
 import cn.jimmiez.pcu.io.ply.WriteScalarToPly;
@@ -48,7 +49,7 @@ public class Skeleton extends DirectedGraph{
 
 
     @SuppressWarnings("unchecked")
-    @WriteScalarToPly(element = "nodes", properties = {"x", "y", "z"}, typeName = "double")
+    @WriteScalarToPly(element = "nodes", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
     @ReadFromPly(element = "nodes", properties = {"x", "y", "z"})
     public List<double[]> nodes4Ply() {
         List<double[]> result = new ArrayList<>();

@@ -10,18 +10,17 @@ import java.lang.annotation.Target;
 public @interface WriteScalarToPly {
 
     /**
-     * @return the property describing the vertex
+     * @return the names of properties
      */
     String[] properties() default {};
 
     /**
-     * @return the type of property, e.g., "float"
+     * @return the type of property, see {@link PlyPropertyType}.
      */
-    String typeName() default "uint";
+    PlyPropertyType type() default PlyPropertyType.UINT;
 
     /**
-     * once you specify the name of element, the ply reader will extract data of this element from ply file.
-     * Vertices data will be added into the List as an array by default,
+     * @return name of current ply-element
      */
     String element() default "null";
 

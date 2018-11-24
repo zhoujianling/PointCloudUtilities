@@ -40,14 +40,14 @@ public class PlyWriter {
                     if (scalarToPly.properties().length < 1) continue;
                     List data = (List) m.invoke(object);
                     String[] propertyNames = scalarToPly.properties();
-                    PlyPropertyType type = PlyReader.recognizeType(scalarToPly.typeName());
+                    PlyPropertyType type = scalarToPly.type();
                     request.defineScalarProperties(propertyNames, type, data);
                 }
                 if (hasWriteListToPly(m)) {
                     WriteListToPly listToPly = m.getAnnotation(WriteListToPly.class);
                     List data = (List) m.invoke(object);
-                    PlyPropertyType sizeType = PlyReader.recognizeType(listToPly.sizeType());
-                    PlyPropertyType valType = PlyReader.recognizeType(listToPly.valType());
+                    PlyPropertyType sizeType = listToPly.sizeType();
+                    PlyPropertyType valType = listToPly.valType();
                     request.defineListProperty(listToPly.property(), sizeType, valType, data);
                 }
 

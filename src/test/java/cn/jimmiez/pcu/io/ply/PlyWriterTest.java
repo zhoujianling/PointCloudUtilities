@@ -170,7 +170,7 @@ public class PlyWriterTest {
             }
         }
 
-        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeName = "double")
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
         public List<double[]> vertices() {
             List<double[]> result = new ArrayList<>();
             for (Point3d p : vertices) {

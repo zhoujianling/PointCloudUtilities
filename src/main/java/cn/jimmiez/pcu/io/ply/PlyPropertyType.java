@@ -11,6 +11,8 @@ public enum PlyPropertyType {
     UINT(4, "uint"),
     FLOAT(4, "float"),
     DOUBLE(8, "double"),
+
+    // list type
     LIST(0, "list");
 
     private int size = 0;
