@@ -13,7 +13,7 @@ public class PlyElement {
 
     String elementName;
 
-    PlyElement() {
+    public PlyElement() {
         this.propertiesName = new ArrayList<>();
         this.propertiesType = new ArrayList<>();
     }

@@ -84,7 +84,7 @@ Firstly, declare a class for your PointCloud/Mesh using annotation WriteScalarTo
         List<Point3d> vertices = new ArrayList<>();
         List<int[]> vertexIndices = new ArrayList<>();
 
-        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, typeName = "double")
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
         public List<double[]> vertices() {
             List<double[]> result = new ArrayList<>();
             for (Point3d p : vertices) {
