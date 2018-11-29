@@ -80,6 +80,7 @@ public class PlyData implements Iterable<PlyElement2>{
         public PlyElement2 next() {
             int[] startPositions = new int[header.getElementsNumber().get(elementPointer).getValue()];
             for (int linePointer = 0; linePointer < header.getElementsNumber().get(elementPointer).getValue(); linePointer ++) {
+                startPositions[linePointer] = bytePointer;
 
             }
             PlyElement2 element2 = new PlyElement2(bytes, bytePointer, startPositions);
