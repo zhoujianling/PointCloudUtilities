@@ -1,27 +1,39 @@
 package cn.jimmiez.pcu.io.ply2;
 
-import cn.jimmiez.pcu.io.ply.PlyHeader;
-import cn.jimmiez.pcu.io.ply.PlyReader;
+
+import cn.jimmiez.pcu.model.Pair;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.file.Files;
 import java.util.Iterator;
 
 public class PlyData implements Iterable<PlyElement2>{
 
     private Iterator<PlyElement2> iterator = null;
 
-    private PlyHeader header = null;
+    private PlyHeader2 header = null;
 
     byte[] bytes = null;
 
-    public PlyData(File file, PlyHeader header) {
+    public PlyData(File file, PlyHeader2 header) throws IOException {
         this.header = header;
-        if (header.getPlyFormat() == PlyReader.FORMAT_ASCII) {
-            iterator = new AsciiIterator();
-        } else {
-            iterator = new BinaryIterator();
+        switch (header.getFormat()) {
+            case ASCII:
+                iterator = new AsciiIterator();
+                break;
+            case BINARY_BIG_ENDIAN:
+                iterator = new BinaryIterator(ByteOrder.BIG_ENDIAN);
+                break;
+            case BINARY_LITTLE_ENDIAN:
+                iterator = new BinaryIterator(ByteOrder.LITTLE_ENDIAN);
+                break;
+            default:
+                throw new IOException("Unsupported Ply format: " + header.getFormat());
         }
+        bytes = Files.readAllBytes(file.toPath());
     }
 
     @Override
@@ -31,24 +43,24 @@ public class PlyData implements Iterable<PlyElement2>{
 
     private class AsciiIterator implements Iterator<PlyElement2> {
 
-        private int bytePointer = header.getHeaderBytes() + 1;
+        private int bytePointer = header.getBytesCount();
 
         private int elementPointer = 0;
 
         @Override
         public boolean hasNext() {
-            return elementPointer < header.getElementsNumber().size();
+            return elementPointer < header.getElementHeaders().size();
         }
 
         @Override
         public PlyElement2 next() {
-            int[] startPositions = new int[header.getElementsNumber().get(elementPointer).getValue()];
+            int[] startPositions = new int[header.getElementHeaders().get(elementPointer).number];
             int linePtr = 0;
             for (; bytePointer < bytes.length; bytePointer ++) {
                 if (bytes[bytePointer] != '\n') continue;
                 startPositions[linePtr] = bytePointer + 1;
                 linePtr += 1;
-                if (linePtr >= header.getElementsNumber().get(elementPointer).getValue()) break;
+                if (linePtr >= header.getElementHeaders().get(elementPointer).number) break;
             }
             PlyElement2 element2 = new PlyElement2(bytes, bytePointer, startPositions);
             elementPointer += 1;
@@ -63,32 +75,61 @@ public class PlyData implements Iterable<PlyElement2>{
 
     private class BinaryIterator implements Iterator<PlyElement2> {
 
-        private int bytePointer = header.getHeaderBytes() + 1;
+        private int bytePointer = header.getBytesCount();
 
         private int elementPointer = 0;
 
-        BinaryIterator() {
+        private ByteOrder order = null;
 
+        BinaryIterator(ByteOrder order) {
+            this.order = order;
         }
 
         @Override
         public boolean hasNext() {
-            return elementPointer < header.getElementsNumber().size();
+            return elementPointer < header.getElementHeaders().size();
         }
 
         @Override
         public PlyElement2 next() {
-            int[] startPositions = new int[header.getElementsNumber().get(elementPointer).getValue()];
-            for (int linePointer = 0; linePointer < header.getElementsNumber().get(elementPointer).getValue(); linePointer ++) {
-                startPositions[linePointer] = bytePointer;
-
+            int[] startPositions = new int[header.getElementHeaders().get(elementPointer).number];
+            PlyElement2 element2 = null;
+            try {
+                for (int linePointer = 0; linePointer < header.getElementHeaders().get(elementPointer).number; linePointer ++) {
+                    startPositions[linePointer] = bytePointer;
+                    marchOneLine();
+                }
+                element2 = new PlyElement2(bytes, bytePointer, startPositions);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("No enough bytes when marching one line.");
             }
-            PlyElement2 element2 = new PlyElement2(bytes, bytePointer, startPositions);
             elementPointer += 1;
             return element2;
         }
 
-
+        private void marchOneLine() throws IOException{
+            PlyHeader2.PlyElementHeader elementHeader = header.getElementHeaders().get(elementPointer);
+            for (Pair<String, PlyPropertyType2> pair : elementHeader.getProperties()) {
+                PlyPropertyType2 type = pair.getValue();
+                if (type instanceof PlyPropertyType2.PlyScalarType) {
+                    bytePointer += ((PlyPropertyType2.PlyScalarType)type).dataType().size();
+                } else if (type instanceof PlyPropertyType2.PlyListType) {
+                    PcuDataType sizeType = ((PlyPropertyType2.PlyListType)type).sizeType();
+                    PcuDataType dataType = ((PlyPropertyType2.PlyListType)type).dataType();
+                    int sizeOfSize = sizeType.size();
+                    if (bytePointer + sizeOfSize > bytes.length) throw new IOException("Space not enough, current byte pointer: " + bytePointer);
+                    ByteBuffer buffer = ByteBuffer.wrap(bytes, bytePointer, sizeOfSize);
+                    buffer.order(order);
+                    int size = PlyElement2.parseSizeOfList(buffer, sizeType);
+                    bytePointer += sizeOfSize;
+                    // **********************
+                    int sizeOfData = dataType.size() * size;
+                    if (bytePointer + sizeOfData > bytes.length) throw new IOException("Space not enough");
+                    bytePointer += sizeOfData;
+                }
+            }
+        }
 
         @Override
         public void remove() {

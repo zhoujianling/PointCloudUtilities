@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import static cn.jimmiez.pcu.io.ply.PlyReader.*;
-
 @SuppressWarnings("Duplicates")
 public class PlyReader2 {
 
@@ -31,7 +29,9 @@ public class PlyReader2 {
             FileInputStream stream = new FileInputStream(file);
             Scanner scanner = new Scanner(stream);
             PlyHeader2 header = readHeader(scanner);
-//            PlyData data = new PlyData(file, header);
+            PlyData data = new PlyData(file, header);
+            for (PlyElement2 element2 : data) {
+            }
             stream.close();
         } catch (InstantiationException e) {
             e.printStackTrace();

@@ -2,6 +2,8 @@ package cn.jimmiez.pcu.io.ply2;
 
 import cn.jimmiez.pcu.io.ply2.PlyProperties;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 public class PlyElement2 implements Iterable<PlyProperties>{
@@ -22,6 +24,26 @@ public class PlyElement2 implements Iterable<PlyProperties>{
     }
 
     private Iterator<PlyProperties> iterator = null;
+
+    public static int parseSizeOfList(ByteBuffer buffer, PcuDataType dataType) throws IOException {
+        switch (dataType) {
+            case CHAR:
+            case UCHAR:
+                return (int)buffer.get();
+            case SHORT:
+            case USHORT:
+                return (int)buffer.getShort();
+            case INT:
+            case UINT:
+                return buffer.getInt();
+            case FLOAT:
+                return (int)buffer.getFloat();
+            case DOUBLE:
+                return (int)buffer.getDouble();
+            default:
+                throw new IOException("Unsupported data type: " + dataType);
+        }
+    }
 
     private class AsciiIterator implements Iterator<PlyProperties>{
 

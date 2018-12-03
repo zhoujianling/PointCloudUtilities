@@ -19,4 +19,14 @@ public class PlyReader2Test {
 //        assertTrue(pointCloud.getPoints().size() == 4770);
 //        assertTrue(pointCloud.getPoints().get(1000).length == 3);
     }
+
+    @Test
+    public void readBinaryPlyDataTest_2() throws IOException {
+        PlyReader2 reader = new PlyReader2();
+        File file = new File(PlyReader2Test.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
+        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
+//        assertNotNull(pointCloud);
+//        assertTrue(pointCloud.getPoints().size() == 4770);
+//        assertTrue(pointCloud.getPoints().get(1000).length == 3);
+    }
 }
