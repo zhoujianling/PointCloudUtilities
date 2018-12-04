@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.io.ply.PlyReader;
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
+import cn.jimmiez.pcu.model.PointCloud3f;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ public class LevelSetSkeletonTest {
     public void skeletonizeTest() {
         PlyReader reader = new PlyReader();
         File file = new File(LevelSetSkeleton.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
-        PcuPointCloud3f pointCloud3f = reader.readPointCloud(file, PcuPointCloud3f.class);
+        PointCloud3f pointCloud3f = reader.readPointCloud(file, PointCloud3f.class);
         List<Point3d> vertices = PcuCommonUtil.arrayList2VecList(pointCloud3f.getPoints());
         LevelSetSkeleton skeleton = new LevelSetSkeleton();
         skeleton.setN(10);

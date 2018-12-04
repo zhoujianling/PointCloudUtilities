@@ -1,6 +1,6 @@
 package cn.jimmiez.pcu.common.graph;
 
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 import org.junit.Test;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.io.off;
 
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
-import cn.jimmiez.pcu.model.PcuPolygonMesh3f;
+import cn.jimmiez.pcu.model.PointCloud3f;
+import cn.jimmiez.pcu.model.PolygonMesh3f;
 import org.junit.Test;
 
 import java.io.File;
@@ -21,7 +21,7 @@ public class OffReaderTest {
         assertTrue(data.getFaceColors().size() == 0 || data.getFaceColors().size() == data.getFacesNum());
         assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == data.getVerticesNum());
 
-        PcuPointCloud3f pointCloud = reader.read(file, PcuPointCloud3f.class);
+        PointCloud3f pointCloud = reader.read(file, PointCloud3f.class);
         assertTrue(pointCloud.getPoints().size() == 8);
     }
 
@@ -34,7 +34,7 @@ public class OffReaderTest {
         assertTrue(data.getFaces().size() == data.getFacesNum());
         assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == data.getVerticesNum());
 
-        PcuPolygonMesh3f pointCloud = reader.read(file, PcuPolygonMesh3f.class);
+        PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
         assertTrue(pointCloud.getPoints().size() == 8);
         assertTrue(pointCloud.getFaces().size() == 6);
     }

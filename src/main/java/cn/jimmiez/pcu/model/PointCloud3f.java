@@ -6,13 +6,14 @@ import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PcuPolygonMesh3f {
+/**
+ * a default entity class representing a point cloud
+ */
+public class PointCloud3f {
     private List<float[]> points;
-    private List<int[]> faces;
 
-    public PcuPolygonMesh3f() {
+    public PointCloud3f() {
         points = new ArrayList<>();
-        faces = new ArrayList<>();
     }
 
     @ReadFromOff
@@ -24,12 +25,4 @@ public class PcuPolygonMesh3f {
         return points;
     }
 
-    @ReadFromOff(dataType = ReadFromOff.FACES)
-    @ReadFromPly(
-            properties = {"vertex_indices"},
-            element = {"face"}
-    )
-    public List<int[]> getFaces() {
-        return faces;
-    }
 }

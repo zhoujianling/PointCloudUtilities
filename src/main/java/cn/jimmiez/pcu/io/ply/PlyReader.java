@@ -2,7 +2,7 @@ package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.io.ReadListener;
 import cn.jimmiez.pcu.Constants;
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 

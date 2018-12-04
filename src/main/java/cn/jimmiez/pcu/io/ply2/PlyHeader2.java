@@ -1,11 +1,9 @@
 package cn.jimmiez.pcu.io.ply2;
 
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PlyHeader2 {
 

@@ -2,7 +2,7 @@ package cn.jimmiez.pcu.common.graph;
 
 
 
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;

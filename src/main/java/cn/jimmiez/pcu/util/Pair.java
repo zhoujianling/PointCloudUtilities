@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.model;
+package cn.jimmiez.pcu.util;
 
 import java.io.Serializable;
 

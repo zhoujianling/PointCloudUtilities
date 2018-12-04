@@ -2,11 +2,9 @@ package cn.jimmiez.pcu.common.graphics;
 
 
 
-import cn.jimmiez.pcu.model.Pair;
-
 import javax.vecmath.Point3d;
 import java.util.*;
-import static cn.jimmiez.pcu.util.PcuVectorUtil.*;
+
 import static java.lang.Math.*;
 
 
@@ -154,7 +152,6 @@ public class Octree {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
         if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
 
-        List<Pair<Integer, Double>> nearest = new ArrayList<>();
 
         final Point3d point = points.get(index);
         long leafNode = locateOctreeNode(this.root, point);
@@ -166,7 +163,16 @@ public class Octree {
 
         adjacentOctreeNodesIndices(candidateLeaves, k);
 //        System.out.println("candidate leaves: " + candidateLeaves.size());
+        PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
 
+        int[] indices = new int[k];
+        for (int i = 0; i < k; i ++) {
+            indices[i] = queue.poll();
+        }
+        return indices;
+    }
+
+    private PriorityQueue<Integer> searchNeighborsInNodes(List<Long> candidateLeaves, final Point3d point) {
         int capacity = 0;
         for (long leafIndex : candidateLeaves) capacity += this.octreeIndices.get(leafIndex).indices.size();
         PriorityQueue<Integer> queue = new PriorityQueue<>(capacity, new Comparator<Integer>() {
@@ -180,12 +186,36 @@ public class Octree {
         for (long leafIndex : candidateLeaves) {
             queue.addAll(this.octreeIndices.get(leafIndex).indices);
         }
+        return queue;
+    }
 
-        int[] indices = new int[k];
-        for (int i = 0; i < k; i ++) {
-            indices[i] = queue.poll();
-        }
-        return indices;
+//    /**
+//     * @param index the index of a point
+//     * @param radius radius of neighborhood
+//     * @return indices of neighboring points of this point
+//     */
+//    public List<Integer> searchNeighbors(int index, double radius) {
+//        List<Integer> neighborIndices = new ArrayList<>();
+//        Point3d point = points.get(index);
+//        List<Long> candidateLeaves = new ArrayList<>();
+//        helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
+//
+//        PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
+//
+//        while (queue.size() > 0) {
+//            Integer nextIndex = queue.poll();
+//            Point3d neighboringPoint = points.get(nextIndex);
+//            if (point.distance(neighboringPoint) >= radius) {
+//                break;
+//            } else {
+//                neighborIndices.add(nextIndex);
+//            }
+//        }
+//        return neighborIndices;
+//    }
+
+    private void helpDetermineCandidatesWithRadius(double radius, Point3d point, List<Long> candidates) {
+        long leafNode = locateOctreeNode(root, point);
     }
 
     /**

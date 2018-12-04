@@ -1,8 +1,8 @@
 package cn.jimmiez.pcu.io.ply;
 
-import cn.jimmiez.pcu.model.Pair;
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
-import cn.jimmiez.pcu.model.PcuPolygonMesh3f;
+import cn.jimmiez.pcu.util.Pair;
+import cn.jimmiez.pcu.model.PointCloud3f;
+import cn.jimmiez.pcu.model.PolygonMesh3f;
 import org.junit.Test;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
-        PcuPointCloud3f pointCloud = reader.readPointCloud(file, PcuPointCloud3f.class);
+        PointCloud3f pointCloud = reader.readPointCloud(file, PointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoints().size() == 4770);
         assertTrue(pointCloud.getPoints().get(1000).length == 3);
@@ -45,7 +45,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
-        PcuPolygonMesh3f pointCloud = reader.readPointCloud(file, PcuPolygonMesh3f.class);
+        PolygonMesh3f pointCloud = reader.readPointCloud(file, PolygonMesh3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoints().size() == 881);
         assertTrue(pointCloud.getPoints().get(200).length == 3);
@@ -61,7 +61,7 @@ public class PlyReaderTest {
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
-        PcuPolygonMesh3f pointCloud = reader.readPointCloud(file, PcuPolygonMesh3f.class);
+        PolygonMesh3f pointCloud = reader.readPointCloud(file, PolygonMesh3f.class);
         assertTrue(pointCloud.getPoints().size() == 27788);
         assertTrue(pointCloud.getFaces().size() == 52113);
     }

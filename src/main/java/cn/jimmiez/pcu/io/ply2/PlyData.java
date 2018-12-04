@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.io.ply2;
 
 
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 
 import java.io.File;
 import java.io.IOException;

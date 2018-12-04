@@ -1,6 +1,6 @@
 package cn.jimmiez.pcu.common.graphics.curve;
 
-import cn.jimmiez.pcu.model.PcuFunction;
+import cn.jimmiez.pcu.util.Function;
 
 import javax.vecmath.Point3d;
 import java.util.List;
@@ -12,8 +12,8 @@ public class CardinalInterpolator implements Interpolator{
     public CardinalInterpolator() {
     }
 
-    private PcuFunction<Double, Point3d> cardinalSplineFit(final Point3d p1, final Point3d p2, final Point3d p3, final Point3d p4) {
-        return new PcuFunction<Double, Point3d>() {
+    private Function<Double, Point3d> cardinalSplineFit(final Point3d p1, final Point3d p2, final Point3d p3, final Point3d p4) {
+        return new Function<Double, Point3d>() {
             @Override
             public Point3d apply(Double u) {
                 double s = (1 - t) / 2;

@@ -1,12 +1,8 @@
 package cn.jimmiez.pcu.io.ply2;
 
 import cn.jimmiez.pcu.Constants;
-import cn.jimmiez.pcu.io.ply.PlyElement;
-import cn.jimmiez.pcu.io.ply.PlyHeader;
-import cn.jimmiez.pcu.io.ply.PlyPropertyType;
-import cn.jimmiez.pcu.io.ply2.PlyData;
-import cn.jimmiez.pcu.model.Pair;
-import cn.jimmiez.pcu.model.PcuPointCloud3f;
+import cn.jimmiez.pcu.util.Pair;
+import cn.jimmiez.pcu.model.PointCloud3f;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,8 +18,8 @@ public class PlyReader2 {
 
 
 
-    public PcuPointCloud3f readPointCloud(File file, Class<PcuPointCloud3f> clazz) {
-        PcuPointCloud3f object = null;
+    public PointCloud3f readPointCloud(File file, Class<PointCloud3f> clazz) {
+        PointCloud3f object = null;
         try {
             object = clazz.newInstance();
             FileInputStream stream = new FileInputStream(file);

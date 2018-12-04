@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.io.ply;
 
 
-import cn.jimmiez.pcu.model.Pair;
+import cn.jimmiez.pcu.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
