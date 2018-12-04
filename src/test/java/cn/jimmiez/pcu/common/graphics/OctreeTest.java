@@ -168,4 +168,23 @@ public class OctreeTest {
         assertTrue(adjacentIndices.size() == 11);
     }
 
+    @Test
+    public void searchNeighborsInSphereTest() {
+        int dataSize = 4127;
+        List<Point3d> data = randomData(dataSize, 0.5, 11.5);
+        Octree octree = new Octree();
+        octree.buildIndex(data);
+
+        int index = 708;
+        double radius = 0.9;
+
+        List<Integer> neighbors = octree.searchNeighborsInSphere(index, radius);
+        assertTrue(neighbors.size() > 0);
+        for (Integer pointIndex : neighbors) {
+            Point3d point = data.get(pointIndex);
+            double distance = point.distance(data.get(index));
+            System.out.println(distance);
+            assertTrue(distance <= radius);
+        }
+    }
 }

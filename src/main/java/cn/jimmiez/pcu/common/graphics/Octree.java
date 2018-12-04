@@ -189,33 +189,63 @@ public class Octree {
         return queue;
     }
 
-//    /**
-//     * @param index the index of a point
-//     * @param radius radius of neighborhood
-//     * @return indices of neighboring points of this point
-//     */
-//    public List<Integer> searchNeighbors(int index, double radius) {
-//        List<Integer> neighborIndices = new ArrayList<>();
-//        Point3d point = points.get(index);
-//        List<Long> candidateLeaves = new ArrayList<>();
-//        helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
-//
-//        PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
-//
-//        while (queue.size() > 0) {
-//            Integer nextIndex = queue.poll();
-//            Point3d neighboringPoint = points.get(nextIndex);
-//            if (point.distance(neighboringPoint) >= radius) {
-//                break;
-//            } else {
-//                neighborIndices.add(nextIndex);
-//            }
-//        }
-//        return neighborIndices;
-//    }
+    /**
+     * @param index the index of a point
+     * @param radius radius of neighborhood
+     * @return indices of neighboring points of this point
+     */
+    public List<Integer> searchNeighborsInSphere(int index, double radius) {
+        List<Integer> neighborIndices = new ArrayList<>();
+        Point3d point = points.get(index);
+        List<Long> candidateLeaves = new ArrayList<>();
+        helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
+
+        PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
+
+        while (queue.size() > 0) {
+            Integer nextIndex = queue.poll();
+            Point3d neighboringPoint = points.get(nextIndex);
+            if (point.distance(neighboringPoint) >= radius) {
+                break;
+            } else {
+                neighborIndices.add(nextIndex);
+            }
+        }
+        return neighborIndices;
+    }
 
     private void helpDetermineCandidatesWithRadius(double radius, Point3d point, List<Long> candidates) {
-        long leafNode = locateOctreeNode(root, point);
+        Sphere sphere = new Sphere(point, radius);
+        long coreNodeIndex = locateOctreeNode(root, point);
+        candidates.add(coreNodeIndex);
+
+        Box coreBox = index2Box(coreNodeIndex);
+        if (Collisions.contains(coreBox, sphere)) {
+            return;
+        }
+        // ===========================================
+        Set<Long> visited = new HashSet<>();
+        visited.add(coreNodeIndex);
+
+        for (int pointer = 0; pointer < candidates.size(); pointer ++) {
+            long octreeNodeIndex = candidates.get(pointer);
+            Vector<Long> adjacentNodes = obtainAdjacent26Indices(octreeNodeIndex);
+            for (Long childIndex : adjacentNodes) {
+                if (visited.contains(childIndex)) continue;
+                Box octreeNodeBox = index2Box(childIndex);
+                if (Collisions.intersect(octreeNodeBox, sphere)) {
+                    candidates.add(childIndex);
+                    visited.add(childIndex);
+                }
+            }
+        }
+    }
+
+    private Box index2Box(long index) {
+        OctreeNode node = octreeIndices.get(index);
+        if (node == null) return null;
+        Point3d center = node.center();
+        return new Box(center, node.maxX - center.x, node.maxY - center.y, node.maxZ - center.z);
     }
 
     /**
@@ -384,6 +414,10 @@ public class Octree {
             return point.x >= minX && point.x <= maxX &&
                     point.y >= minY && point.y <= maxY &&
                     point.z >= minZ && point.z <= maxZ;
+        }
+
+        Point3d center() {
+            return new Point3d((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
         }
 
         public List<Integer> getIndices() {
