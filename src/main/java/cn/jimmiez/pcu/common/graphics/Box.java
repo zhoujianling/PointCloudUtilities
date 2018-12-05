@@ -7,13 +7,20 @@ import javax.vecmath.Point3d;
  */
 public class Box {
 
-    private Point3d center;
+    protected Point3d center;
 
-    private double xExtent;
+    protected double xExtent;
 
-    private double yExtent;
+    protected double yExtent;
 
-    private double zExtent;
+    protected double zExtent;
+
+    public Box() {
+        center = new Point3d();
+        xExtent = 1d;
+        yExtent = 1d;
+        zExtent = 1d;
+    }
 
     public Box(Point3d center, double xAxis, double yAxis, double zAxis) {
         this.center = center;

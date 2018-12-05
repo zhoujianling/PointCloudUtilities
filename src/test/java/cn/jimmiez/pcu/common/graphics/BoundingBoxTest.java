@@ -14,37 +14,19 @@ public class BoundingBoxTest {
     @Test
     public void ofTest() {
         BoundingBox box = BoundingBox.of(genData(500,1, 3, 5, 7, 9, 11));
-        assertTrue(box.minX() <= box.maxX());
-        assertTrue(box.minY() <= box.maxY());
-        assertTrue(box.minZ() <= box.maxZ());
-        assertTrue(box.minX() >= 1);
-        assertTrue(box.maxX() <= 3);
-        assertTrue(box.minY() >= 5);
-        assertTrue(box.maxY() <= 7);
-        assertTrue(box.minZ() >= 9);
-        assertTrue(box.maxZ() <= 11);
 
-        box = BoundingBox.of(genData(500,
-                100_000_000, 100_000_000,
-                100_000_000, 100_000_000,
-                100_000_000, 100_000_000));
-        assertTrue(box.minX() <= box.maxX());
-        assertTrue(box.minY() <= box.maxY());
-        assertTrue(box.minZ() <= box.maxZ());
-        assertEquals(100_000_000, box.minX(), 1e-5);
-        assertEquals(100_000_000, box.maxX(), 1e-5);
-        assertEquals(100_000_000, box.minY(), 1e-5);
-        assertEquals(100_000_000, box.maxY(), 1e-5);
-        assertEquals(100_000_000, box.minZ(), 1e-5);
-        assertEquals(100_000_000, box.maxZ(), 1e-5);
+        assertTrue(box.getCenter().x + box.getxExtent() <= 3 && box.getCenter().x - box.getxExtent() >= 1);
+        assertTrue(box.getCenter().y + box.getyExtent() <= 7 && box.getCenter().y - box.getyExtent() >= 5);
+        assertTrue(box.getCenter().z + box.getzExtent() <= 11 && box.getCenter().z - box.getzExtent() >= 9);
 
-        box = BoundingBox.of(genData(0,1, 3, 5, 7, 9, 11));
-        assertTrue(Double.isNaN(box.minX()));
-        assertTrue(Double.isNaN(box.maxX()));
-        assertTrue(Double.isNaN(box.minY()));
-        assertTrue(Double.isNaN(box.maxY()));
-        assertTrue(Double.isNaN(box.minZ()));
-        assertTrue(Double.isNaN(box.maxZ()));
+
+        box = BoundingBox.of(genData(0,1, 3, 6, 7, 4, 11));
+        assertTrue(Double.isNaN(box.getCenter().x));
+        assertTrue(Double.isNaN(box.getCenter().y));
+        assertTrue(Double.isNaN(box.getCenter().z));
+        assertTrue(Double.isNaN(box.getxExtent()));
+        assertTrue(Double.isNaN(box.getyExtent()));
+        assertTrue(Double.isNaN(box.getzExtent()));
     }
 
     private List<Point3d> genData(int n, double minX, double maxX, double minY, double maxY, double minZ, double maxZ) {

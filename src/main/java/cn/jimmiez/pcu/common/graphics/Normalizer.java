@@ -19,7 +19,7 @@ public class Normalizer {
      */
     public void normalize(List<Point3d> data) {
         BoundingBox box = BoundingBox.of(data);
-        double maxLength = PcuCommonUtil.max(box.maxX() - box.minX(), box.maxY() - box.minY(), box.maxZ() - box.minZ());
+        double maxLength = 2 * PcuCommonUtil.max(box.getxExtent(), box.getyExtent(), box.getzExtent());
         double ratio = length / maxLength;
         for (Point3d p : data) p.scale(ratio);
     }

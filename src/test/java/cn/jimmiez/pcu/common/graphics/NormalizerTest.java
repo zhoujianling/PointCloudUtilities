@@ -19,9 +19,9 @@ public class NormalizerTest {
         List<Point3d> data = genData(150, box);
         normalizer.normalize(data);
         BoundingBox newBox = BoundingBox.of(data);
-        assertTrue(newBox.maxX() - newBox.minX() <= normalizer.getLength());
-        assertTrue(newBox.maxY() - newBox.minY() <= normalizer.getLength());
-        assertTrue(newBox.maxZ() - newBox.minZ() <= normalizer.getLength());
+        assertTrue(2 * newBox.getxExtent() <= normalizer.getLength());
+        assertTrue(2 * newBox.getyExtent() <= normalizer.getLength());
+        assertTrue(2 * newBox.getzExtent() <= normalizer.getLength());
 
     }
 
@@ -29,9 +29,9 @@ public class NormalizerTest {
         List<Point3d> data = new ArrayList<>();
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < n; i ++) {
-            double rx = box.minX() + (box.maxX() - box.minX()) * random.nextDouble();
-            double ry = box.minY() + (box.maxY() - box.minY()) * random.nextDouble();
-            double rz = box.minZ() + (box.maxZ() - box.minZ()) * random.nextDouble();
+            double rx = box.getCenter().x + box.getxExtent() * 2 * (random.nextDouble() - 0.5);
+            double ry = box.getCenter().y + box.getyExtent() * 2 * (random.nextDouble() - 0.5);
+            double rz = box.getCenter().z + box.getzExtent() * 2 * (random.nextDouble() - 0.5);
             Point3d point = new Point3d(rx, ry, rz);
             data.add(point);
         }

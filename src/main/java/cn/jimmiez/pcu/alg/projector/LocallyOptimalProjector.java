@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.alg.projector;
 
+import cn.jimmiez.pcu.common.graphics.BoundingBox;
+
 import javax.vecmath.Point3d;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,25 +40,8 @@ public class LocallyOptimalProjector {
      */
     private double defaultH() {
         if (data == null || data.size() < 1) return 1;
-        double minX =  data.get(0).x;
-        double maxX =  data.get(0).x;
-        double minY =  data.get(0).y;
-        double maxY =  data.get(0).y;
-        double minZ =  data.get(0).z;
-        double maxZ =  data.get(0).z;
-        for (Point3d p : data) {
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y);
-            maxY = Math.max(maxY, p.y);
-            minZ = Math.min(minZ, p.z);
-            maxZ = Math.max(maxZ, p.z);
-        }
-        return 4 * Math.sqrt(
-                Math.sqrt(
-                        (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) + (maxZ - minZ) * (maxZ - minZ))
-                        / data.size()
-        );
+        BoundingBox box = BoundingBox.of(data);
+        return box.diagonalLength() / data.size() * 4;
     }
 
     private double theta(double distance) {
