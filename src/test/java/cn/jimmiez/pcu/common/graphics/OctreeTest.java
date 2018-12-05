@@ -38,13 +38,14 @@ public class OctreeTest {
         }
         assertTrue(octree.getDepth() == 4);
         assertTrue(octree.octreeIndices.size() == 8 * 8 * 8);
+        System.out.println("" + pointNum + " " + dataSize);
         assertTrue(pointNum == dataSize);
 
         /** corner node **/
         Octree.OctreeNode node = octree.octreeIndices.get(0L);
-        assertTrue(Math.abs(node.minX - 0) < 1e-1);
-        assertTrue(Math.abs(node.minY - 0) < 1e-1);
-        assertTrue(Math.abs(node.minZ - 0) < 1e-1);
+        assertTrue(Math.abs(node.minX() - 0) < 1e-1);
+        assertTrue(Math.abs(node.minY() - 0) < 1e-1);
+        assertTrue(Math.abs(node.minZ() - 0) < 1e-1);
 
         List<Point3d> emptyData = new ArrayList<>();
         octree.buildIndex(emptyData);
@@ -183,7 +184,7 @@ public class OctreeTest {
         for (Integer pointIndex : neighbors) {
             Point3d point = data.get(pointIndex);
             double distance = point.distance(data.get(index));
-            System.out.println(distance);
+//            System.out.println(distance);
             assertTrue(distance <= radius);
         }
     }

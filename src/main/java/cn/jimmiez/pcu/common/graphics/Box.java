@@ -60,4 +60,29 @@ public class Box {
     public void setzExtent(double zExtent) {
         this.zExtent = zExtent;
     }
+
+    public double maxX() {
+        return center.x + xExtent;
+    }
+
+    public double minX() {
+        return center.x - xExtent;
+    }
+
+    public double maxY() {
+        return center.y + yExtent;
+    }
+
+    public double minY() {
+        return center.y - yExtent;
+    }
+
+    public double maxZ() {
+        return center.z + zExtent;
+    }
+
+    public double minZ() {
+        return center.z - zExtent;
+    }
+
 }

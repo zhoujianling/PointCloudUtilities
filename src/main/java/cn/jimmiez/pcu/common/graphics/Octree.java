@@ -2,6 +2,8 @@ package cn.jimmiez.pcu.common.graphics;
 
 
 
+import cn.jimmiez.pcu.util.PcuCommonUtil;
+
 import javax.vecmath.Point3d;
 import java.util.*;
 
@@ -51,9 +53,8 @@ public class Octree {
         this.octreeIndices.clear();
 
         this.points = points;
-        this.root = new OctreeNode();
 
-        determineBox();
+        determineRootNode();
         createOctree(1, this.root);
 
         for (int i = 0; i < points.size(); i ++) {
@@ -79,29 +80,10 @@ public class Octree {
     /**
      * determine bounding box of data points, expand the box to make it cubic
      */
-    private void determineBox() {
-        this.root.minX = points.get(0).x;
-        this.root.maxX = points.get(0).x;
-        this.root.minY = points.get(0).y;
-        this.root.maxY = points.get(0).y;
-        this.root.minZ = points.get(0).z;
-        this.root.maxZ = points.get(0).z;
-        for (Point3d xyz: points) {
-            this.root.minX = min(xyz.x, this.root.minX);
-            this.root.maxX = max(xyz.x, this.root.maxX);
-            this.root.minY = min(xyz.y, this.root.minY);
-            this.root.maxY = max(xyz.y, this.root.maxY);
-            this.root.minZ = min(xyz.z, this.root.minZ);
-            this.root.maxZ = max(xyz.z, this.root.maxZ);
-        }
-
-        double maxLength = Math.max(this.root.maxX - this.root.minX, Math.max(this.root.maxY - this.root.minY, this.root.maxZ - this.root.minZ)) + 1e-4;
-        this.root.minX = (this.root.minX + this.root.maxX) / 2 - maxLength / 2;
-        this.root.maxX = (this.root.minX + this.root.maxX) / 2 + maxLength / 2;
-        this.root.minY = (this.root.minY + this.root.maxY) / 2 - maxLength / 2;
-        this.root.maxY = (this.root.minY + this.root.maxY) / 2 + maxLength / 2;
-        this.root.minZ = (this.root.minZ + this.root.maxZ) / 2 - maxLength / 2;
-        this.root.maxZ = (this.root.minZ + this.root.maxZ) / 2 + maxLength / 2;
+    private void determineRootNode() {
+        Box bbox = BoundingBox.of(points);
+        double maxExtent = PcuCommonUtil.max(bbox.xExtent, bbox.yExtent, bbox.zExtent);
+        this.root = new OctreeNode(bbox.center, maxExtent);
     }
 
     /**
@@ -123,15 +105,18 @@ public class Octree {
                     long index = (long) (((i + 1) * 2 + (j + 1) * 1 + (k + 1) / 2));
 //                    index <<= (currentDepth - 1) * 3;
                     index |= (currentNode.index << 3);
-                    OctreeNode node = new OctreeNode();
+
+                    double length = currentNode.getxExtent(); // xExtent == yExtent == zExtent
+                    Point3d center = new Point3d(currentNode.center.x + i * length / 2, currentNode.center.y + j * length / 2, currentNode.center.z + k * length / 2);
+                    OctreeNode node = new OctreeNode(center, length / 2);
                     currentNode.children[cnt] = node;
                     node.index = index;
-                    node.minX = currentNode.minX + (i + 1) / 2 * (currentNode.maxX - currentNode.minX) / 2;
-                    node.maxX = currentNode.maxX + (i - 1) / 2 * (currentNode.maxX - currentNode.minX) / 2;
-                    node.minY = currentNode.minY + (j + 1) / 2 * (currentNode.maxY - currentNode.minY) / 2;
-                    node.maxY = currentNode.maxY + (j - 1) / 2 * (currentNode.maxY - currentNode.minY) / 2;
-                    node.minZ = currentNode.minZ + (k + 1) / 2 * (currentNode.maxZ - currentNode.minZ) / 2;
-                    node.maxZ = currentNode.maxZ + (k - 1) / 2 * (currentNode.maxZ - currentNode.minZ) / 2;
+//                    node.minX = currentNode.minX + (i + 1) / 2 * currentNode.xExtent;
+//                    node.maxX = currentNode.maxX + (i - 1) / 2 * currentNode.xExtent;
+//                    node.minY = currentNode.minY + (j + 1) / 2 * currentNode.yExtent;
+//                    node.maxY = currentNode.maxY + (j - 1) / 2 * currentNode.yExtent;
+//                    node.minZ = currentNode.minZ + (k + 1) / 2 * currentNode.zExtent;
+//                    node.maxZ = currentNode.maxZ + (k - 1) / 2 * currentNode.zExtent;
                     if (currentDepth + 1 == this.depth) this.octreeIndices.put(index, node);
                     createOctree(currentDepth + 1, node);
                     cnt += 1;
@@ -219,7 +204,7 @@ public class Octree {
         long coreNodeIndex = locateOctreeNode(root, point);
         candidates.add(coreNodeIndex);
 
-        Box coreBox = index2Box(coreNodeIndex);
+        Box coreBox = octreeIndices.get(coreNodeIndex);
         if (Collisions.contains(coreBox, sphere)) {
             return;
         }
@@ -231,21 +216,14 @@ public class Octree {
             long octreeNodeIndex = candidates.get(pointer);
             Vector<Long> adjacentNodes = obtainAdjacent26Indices(octreeNodeIndex);
             for (Long childIndex : adjacentNodes) {
+                OctreeNode octreeNodeBox = octreeIndices.get(childIndex);
                 if (visited.contains(childIndex)) continue;
-                Box octreeNodeBox = index2Box(childIndex);
                 if (Collisions.intersect(octreeNodeBox, sphere)) {
                     candidates.add(childIndex);
                     visited.add(childIndex);
                 }
             }
         }
-    }
-
-    private Box index2Box(long index) {
-        OctreeNode node = octreeIndices.get(index);
-        if (node == null) return null;
-        Point3d center = node.center();
-        return new Box(center, node.maxX - center.x, node.maxY - center.y, node.maxZ - center.z);
     }
 
     /**
@@ -262,9 +240,9 @@ public class Octree {
                 throw new IllegalStateException("Search a point exceeding octree bounds.");
             }
         } else {
-            int xi = point.x < (node.maxX + node.minX) / 2 ? 0 : 1;
-            int yj = point.y < (node.maxY + node.minY) / 2 ? 0 : 1;
-            int zk = point.z < (node.maxZ + node.minZ) / 2 ? 0 : 1;
+            int xi = point.x < node.getCenter().x ? 0 : 1;
+            int yj = point.y < node.getCenter().y ? 0 : 1;
+            int zk = point.z < node.getCenter().z ? 0 : 1;
             int childIndex = xi * 4 + yj * 2 + zk * 1;
             return locateOctreeNode(node.children[childIndex], point);
         }
@@ -371,7 +349,11 @@ public class Octree {
                 && coord[2] >= 0 && coord[2] < (int) pow(2, this.depth - 1);
     }
 
-    public class OctreeNode {
+    public int getDepth() {
+        return depth;
+    }
+
+    public class OctreeNode extends Box{
 
         /**
          * default value is root index
@@ -388,36 +370,32 @@ public class Octree {
         /** in a non-leaf node, field indices is null **/
         OctreeNode[] children = null;
 
-        /** following fields define a bounding box **/
-        double minX = Double.NaN;
-        double maxX = Double.NaN;
-        double minY = Double.NaN;
-        double maxY = Double.NaN;
-        double minZ = Double.NaN;
-        double maxZ = Double.NaN;
+        OctreeNode(Point3d center, double length) {
+            this.center = new Point3d(center);
+            this.xExtent = length;
+            this.yExtent = length;
+            this.zExtent = length;
+        }
 
         void addPoint(Point3d point, int index) {
             if (children == null) {
-                if (contains(point)) {
-                    indices.add(index);
-                }
+//                if (contains(point)) {
+//                }
+                indices.add(index);
             } else {
-                int xi = point.x < (maxX + minX) / 2 ? 0 : 1;
-                int yj = point.y < (maxY + minY) / 2 ? 0 : 1;
-                int zk = point.z < (maxZ + minZ) / 2 ? 0 : 1;
+                int xi = point.x < center.x ? 0 : 1;
+                int yj = point.y < center.y ? 0 : 1;
+                int zk = point.z < center.z ? 0 : 1;
                 int childIndex = xi * 4 + yj * 2 + zk * 1;
                 children[childIndex].addPoint(point, index);
             }
         }
 
         boolean contains(Point3d point) {
-            return point.x >= minX && point.x <= maxX &&
-                    point.y >= minY && point.y <= maxY &&
-                    point.z >= minZ && point.z <= maxZ;
-        }
-
-        Point3d center() {
-            return new Point3d((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+            return
+                    point.x >= center.x - xExtent && point.x <= center.x + xExtent &&
+                            point.y >= center.y - yExtent && point.y <= center.y + yExtent &&
+                            point.z >= center.z - zExtent && point.z <= center.z + zExtent;
         }
 
         public List<Integer> getIndices() {
@@ -428,33 +406,6 @@ public class Octree {
             return children;
         }
 
-        public double getMaxX() {
-            return maxX;
-        }
-
-        public double getMinX() {
-            return minX;
-        }
-
-        public double getMaxY() {
-            return maxY;
-        }
-
-        public double getMinY() {
-            return minY;
-        }
-
-        public double getMaxZ() {
-            return maxZ;
-        }
-
-        public double getMinZ() {
-            return minZ;
-        }
-    }
-
-    public int getDepth() {
-        return depth;
     }
 
 }
