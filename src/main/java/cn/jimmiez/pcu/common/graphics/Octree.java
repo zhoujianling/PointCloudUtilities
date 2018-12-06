@@ -379,8 +379,6 @@ public class Octree {
 
         void addPoint(Point3d point, int index) {
             if (children == null) {
-//                if (contains(point)) {
-//                }
                 indices.add(index);
             } else {
                 int xi = point.x < center.x ? 0 : 1;
@@ -392,10 +390,18 @@ public class Octree {
         }
 
         boolean contains(Point3d point) {
-            return
-                    point.x >= center.x - xExtent && point.x <= center.x + xExtent &&
-                            point.y >= center.y - yExtent && point.y <= center.y + yExtent &&
-                            point.z >= center.z - zExtent && point.z <= center.z + zExtent;
+            for (int index : indices) {
+                if (points.get(index) == point) return true;
+            }
+            return abs(point.x - center.x) <= xExtent &&
+                    abs(point.y - center.y) <= yExtent &&
+                    abs(point.z - center.z) <= zExtent;
+        }
+
+        boolean contains(Point3d point, double tolerance) {
+            return abs(abs(point.x - center.x) - xExtent) <= tolerance &&
+                    abs(abs(point.y - center.y) - yExtent) <= tolerance &&
+                    abs(abs(point.z - center.z) - zExtent) <= tolerance;
         }
 
         public List<Integer> getIndices() {

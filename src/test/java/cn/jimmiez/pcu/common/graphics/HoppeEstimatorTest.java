@@ -36,7 +36,7 @@ public class HoppeEstimatorTest {
         double minY = 1;
         double maxY = 3;
         double minZ = 0.22;
-        double maxZ = 0.23;
+        double maxZ = 0.25;
         for (int i = 0; i < 1000; i ++) {
             Point3d point = new Point3d(
                     minX + (maxX - minX) * random.nextDouble(),

@@ -38,7 +38,7 @@ public class OctreeTest {
         }
         assertTrue(octree.getDepth() == 4);
         assertTrue(octree.octreeIndices.size() == 8 * 8 * 8);
-        System.out.println("" + pointNum + " " + dataSize);
+//        System.out.println("" + pointNum + " " + dataSize);
         assertTrue(pointNum == dataSize);
 
         /** corner node **/
@@ -107,34 +107,17 @@ public class OctreeTest {
 
     @Test
     public void locateOctreeNodeTest() {
-        int dataSize = 42349;
-        List<Point3d> data = randomData(dataSize, 1, 11.5);
-        Octree octree = new Octree();
-        octree.buildIndex(data);
-        Random random = new Random(System.currentTimeMillis());
-        for (int i = 0; i < 10; i ++) {
-            int randomPointIndex = random.nextInt(dataSize);
-            long nodeIndex = octree.locateOctreeNode(octree.root, data.get(randomPointIndex));
-            List<Integer> indices = octree.octreeIndices.get(nodeIndex).indices;
-            boolean exist = false;
-            for (int pointIndex : indices) {
-                if (pointIndex == randomPointIndex) {
-                    exist = true;
-                    break;
-                }
+        for (int iter = 0; iter < 3; iter ++) {
+            int dataSize = 2339;
+            List<Point3d> data = randomData(dataSize, 9, 11.5);
+            Octree octree = new Octree();
+            octree.buildIndex(data);
+            for (int i = 0; i < dataSize; i ++) {
+                long nodeIndex = octree.locateOctreeNode(octree.root, data.get(i));
+                Octree.OctreeNode node = octree.octreeIndices.get(nodeIndex);
+                assertTrue(node.contains(data.get(i)));
+//                System.out.println("ok");
             }
-            assertTrue(exist);
-
-            exist = false;
-            nodeIndex = nodeIndex == 0 ? 1 : nodeIndex - 1;
-            indices = octree.octreeIndices.get(nodeIndex).indices;
-            for (int pointIndex : indices) {
-                if (pointIndex == randomPointIndex) {
-                    exist = true;
-                    break;
-                }
-            }
-            assertFalse(exist);
         }
     }
 
@@ -171,21 +154,22 @@ public class OctreeTest {
 
     @Test
     public void searchNeighborsInSphereTest() {
-        int dataSize = 4127;
+        int dataSize = 3127;
         List<Point3d> data = randomData(dataSize, 0.5, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
 
-        int index = 708;
-        double radius = 0.9;
-
-        List<Integer> neighbors = octree.searchNeighborsInSphere(index, radius);
-        assertTrue(neighbors.size() > 0);
-        for (Integer pointIndex : neighbors) {
-            Point3d point = data.get(pointIndex);
-            double distance = point.distance(data.get(index));
-//            System.out.println(distance);
-            assertTrue(distance <= radius);
+        double radius = 1.9;
+        for (int index = 0; index < dataSize; index ++) {
+            List<Integer> neighbors = octree.searchNeighborsInSphere(index, radius);
+            assertTrue(neighbors.size() > 0);
+            for (Integer pointIndex : neighbors) {
+                Point3d point = data.get(pointIndex);
+                double distance = point.distance(data.get(index));
+                assertTrue(distance <= radius);
+            }
         }
+
     }
+
 }

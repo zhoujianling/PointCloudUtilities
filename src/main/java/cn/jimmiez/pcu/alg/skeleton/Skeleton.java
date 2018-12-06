@@ -18,9 +18,10 @@ import cn.jimmiez.pcu.io.ply.WriteScalarToPly;
 public class Skeleton extends DirectedGraph{
     private List<Point3d> skeletonNodes = new ArrayList<>();
 
-    public void addNode(Point3d p) {
+    public synchronized int addNode(Point3d p) {
         skeletonNodes.add(p);
         super.addVertex(skeletonNodes.size() - 1);
+        return skeletonNodes.size() - 1;
     }
 
     public void removeNode(Point3d p) {
@@ -31,6 +32,11 @@ public class Skeleton extends DirectedGraph{
         }
         skeletonNodes.remove(index);
         super.removeVertex(index);
+    }
+
+    public void clear() {
+        skeletonNodes.clear();
+        edges.clear();
     }
 
     @Override
