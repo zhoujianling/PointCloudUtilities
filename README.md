@@ -13,7 +13,7 @@ This is a util for point cloud processing.
 * Read and write a *PLY* file.
 * Read an *OFF* file.
 * Read an *OBJ* file.
-* Searching nearest neighbors using *Octree*.
+* Search nearest neighbors using *Octree*.
 * Estimate normals of point cloud surface.
 * Other algorithms for point cloud processing...
 
@@ -145,7 +145,7 @@ int result = new PlyWriter()
 ### OffReader 
 You can use *OffReader* to get point cloud data from *OFF* file.
 
-Define the entity class as you did in [PlyReader](#PlyReader). Annotate the getters of vertex data of face data with *\@ReadFromOff*, see following code snippet:
+Define the entity class as you did in [PlyReader](#PlyReader). Annotate the getters of vertex data or face data with *\@ReadFromOff*, see following code snippet:
 
 ```java
 public class PolygonMesh3f {
