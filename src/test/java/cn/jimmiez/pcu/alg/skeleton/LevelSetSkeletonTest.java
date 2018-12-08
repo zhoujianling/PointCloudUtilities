@@ -15,7 +15,7 @@ public class LevelSetSkeletonTest {
     public void skeletonizeTest() {
         PlyReader reader = new PlyReader();
         File file = new File(LevelSetSkeleton.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
-        PointCloud3f pointCloud3f = reader.readPointCloud(file, PointCloud3f.class);
+        PointCloud3f pointCloud3f = reader.read(file, PointCloud3f.class);
         List<Point3d> vertices = PcuCommonUtil.arrayList2VecList(pointCloud3f.getPoints());
         LevelSetSkeleton skeleton = new LevelSetSkeleton();
         skeleton.setN(10);

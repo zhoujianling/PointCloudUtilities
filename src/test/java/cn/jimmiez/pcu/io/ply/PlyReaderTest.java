@@ -34,7 +34,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
-        PointCloud3f pointCloud = reader.readPointCloud(file, PointCloud3f.class);
+        PointCloud3f pointCloud = reader.read(file, PointCloud3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoints().size() == 4770);
         assertTrue(pointCloud.getPoints().get(1000).length == 3);
@@ -45,7 +45,7 @@ public class PlyReaderTest {
     public void readAsciiPlyDataTest2() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
-        PolygonMesh3f pointCloud = reader.readPointCloud(file, PolygonMesh3f.class);
+        PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
         assertNotNull(pointCloud);
         assertTrue(pointCloud.getPoints().size() == 881);
         assertTrue(pointCloud.getPoints().get(200).length == 3);
@@ -61,7 +61,7 @@ public class PlyReaderTest {
     public void readBinaryLittleEndianPlyDataTest() {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
-        PolygonMesh3f pointCloud = reader.readPointCloud(file, PolygonMesh3f.class);
+        PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
         assertTrue(pointCloud.getPoints().size() == 27788);
         assertTrue(pointCloud.getFaces().size() == 52113);
     }

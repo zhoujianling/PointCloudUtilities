@@ -155,12 +155,12 @@ public class PlyReader {
         }
     }
 
-    public <T> T readPointCloud(File file, Class<T> clazz) {
+    public <T> T read(File file, Class<T> clazz) {
         T object = null;
         final List<Integer> errorCodes = new ArrayList<>();
         try {
             object = clazz.newInstance();
-            readPointCloud(file, object, new ReadListener() {
+            read(file, object, new ReadListener() {
                 @Override
                 public void onFail(int code, String message) {
                     errorCodes.add(code);
@@ -987,7 +987,7 @@ public class PlyReader {
      * @param file The point cloud file(ply)
      * @param pointCloud The point cloud object (with annotation ReadFromPly)
      */
-    public <T> void readPointCloud(File file, T pointCloud, ReadListener listener) {
+    public <T> void read(File file, T pointCloud, ReadListener listener) {
         if (! file.exists()) {
             listener.onFail(Constants.ERR_CODE_FILE_NOT_FOUND, "File does NOT exist.");
             return;
