@@ -4,20 +4,18 @@ import cn.jimmiez.pcu.io.ply.PlyPropertyType;
 
 public interface PlyProperties {
 
-    int getPropertyAsInt(String propertyName);
+    int parseNextPropertyAsInt();
 
-    byte getPropertyAsChar(String propertyName);
+    byte parseNextPropertyAsChar();
 
-    double getPropertyAsDouble(String propertyName);
+    double parseNextPropertyAsDouble();
 
-    float getPropertyAsFloat(String propertyName);
+    float parseNextPropertyAsFloat();
 
-    short getPropertyAsShort(String propertyName);
+    short parseNextPropertyAsShort();
 
-    long getPropertyAsLong(String propertyName);
+    int[] parseNextPropertyAsListI();
 
-    int[] getPropertyAsListI(String propertyName, PlyPropertyType type);
-
-    float[] getPropertyAsListF(String propertyName, PlyPropertyType type);
+    double[] parseNextPropertyAsListF();
 
 }

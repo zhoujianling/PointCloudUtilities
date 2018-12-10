@@ -18,7 +18,7 @@ public class PlyData implements Iterable<PlyElement2>{
 
     byte[] bytes = null;
 
-    public PlyData(File file, PlyHeader2 header) throws IOException {
+    PlyData(File file, PlyHeader2 header) throws IOException {
         this.header = header;
         switch (header.getFormat()) {
             case ASCII:
@@ -56,14 +56,16 @@ public class PlyData implements Iterable<PlyElement2>{
         public PlyElement2 next() {
             int[] startPositions = new int[header.getElementHeaders().get(elementPointer).number];
             int linePtr = 0;
+            startPositions[linePtr] = bytePointer;
             for (; bytePointer < bytes.length; bytePointer ++) {
                 if (bytes[bytePointer] != '\n') continue;
-                startPositions[linePtr] = bytePointer + 1;
                 linePtr += 1;
                 if (linePtr >= header.getElementHeaders().get(elementPointer).number) break;
+                startPositions[linePtr] = bytePointer + 1;
             }
-            PlyElement2 element2 = new PlyElement2(bytes, bytePointer, startPositions);
+            PlyElement2 element2 = new PlyElement2(bytes, startPositions, header.getElementHeaders().get(elementPointer), header.getFormat());
             elementPointer += 1;
+            if (! hasNext()) bytes = null;
             return element2;
         }
 
@@ -99,12 +101,13 @@ public class PlyData implements Iterable<PlyElement2>{
                     startPositions[linePointer] = bytePointer;
                     marchOneLine();
                 }
-                element2 = new PlyElement2(bytes, bytePointer, startPositions);
+                element2 = new PlyElement2(bytes, startPositions, header.getElementHeaders().get(elementPointer), header.getFormat());
             } catch (IOException e) {
                 e.printStackTrace();
                 System.err.println("No enough bytes when marching one line.");
             }
             elementPointer += 1;
+            if (! hasNext()) bytes = null;
             return element2;
         }
 

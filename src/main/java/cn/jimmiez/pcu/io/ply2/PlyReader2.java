@@ -16,9 +16,16 @@ import java.util.Scanner;
 @SuppressWarnings("Duplicates")
 public class PlyReader2 {
 
+    public PlyData readPlyData(File file) throws IOException {
+        FileInputStream stream = new FileInputStream(file);
+        Scanner scanner = new Scanner(stream);
+        PlyHeader2 header = readHeader(scanner);
+        PlyData data = new PlyData(file, header);
+        return data;
+    }
 
 
-    public PointCloud3f readPointCloud(File file, Class<PointCloud3f> clazz) {
+    public PointCloud3f read(File file, Class<PointCloud3f> clazz) {
         PointCloud3f object = null;
         try {
             object = clazz.newInstance();
