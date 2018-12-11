@@ -1,21 +1,19 @@
 package cn.jimmiez.pcu.io.ply2;
 
-import cn.jimmiez.pcu.io.ply.PlyPropertyType;
-
 public interface PlyProperties {
 
-    int parseNextPropertyAsInt();
+    int nextPropertyAsInt();
 
-    byte parseNextPropertyAsChar();
+    byte nextPropertyAsChar();
 
-    double parseNextPropertyAsDouble();
+    double nextPropertyAsDouble();
 
-    float parseNextPropertyAsFloat();
+    float nextPropertyAsFloat();
 
-    short parseNextPropertyAsShort();
+    short nextPropertyAsShort();
 
-    int[] parseNextPropertyAsListI();
+    int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType);
 
-    double[] parseNextPropertyAsListF();
+    double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType);
 
 }

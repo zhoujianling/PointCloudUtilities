@@ -5,6 +5,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -23,9 +25,9 @@ public class PlyElement2 implements Iterable<PlyProperties>{
         if (format == PlyFormat.ASCII) {
             iterator = new AsciiIterator();
         } else if (format == PlyFormat.BINARY_BIG_ENDIAN) {
-            iterator = new BinaryIterator();
+            iterator = new BinaryIterator(ByteOrder.BIG_ENDIAN);
         } else if (format == PlyFormat.BINARY_LITTLE_ENDIAN) {
-            iterator = new BinaryIterator();
+            iterator = new BinaryIterator(ByteOrder.LITTLE_ENDIAN);
         }
     }
 
@@ -36,7 +38,7 @@ public class PlyElement2 implements Iterable<PlyProperties>{
 
     private Iterator<PlyProperties> iterator = null;
 
-    public static int parseSizeOfList(ByteBuffer buffer, PcuDataType dataType) throws IOException {
+    public static int parseInt(ByteBuffer buffer, PcuDataType dataType) throws IOException {
         switch (dataType) {
             case CHAR:
             case UCHAR:
@@ -56,20 +58,37 @@ public class PlyElement2 implements Iterable<PlyProperties>{
         }
     }
 
+    public static double parseDouble(ByteBuffer buffer, PcuDataType dataType) throws IOException {
+        switch (dataType) {
+            case CHAR:
+            case UCHAR:
+                return (double) buffer.get();
+            case SHORT:
+            case USHORT:
+                return (double) buffer.getShort();
+            case INT:
+            case UINT:
+                return (double) buffer.getInt();
+            case FLOAT:
+                return (double) buffer.getFloat();
+            case DOUBLE:
+                return buffer.getDouble();
+            default:
+                throw new IOException("Unsupported data type: " + dataType);
+        }
+    }
+
     private class AsciiIterator implements Iterator<PlyProperties>{
 
         private int linePointer = 0;
 
-        private Scanner scanner = null;
+//        private Scanner scanner = null;
 
         public AsciiIterator() {
-            try {
-                InputStream is = new ByteArrayInputStream(bytes);
-                is.skip(startPositions[0]);
-                scanner = new Scanner(is);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         }
 
         @Override
@@ -79,35 +98,42 @@ public class PlyElement2 implements Iterable<PlyProperties>{
 
         @Override
         public PlyProperties next() {
-
+            InputStream is = new ByteArrayInputStream(bytes);
+            try {
+                is.skip(startPositions[0]);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+            final Scanner scanner = new Scanner(is);
             PlyProperties properties = new PlyProperties() {
                 @Override
-                public int parseNextPropertyAsInt() {
+                public int nextPropertyAsInt() {
                     return scanner.nextInt();
                 }
 
                 @Override
-                public byte parseNextPropertyAsChar() {
+                public byte nextPropertyAsChar() {
                     return scanner.nextByte();
                 }
 
                 @Override
-                public double parseNextPropertyAsDouble() {
+                public double nextPropertyAsDouble() {
                     return scanner.nextDouble();
                 }
 
                 @Override
-                public float parseNextPropertyAsFloat() {
+                public float nextPropertyAsFloat() {
                     return scanner.nextFloat();
                 }
 
                 @Override
-                public short parseNextPropertyAsShort() {
+                public short nextPropertyAsShort() {
                     return scanner.nextShort();
                 }
 
                 @Override
-                public int[] parseNextPropertyAsListI() {
+                public int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType) {
                     int length = scanner.nextInt();
                     int[] array = new int[length];
                     for (int i = 0; i < length; i ++) {
@@ -117,7 +143,7 @@ public class PlyElement2 implements Iterable<PlyProperties>{
                 }
 
                 @Override
-                public double[] parseNextPropertyAsListF() {
+                public double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType) {
                     int length = scanner.nextInt();
                     double[] array = new double[length];
                     for (int i = 0; i < length; i ++) {
@@ -141,10 +167,10 @@ public class PlyElement2 implements Iterable<PlyProperties>{
 
         private int linePointer = 0;
 
-        private ByteBuffer buffer = null;
+        private ByteOrder order = null;
 
-        public BinaryIterator() {
-
+        public BinaryIterator(ByteOrder order) {
+            this.order = order;
         }
 
         @Override
@@ -154,39 +180,59 @@ public class PlyElement2 implements Iterable<PlyProperties>{
 
         @Override
         public PlyProperties next() {
+            final ByteBuffer buffer = ByteBuffer.wrap(bytes, startPositions[linePointer], bytes.length - startPositions[linePointer]);
+            buffer.order(order);
             PlyProperties properties = new PlyProperties() {
                 @Override
-                public int parseNextPropertyAsInt() {
-                    return 0;
+                public int nextPropertyAsInt() {
+                    return buffer.getInt();
                 }
 
                 @Override
-                public byte parseNextPropertyAsChar() {
-                    return 0;
+                public byte nextPropertyAsChar() {
+                    return buffer.get();
                 }
 
                 @Override
-                public double parseNextPropertyAsDouble() {
-                    return 0;
+                public double nextPropertyAsDouble() {
+                    return buffer.getDouble();
                 }
 
                 @Override
-                public float parseNextPropertyAsFloat() {
-                    return 0;
+                public float nextPropertyAsFloat() {
+                    return buffer.getFloat();
                 }
 
                 @Override
-                public short parseNextPropertyAsShort() {
-                    return 0;
+                public short nextPropertyAsShort() {
+                    return buffer.getShort();
                 }
 
                 @Override
-                public int[] parseNextPropertyAsListI() {
+                public int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType) {
+                    try {
+                        int size = parseInt(buffer, sizeType);
+                        int[] list = new int[size];
+                        for (int i = 0; i < size; i ++)
+                            list[i] = parseInt(buffer, dataType);
+                        return list;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     return new int[0];
                 }
 
                 @Override
-                public double[] parseNextPropertyAsListF() {
+                public double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType) {
+                    try {
+                        int size = parseInt(buffer, sizeType);
+                        double[] list = new double[size];
+                        for (int i = 0; i < size; i ++)
+                            list[i] = parseDouble(buffer, dataType);
+                        return list;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     return new double[0];
                 }
             };

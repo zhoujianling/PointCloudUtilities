@@ -124,7 +124,7 @@ public class PlyData implements Iterable<PlyElement2>{
                     if (bytePointer + sizeOfSize > bytes.length) throw new IOException("Space not enough, current byte pointer: " + bytePointer);
                     ByteBuffer buffer = ByteBuffer.wrap(bytes, bytePointer, sizeOfSize);
                     buffer.order(order);
-                    int size = PlyElement2.parseSizeOfList(buffer, sizeType);
+                    int size = PlyElement2.parseInt(buffer, sizeType);
                     bytePointer += sizeOfSize;
                     // **********************
                     int sizeOfData = dataType.size() * size;
