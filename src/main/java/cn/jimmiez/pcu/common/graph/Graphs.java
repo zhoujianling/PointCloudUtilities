@@ -35,6 +35,44 @@ public class Graphs {
     }
 
     /**
+     * get a graph where the vertices is a sub-set of another graph
+     * @param graph another graph
+     * @param vertices indices of vertices
+     * @return the sub-graph
+     */
+    public static GraphStatic subGraph(final GraphStatic graph, final Set<Integer> vertices) {
+        final Map<Integer, List<Integer>> adjacencyMap = new HashMap<>();
+        for (int vertexIndex : vertices) {
+            Collection<Integer> adjacents = graph.adjacentVertices(vertexIndex);
+            List<Integer> adjacentsInSubGraph = new ArrayList<>();
+            for (int index : adjacents) {
+                if (vertices.contains(index)) {
+                    adjacentsInSubGraph.add(index);
+                }
+            }
+            adjacencyMap.put(vertexIndex, adjacentsInSubGraph);
+        }
+        return new GraphStatic() {
+            @Override
+            public double edgeWeight(int i, int j) {
+                if (vertices.contains(i) && vertices.contains(j))
+                    return graph.edgeWeight(i, j);
+                return Graph.N;
+            }
+
+            @Override
+            public Collection<Integer> adjacentVertices(int i) {
+                return adjacencyMap.get(i);
+            }
+
+            @Override
+            public Collection<Integer> vertices() {
+                return vertices;
+            }
+        };
+    }
+
+    /**
      * compute the number of edges in a graph
      * @param graph a graph
      * @return number of edges( e_ij e_ji are seen as two different edges )

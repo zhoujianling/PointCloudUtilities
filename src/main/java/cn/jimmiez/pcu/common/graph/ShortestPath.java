@@ -15,9 +15,9 @@ public class ShortestPath {
      */
     public static Map<Integer, Pair<List<Integer>, Double>> dijkstra(GraphStatic graph, int rootIndex) {
         Map<Integer, Pair<List<Integer>, Double>> result = new HashMap<>();
-        if (rootIndex < 0 || rootIndex >= graph.vertices().size()) {
-            throw new IllegalArgumentException("Invalid root index");
-        }
+//        if (rootIndex < 0 || rootIndex >= graph.vertices().size()) {
+//            throw new IllegalArgumentException("Invalid root index");
+//        }
         Set<Integer> sSet = new HashSet<>();
         Set<Integer> sExcluded = new HashSet<>();
         Map<Integer, Integer> prev = new HashMap<>();

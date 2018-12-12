@@ -4,10 +4,8 @@ import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -53,7 +51,7 @@ public class OffReader {
                     if (line.toLowerCase().equals("off")) {
                         state = STATE_READING_ELEMENT_NUM;
                     } else {
-                        System.err.println("First line does not start with \"off\"");
+                        System.err.println("Cannot recognize the format of this file.");
                         state = STATE_ERROR;
                     }
                     break;
@@ -229,60 +227,6 @@ public class OffReader {
             e.printStackTrace();
         }
         return object;
-    }
-
-    public static class OffData {
-
-        private static final int UNSET = -1;
-
-        /** number of vertices **/
-        private int verticesNum = UNSET;
-
-        /** number of faces **/
-        private int facesNum = UNSET;
-
-        /** number of edges, can be safely ignored **/
-        private int edgesNum = UNSET;
-
-        /** vertices data, each array is a point in 3d space **/
-        private List<float[]> vertices = new ArrayList<>();
-
-        /** face data, each array is composed of indices of vertices **/
-        private List<int[]> faces = new ArrayList<>();
-
-        /** optional face colors **/
-        private List<float[]> faceColors = new ArrayList<>();
-
-        /** optional vertex colors **/
-        private List<float[]> vertexColors = new ArrayList<>();
-
-        public int getVerticesNum() {
-            return verticesNum;
-        }
-
-        public int getFacesNum() {
-            return facesNum;
-        }
-
-        public int getEdgesNum() {
-            return edgesNum;
-        }
-
-        public List<float[]> getVertices() {
-            return vertices;
-        }
-
-        public List<int[]> getFaces() {
-            return faces;
-        }
-
-        public List<float[]> getFaceColors() {
-            return faceColors;
-        }
-
-        public List<float[]> getVertexColors() {
-            return vertexColors;
-        }
     }
 
 }
