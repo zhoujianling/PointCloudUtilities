@@ -5,19 +5,8 @@ import java.util.List;
 
 public class OffData {
 
-    public static final int UNSET = -1;
-
-    /** the format of OFF file, e.g. OFF, NOFF **/
-    OffFormat format = null;
-
-    /** number of vertices **/
-    int verticesNum = UNSET;
-
-    /** number of faces **/
-    int facesNum = UNSET;
-
-    /** number of edges, can be safely ignored **/
-    int edgesNum = UNSET;
+    /** the header of OFF file, e.g. OFF, NOFF **/
+    private OffHeader header = null;
 
     /** vertices data, each array is a point in 3d space **/
     List<float[]> vertices = new ArrayList<>();
@@ -30,18 +19,6 @@ public class OffData {
 
     /** optional vertex colors **/
     List<float[]> vertexColors = new ArrayList<>();
-
-    public int getVerticesNum() {
-        return verticesNum;
-    }
-
-    public int getFacesNum() {
-        return facesNum;
-    }
-
-    public int getEdgesNum() {
-        return edgesNum;
-    }
 
     public List<float[]> getVertices() {
         return vertices;
@@ -57,5 +34,13 @@ public class OffData {
 
     public List<float[]> getVertexColors() {
         return vertexColors;
+    }
+
+    public OffHeader getHeader() {
+        return header;
+    }
+
+    public void setHeader(OffHeader header) {
+        this.header = header;
     }
 }

@@ -20,6 +20,7 @@ public class ShortestPathTest {
         assertEquals(2.0, result.get(2).getValue(), 1e-7);
         assertEquals(3.0, result.get(3).getValue(), 1e-7);
         assertEquals(3.3, result.get(4).getValue(), 1e-7);
+        assertTrue(result.get(5).getValue() == Double.POSITIVE_INFINITY);
 
     }
 
@@ -27,18 +28,20 @@ public class ShortestPathTest {
     private GraphStatic genData() {
         final double N = Double.POSITIVE_INFINITY;
         final double[][] edges = new double[][] {
-                {0,   3,   2,   N,   4  },
-                {3,   0,   0.5, 2,   0.8},
-                {2,   0.5, 0,   1,   N  },
-                {N,   2,   1,   0,   2  },
-                {4,   0.8, N,   2,   0  },
+                {0,   3,   2,   N,   4,   N},
+                {3,   0,   0.5, 2,   0.8, N},
+                {2,   0.5, 0,   1,   N,   N},
+                {N,   2,   1,   0,   2,   N},
+                {4,   0.8, N,   2,   0,   N},
+                {N,   N,   N,   N,   N,   0},
         };
         final int[][] adjacency = new int[][] {
                 {1, 2, 4},
                 {0, 2, 3, 4},
                 {0, 1, 3},
                 {1, 2, 4},
-                {0, 1, 3}
+                {0, 1, 3},
+                {}
         };
         return Graphs.graph(edges, adjacency);
     }

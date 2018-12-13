@@ -37,6 +37,7 @@ public class ShortestPath {
                     nearestVertexIndex = index;
                 }
             }
+            if (nearestVertexIndex == -1) break;
             sSet.add(nearestVertexIndex);
             sExcluded.remove(nearestVertexIndex);
             if (prev.get(nearestVertexIndex) != null) {

@@ -16,10 +16,11 @@ public class OffReaderTest {
         File file = new File(OffReaderTest.class.getClassLoader().getResource("model/off/cube.off").getFile());
         OffReader reader = new OffReader();
         OffData data =  reader.read(file);
-        assertTrue(data.getVertices().size() == data.getVerticesNum());
-        assertTrue(data.getFaces().size() == data.getFacesNum());
-        assertTrue(data.getFaceColors().size() == 0 || data.getFaceColors().size() == data.getFacesNum());
-        assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == data.getVerticesNum());
+        OffHeader header = data.getHeader();
+        assertTrue(data.getVertices().size() == header.getVerticesNum());
+        assertTrue(data.getFaces().size() == header.getFacesNum());
+        assertTrue(data.getFaceColors().size() == 0 || data.getFaceColors().size() == header.getFacesNum());
+        assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == header.getVerticesNum());
 
         PointCloud3f pointCloud = reader.read(file, PointCloud3f.class);
         assertTrue(pointCloud.getPoints().size() == 8);
@@ -30,9 +31,10 @@ public class OffReaderTest {
         File file = new File(OffReaderTest.class.getClassLoader().getResource("model/off/cube2.off").getFile());
         OffReader reader = new OffReader();
         OffData data =  reader.read(file);
-        assertTrue(data.getVertices().size() == data.getVerticesNum());
-        assertTrue(data.getFaces().size() == data.getFacesNum());
-        assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == data.getVerticesNum());
+        OffHeader header = data.getHeader();
+        assertTrue(data.getVertices().size() == header.getVerticesNum());
+        assertTrue(data.getFaces().size() == header.getFacesNum());
+        assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == header.getVerticesNum());
 
         PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
         assertTrue(pointCloud.getPoints().size() == 8);

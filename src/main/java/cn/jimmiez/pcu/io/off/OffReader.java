@@ -16,12 +16,13 @@ import java.util.Scanner;
 public class OffReader {
 
     private static final int STATE_READY = 0;
-    private static final int STATE_CHECK_HEADER = 1;
-    private static final int STATE_READING_ELEMENT_NUM = 2;
-    private static final int STATE_READING_VERTICES = 3;
-    private static final int STATE_READING_FACES= 4;
-    private static final int STATE_COMPLETE = 5;
-    private static final int STATE_ERROR = 6;
+    private static final int STATE_PARSE_HEADER_KEYWORD = 1;
+    private static final int STATE_PARSE_HEADER_N_DIM = 2;
+    private static final int STATE_PARSE_ELEMENT_NUM = 3;
+    private static final int STATE_READING_VERTICES = 4;
+    private static final int STATE_READING_FACES= 5;
+    private static final int STATE_COMPLETE = 6;
+    private static final int STATE_ERROR = 7;
 
     private String fetchNextLine(Scanner scanner) {
         while (scanner.hasNextLine()) {
@@ -35,28 +36,50 @@ public class OffReader {
     private void readImpl(Scanner scanner, OffData data) {
         int state = STATE_READY;
         boolean loop = true;
+        OffHeader header = new OffHeader();
         while (loop) {
             switch (state) {
                 case STATE_READY: {
-                    state = STATE_CHECK_HEADER;
+                    state = STATE_PARSE_HEADER_KEYWORD;
                     break;
                 }
-                case STATE_CHECK_HEADER: {
+                case STATE_PARSE_HEADER_KEYWORD: {
                     String line = fetchNextLine(scanner);
                     if (line == null) {
                         System.err.println("Cannot read first line.");
                         state = STATE_ERROR;
                         break;
                     }
-                    if (line.toLowerCase().equals("off")) {
-                        state = STATE_READING_ELEMENT_NUM;
+                    String keyword = line.trim();
+                    if (keyword.endsWith("OFF")) {
+                        header.setName(keyword);
+                        if (keyword.contains("ST")) header.setHasTextureCoordinates(true);
+                        if (keyword.contains("N")) header.setHasNormal(true);
+                        if (keyword.contains("C")) header.setHasColor(true);
+                        if (keyword.contains("4")) header.setHas4Components(true);
+                        if (keyword.contains("n")) header.setIfDimensionSpecified(true);
+                    }
+                    // some files may omit OFF keyword in first line
+                    if (header.isDimensionSpecified()) {
+                        state = STATE_PARSE_HEADER_N_DIM;
                     } else {
-                        System.err.println("Cannot recognize the format of this file.");
-                        state = STATE_ERROR;
+                        state = STATE_PARSE_ELEMENT_NUM;
                     }
                     break;
                 }
-                case STATE_READING_ELEMENT_NUM: {
+                case STATE_PARSE_HEADER_N_DIM: {
+                    String line = fetchNextLine(scanner);
+                    if (line == null) {
+                        System.err.println("Cannot read number of dimensions.");
+                        state = STATE_ERROR;
+                        break;
+                    }
+                    int dimen = Integer.valueOf(line);
+                    header.setDimension(dimen);
+                    state = STATE_PARSE_ELEMENT_NUM;
+                    break;
+                }
+                case STATE_PARSE_ELEMENT_NUM: {
                     String line = fetchNextLine(scanner);
                     if (line == null) {
                         System.err.println("Cannot read number of vertices and faces.");
@@ -64,25 +87,32 @@ public class OffReader {
                         break;
                     }
                     String[] nums = line.split(" ");
-                    if (nums.length != 3) {
+                    int verticesNum = -1, facesNum = -1, edgesNum = -1;
+                    if (nums.length < 2) {
+                        System.err.println("Too few numbers for parsing element size.");
                         state = STATE_ERROR;
-                    } else {
-                        data.verticesNum = Integer.valueOf(nums[0]);
-                        data.facesNum = Integer.valueOf(nums[1]);
-                        data.edgesNum = Integer.valueOf(nums[2]);
-                        state = STATE_READING_VERTICES;
+                        break;
                     }
+                    verticesNum = Integer.valueOf(nums[0]);
+                    facesNum = Integer.valueOf(nums[1]);
+                    if (nums.length > 2){
+                        edgesNum = Integer.valueOf(nums[2]);
+                    }
+                    if (verticesNum >= 0) header.setVerticesNum(verticesNum);
+                    if (facesNum >= 0) header.setFacesNum(facesNum);
+                    if (edgesNum >= 0) header.setEdgesNum(edgesNum);
+                    data.setHeader(header);
+                    state = STATE_READING_VERTICES;
                     break;
                 }
                 case STATE_READING_VERTICES: {
-                    if (data.verticesNum == OffData.UNSET) {
+                    if (header.getVerticesNum() == OffHeader.UNSET) {
                         System.err.println("Invalid number of vertices.");
                         state = STATE_ERROR;
                         break;
                     }
                     boolean success = true;
-                    for (int i = 0; i < data.verticesNum; i ++) {
-
+                    for (int i = 0; i < header.getVerticesNum(); i ++) {
                         String line = fetchNextLine(scanner);
                         if (line == null) {
                             System.err.println("Fewer vertices than expected.");
@@ -96,11 +126,11 @@ public class OffReader {
                         for (j = 0; j < 3; j ++) xyz[j] = Float.valueOf(values[j]);
                         data.vertices.add(xyz);
 
-                        if (values.length >= 7) {
-                            float[] rgba = new float[4];
-                            for (; j < 7; j ++) rgba[j - 3] = Float.valueOf(values[j]);
-                            data.vertexColors.add(rgba);
-                        }
+//                        if (values.length >= 7) {
+//                            float[] rgba = new float[4];
+//                            for (; j < 7; j ++) rgba[j - 3] = Float.valueOf(values[j]);
+//                            data.vertexColors.add(rgba);
+//                        }
 
                     }
                     if (success) {
@@ -111,13 +141,13 @@ public class OffReader {
                     break;
                 }
                 case STATE_READING_FACES: {
-                    if (data.facesNum == OffData.UNSET) {
+                    if (header.getFacesNum() == OffHeader.UNSET) {
                         System.err.println("Invalid number of faces.");
                         state = STATE_ERROR;
                         break;
                     }
                     boolean success = true;
-                    for (int i = 0; i < data.facesNum; i ++) {
+                    for (int i = 0; i < header.getFacesNum(); i ++) {
                         String line = fetchNextLine(scanner);
                         if (line == null) {
                             System.err.println("Fewer faces than expected.");
