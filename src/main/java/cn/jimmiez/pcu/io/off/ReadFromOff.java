@@ -26,5 +26,6 @@ public @interface ReadFromOff {
     int FACES = 1;
     int VERTEX_COLORS = 2;
     int FACE_COLORS = 3;
+    int VERTEX_NORMALS = 4;
 
 }

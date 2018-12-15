@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -36,8 +38,23 @@ public class OffReaderTest {
         assertTrue(data.getFaces().size() == header.getFacesNum());
         assertTrue(data.getVertexColors().size() == 0 || data.getVertexColors().size() == header.getVerticesNum());
 
-        PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
-        assertTrue(pointCloud.getPoints().size() == 8);
-        assertTrue(pointCloud.getFaces().size() == 6);
+        MeshWithColor4f mesh = reader.read(file, MeshWithColor4f.class);
+        assertTrue(mesh.getPoints().size() == 8);
+        assertTrue(mesh.getFaces().size() == 6);
+        assertTrue(mesh.getVertexColors().size() == 8);
+    }
+
+    public static class MeshWithColor4f extends PolygonMesh3f{
+        private List<float[]> vertexColors;
+
+        public MeshWithColor4f() {
+            super();
+            vertexColors = new ArrayList<>();
+        }
+
+        @ReadFromOff(dataType = ReadFromOff.VERTEX_COLORS)
+        public List<float[]> getVertexColors() {
+            return vertexColors;
+        }
     }
 }

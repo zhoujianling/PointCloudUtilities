@@ -11,6 +11,9 @@ public class OffData {
     /** vertices data, each array is a point in 3d space **/
     List<float[]> vertices = new ArrayList<>();
 
+    /** normals of vertices data, each array is a 3d-vector **/
+    List<float[]> vertexNormals = new ArrayList<>();
+
     /** face data, each array is composed of indices of vertices **/
     List<int[]> faces = new ArrayList<>();
 

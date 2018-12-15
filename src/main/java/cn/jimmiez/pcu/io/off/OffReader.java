@@ -75,8 +75,13 @@ public class OffReader {
                         break;
                     }
                     int dimen = Integer.valueOf(line);
-                    header.setDimension(dimen);
-                    state = STATE_PARSE_ELEMENT_NUM;
+                    if (dimen >= 1) {
+                        header.setDimension(dimen);
+                        state = STATE_PARSE_ELEMENT_NUM;
+                    } else {
+                        System.err.println("Incorrect vertex dimension.");
+                        state = STATE_ERROR;
+                    }
                     break;
                 }
                 case STATE_PARSE_ELEMENT_NUM: {
@@ -119,18 +124,36 @@ public class OffReader {
                             success = false;
                             break;
                         }
-
+                        int expectedLength = 3;
                         String[] values = line.trim().split("(\\s)+");
                         float[] xyz = new float[3];
                         int j;
                         for (j = 0; j < 3; j ++) xyz[j] = Float.valueOf(values[j]);
                         data.vertices.add(xyz);
 
-//                        if (values.length >= 7) {
-//                            float[] rgba = new float[4];
-//                            for (; j < 7; j ++) rgba[j - 3] = Float.valueOf(values[j]);
-//                            data.vertexColors.add(rgba);
-//                        }
+                        if (header.hasTextureCoordinates()) {
+                            System.out.println("Texture coordinates are currently unsupported.");
+                            break;
+                        }
+                        if (header.hasNormal()) {
+                            expectedLength += 3;
+                            if (values.length >= expectedLength) {
+                                float[] normal = new float[3];
+                                for (; j < expectedLength; j ++) normal[j - 3] = Float.valueOf(values[j]);
+                                data.vertexNormals.add(normal);
+                            } else {
+                                System.err.println("Fewer float values than expected.");
+                                break;
+                            }
+                        }
+                        if (header.hasColor()) {
+                            expectedLength += 4;
+                            if (values.length >= expectedLength) {
+                                float[] rgba = new float[4];
+                                for (; j < expectedLength; j ++) rgba[j - (expectedLength - 4)] = Float.valueOf(values[j]);
+                                data.vertexColors.add(rgba);
+                            }
+                        }
 
                     }
                     if (success) {

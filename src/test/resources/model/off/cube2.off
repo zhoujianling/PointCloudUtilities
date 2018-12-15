@@ -1,4 +1,4 @@
-OFF
+COFF
 #
 #  cube2.off
 #  There is extra RGBA color information specified for the vertices.
