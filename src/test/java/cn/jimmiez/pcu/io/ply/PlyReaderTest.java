@@ -84,7 +84,7 @@ public class PlyReaderTest {
 
         @ReadFromPly(
                 properties = {"red", "green", "blue", "alpha"},
-                element = {"vertex"}
+                element = "vertex"
         )
         public List<byte[]> getVertexColors() {
             return vertexColors;

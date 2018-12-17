@@ -19,7 +19,7 @@ public class PointCloud3f {
     @ReadFromOff
     @ReadFromPly(
             properties = {"x", "y", "z"},
-            element = {"vertex", "vertices"}
+            element = "vertex"
     )
     public List<float[]> getPoints() {
         return points;

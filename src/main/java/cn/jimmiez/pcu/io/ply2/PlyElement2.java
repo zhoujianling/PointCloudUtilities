@@ -38,6 +38,10 @@ public class PlyElement2 implements Iterable<PlyProperties>{
 
     private Iterator<PlyProperties> iterator = null;
 
+    public PlyHeader2.PlyElementHeader getHeader() {
+        return header;
+    }
+
     public static int parseInt(ByteBuffer buffer, PcuDataType dataType) throws IOException {
         switch (dataType) {
             case CHAR:

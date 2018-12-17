@@ -62,7 +62,7 @@ class YourPointCloud {
 
     @ReadFromPly(
         properties = {"x", "y", "z"},
-        element = {"vertex"}
+        element = "vertex"
     )
     public List<float[]> getPoints() {
         return points;

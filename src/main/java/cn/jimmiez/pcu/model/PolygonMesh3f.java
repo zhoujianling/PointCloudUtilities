@@ -18,7 +18,7 @@ public class PolygonMesh3f {
     @ReadFromOff
     @ReadFromPly(
             properties = {"x", "y", "z"},
-            element = {"vertex", "vertices"}
+            element = "vertex"
     )
     public List<float[]> getPoints() {
         return points;
@@ -27,7 +27,7 @@ public class PolygonMesh3f {
     @ReadFromOff(dataType = ReadFromOff.FACES)
     @ReadFromPly(
             properties = {"vertex_indices"},
-            element = {"face"}
+            element = "face"
     )
     public List<int[]> getFaces() {
         return faces;

@@ -417,16 +417,9 @@ public class PlyReader {
             void release() throws InvocationTargetException, IllegalAccessException {
                 for (Method method : getters) {
                     ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
-                    String[] elementNames = annotation.element();
-                    String elementName = null;
+                    String elementName = annotation.element();
                     int elementNumber = 0;
-                    for (String elementNameInPly : header.getElementTypes().keySet()) {
-                        if (PcuArrayUtil.find(elementNames, elementNameInPly) >= 0) {
-                            elementName = elementNameInPly;
-                            break;
-                        }
-                    }
-                    if (elementName == null) {
+                    if (header.getElementTypes().get(elementName) == null) {
                         throw new IllegalStateException("Cannot find the element in ply for your getter: " + method.getName());
                     }
                     // an ugly way to find number of items in current element

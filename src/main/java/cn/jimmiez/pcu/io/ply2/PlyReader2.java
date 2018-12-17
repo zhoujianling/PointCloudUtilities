@@ -1,13 +1,16 @@
 package cn.jimmiez.pcu.io.ply2;
 
 import cn.jimmiez.pcu.Constants;
+import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import cn.jimmiez.pcu.util.Pair;
-import cn.jimmiez.pcu.model.PointCloud3f;
+import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -24,18 +27,56 @@ public class PlyReader2 {
         return data;
     }
 
+    private List<Method> findAllElementGetter(List<Method> methods) {
+        List<Method> getters = new ArrayList<>();
+        for (Method m : methods) {
+            ReadFromPly pcuEle = m.getAnnotation(ReadFromPly.class);
+            if (pcuEle == null) continue;
+            getters.add(m);
+        }
+        return getters;
+    }
 
-    public PointCloud3f read(File file, Class<PointCloud3f> clazz) {
-        PointCloud3f object = null;
+
+    private <T> void injectData(List<List> dataContainer , PlyData data) throws InvocationTargetException, IllegalAccessException {
+
+//        int outterPointer = 0;
+//        for (PlyElement2 element2 : data) {
+//            int innerPointer = 0;
+//            for (PlyProperties properties : element2) {
+//
+//                innerPointer += 1;
+//            }
+//            outterPointer += 1;
+//        }
+
+    }
+
+    private <T> T reflect(PlyHeader2 header, PlyData data, Class<T> clazz) throws IllegalAccessException, InstantiationException, InvocationTargetException {
+        T object = clazz.newInstance();
+        List<Method> allMethods = PcuReflectUtil.fetchAllMethods(object);
+        List<Method> methods = findAllElementGetter(allMethods);
+
+        for (Method method : methods) {
+            ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
+            PlyHeader2.PlyElementHeader elementHeader = header.findElement(annotation.element());
+            if (elementHeader == null) continue;
+            List list = (List) method.invoke(object);
+            if (list == null) continue;
+//            String[] elementNames = annotation.element();
+        }
+        return object;
+    }
+
+    public <T> T read(File file, Class<T> clazz) {
+        T object = null;
         try {
-            object = clazz.newInstance();
             FileInputStream stream = new FileInputStream(file);
             Scanner scanner = new Scanner(stream);
             PlyHeader2 header = readHeader(scanner);
             PlyData data = new PlyData(file, header);
-            for (PlyElement2 element2 : data) {
-            }
             stream.close();
+            object = reflect(header, data, clazz);
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -43,6 +84,8 @@ public class PlyReader2 {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
         return object;
