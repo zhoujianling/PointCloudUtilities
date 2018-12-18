@@ -175,14 +175,8 @@ public class Octree {
         return queue;
     }
 
-    /**
-     * @param index the index of a point
-     * @param radius radius of neighborhood
-     * @return indices of neighboring points of this point
-     */
-    public List<Integer> searchNeighborsInSphere(int index, double radius) {
+    public List<Integer> searchNeighborsInSphere(Point3d point, double radius) {
         List<Integer> neighborIndices = new ArrayList<>();
-        Point3d point = points.get(index);
         List<Long> candidateLeaves = new ArrayList<>();
         helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
 
@@ -198,6 +192,16 @@ public class Octree {
             }
         }
         return neighborIndices;
+
+    }
+
+    /**
+     * @param index the index of a point
+     * @param radius radius of neighborhood
+     * @return indices of neighboring points of this point
+     */
+    public List<Integer> searchNeighborsInSphere(int index, double radius) {
+        return searchNeighborsInSphere(points.get(index), radius);
     }
 
     private void helpDetermineCandidatesWithRadius(double radius, Point3d point, List<Long> candidates) {

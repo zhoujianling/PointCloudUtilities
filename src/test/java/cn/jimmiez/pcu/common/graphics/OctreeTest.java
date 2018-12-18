@@ -191,6 +191,29 @@ public class OctreeTest {
             }
         }
 
+        // TEST searchNearestNeighbors(int, Point3d)
+        BoundingBox box = BoundingBox.of(data);
+        Random random = new Random(System.currentTimeMillis());
+        for (int i = 0; i < 3; i ++) {
+            double x = box.center.x + box.xExtent * (random.nextDouble() - 0.5);
+            double y = box.center.y + box.yExtent * (random.nextDouble() - 0.5);
+            double z = box.center.z + box.zExtent * (random.nextDouble() - 0.5);
+            Point3d p = new Point3d(x, y, z);
+            double randomRadius = Math.min(box.xExtent, Math.min(box.yExtent, box.zExtent)) * 0.3;
+            List<Integer> neighbors = octree.searchNeighborsInSphere(p, randomRadius);
+            Set<Integer> set = new HashSet<>();
+            set.addAll(neighbors);
+            for (int j = 0; j < 25; j ++) {
+                int randomIndex = random.nextInt(data.size());
+                while (set.contains(randomIndex))  randomIndex = random.nextInt(data.size());
+                double distance1 = p.distance(data.get(randomIndex));
+                for (int kNeighborIndex : neighbors) {
+                    double neighborDistance = data.get(kNeighborIndex).distance(p);
+                    assertTrue(distance1 >= neighborDistance);
+                }
+            }
+        }
+
     }
 
 }
