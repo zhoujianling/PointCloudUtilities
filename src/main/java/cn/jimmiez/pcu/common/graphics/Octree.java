@@ -136,9 +136,10 @@ public class Octree {
     public int[] searchNearestNeighbors(int k, int index) {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
         if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        return searchNearestNeighbors(k, points.get(index));
+    }
 
-
-        final Point3d point = points.get(index);
+    public int[] searchNearestNeighbors(int k, final Point3d point) {
         long leafNode = locateOctreeNode(this.root, point);
         List<Long> adjacentLeaves = obtainAdjacent26Indices(leafNode);
         List<Long> candidateLeaves = new ArrayList<>();
@@ -393,9 +394,9 @@ public class Octree {
             for (int index : indices) {
                 if (points.get(index) == point) return true;
             }
-            return abs(point.x - center.x) <= xExtent &&
-                    abs(point.y - center.y) <= yExtent &&
-                    abs(point.z - center.z) <= zExtent;
+            return abs(point.x - center.x) <= xExtent + 1e-4  &&
+                    abs(point.y - center.y) <= yExtent + 1e-4 &&
+                    abs(point.z - center.z) <= zExtent + 1e-4;
         }
 
         boolean contains(Point3d point, double tolerance) {
