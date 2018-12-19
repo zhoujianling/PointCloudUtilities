@@ -5,6 +5,10 @@ import java.util.List;
 
 public class BoundingBox extends Box {
 
+    public BoundingBox(Box box) {
+        this(box.minX(), box.maxX(), box.minY(), box.maxY(), box.minZ(), box.maxZ());
+    }
+
     public BoundingBox() {
         this(0, 1, 0, 1, 0, 1);
     }
