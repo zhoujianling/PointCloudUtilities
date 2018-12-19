@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg.projector;
+package cn.jimmiez.pcu.alg.sampler;
 
 import cn.jimmiez.pcu.common.graphics.Octree;
 

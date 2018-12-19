@@ -97,6 +97,8 @@ public class WeightedLocallyOptimalProjector {
                 Vector3d deltaj;
                 Point3d neighborPoint = originals.get(originalNeighborIndex);
                 double distance = sample.distance(neighborPoint);
+
+                // in case distance is near zero, resulting in INFINITY weight
                 distance = Math.max(h * 0.01 , distance);
                 averageWeight = (theta(distance) / distance);
 
@@ -127,6 +129,7 @@ public class WeightedLocallyOptimalProjector {
 
                 double distance = neighborPoint.distance(sample);
 
+                // in case distance is near zero, resulting in INFINITY weight
                 distance = Math.max(h * 0.01 , distance);
                 // the eta function is - 1 / r^3
                 double repulsionWeight = theta(distance) / Math.pow(distance, 4);
@@ -146,7 +149,6 @@ public class WeightedLocallyOptimalProjector {
     }
 
     private void computeDensity(List<Point3d> points, List<Double> densities, List<List<Integer>> neighborList, double h, boolean original) {
-        double iradius16 = - h / (h * h);
         for (int i = 0; i < points.size(); i ++) {
             double density = 1.0;
             Point3d point = points.get(i);
@@ -154,8 +156,8 @@ public class WeightedLocallyOptimalProjector {
 
             for (int neighborIndex : neighbors) {
                 Point3d neighbor = points.get(neighborIndex);
-                double distance2 = Math.pow(point.distance(neighbor), 2);
-                double den = Math.exp(distance2 * iradius16);
+                double distance = point.distance(neighbor);
+                double den = theta(distance);
                 density += den;
             }
             if (original) {
@@ -204,12 +206,8 @@ public class WeightedLocallyOptimalProjector {
             Vector3d averageVector = averageVectors.get(i);
             Vector3d repulsionVector = repulsionVectors.get(i);
             if (averageWeightSum  > 1e-6) {
-                double x = averageVector.x;
                 averageVector.scale(1.0 / averageWeightSum);
                 sample.set(averageVector);
-                if (Double.isNaN(averageVector.x)) {
-                    System.out.println("fuck, before: " + x + " weightSum: " + averageWeightSum);
-                }
             }
             if (repulsionWeightSum > 1e-6 && repulsionMu >= 0) {
                 repulsionVector.scale(repulsionMu / repulsionWeightSum);
