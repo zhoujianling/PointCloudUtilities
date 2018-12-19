@@ -82,9 +82,9 @@ public class OctreeTest {
         BoundingBox box = BoundingBox.of(data);
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
-            double x = box.center.x + box.xExtent * (random.nextDouble() - 0.5);
-            double y = box.center.y + box.yExtent * (random.nextDouble() - 0.5);
-            double z = box.center.z + box.zExtent * (random.nextDouble() - 0.5);
+            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
+            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
+            double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
             int randomK = random.nextInt(40);
             if (randomK == 0) randomK += 1;
@@ -195,11 +195,11 @@ public class OctreeTest {
         BoundingBox box = BoundingBox.of(data);
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
-            double x = box.center.x + box.xExtent * (random.nextDouble() - 0.5);
-            double y = box.center.y + box.yExtent * (random.nextDouble() - 0.5);
-            double z = box.center.z + box.zExtent * (random.nextDouble() - 0.5);
+            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
+            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
+            double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
-            double randomRadius = Math.min(box.xExtent, Math.min(box.yExtent, box.zExtent)) * 0.3;
+            double randomRadius = Math.min(box.getxExtent(), Math.min(box.getyExtent(), box.getzExtent())) * 0.3;
             List<Integer> neighbors = octree.searchNeighborsInSphere(p, randomRadius);
             Set<Integer> set = new HashSet<>();
             set.addAll(neighbors);

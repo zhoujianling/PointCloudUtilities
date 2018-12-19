@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.common.graphics;
+package cn.jimmiez.pcu.common.graphics.shape;
 
 import javax.vecmath.Point3d;
 

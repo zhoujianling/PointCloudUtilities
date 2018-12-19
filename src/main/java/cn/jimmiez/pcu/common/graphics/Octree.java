@@ -2,6 +2,8 @@ package cn.jimmiez.pcu.common.graphics;
 
 
 
+import cn.jimmiez.pcu.common.graphics.shape.Box;
+import cn.jimmiez.pcu.common.graphics.shape.Sphere;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;
@@ -82,8 +84,8 @@ public class Octree {
      */
     private void determineRootNode() {
         Box bbox = BoundingBox.of(points);
-        double maxExtent = PcuCommonUtil.max(bbox.xExtent, bbox.yExtent, bbox.zExtent);
-        this.root = new OctreeNode(bbox.center, maxExtent);
+        double maxExtent = PcuCommonUtil.max(bbox.getxExtent(), bbox.getyExtent(), bbox.getzExtent());
+        this.root = new OctreeNode(bbox.getCenter(), maxExtent);
     }
 
     /**
@@ -107,7 +109,7 @@ public class Octree {
                     index |= (currentNode.index << 3);
 
                     double length = currentNode.getxExtent(); // xExtent == yExtent == zExtent
-                    Point3d center = new Point3d(currentNode.center.x + i * length / 2, currentNode.center.y + j * length / 2, currentNode.center.z + k * length / 2);
+                    Point3d center = new Point3d(currentNode.getCenter().x + i * length / 2, currentNode.getCenter().y + j * length / 2, currentNode.getCenter().z + k * length / 2);
                     OctreeNode node = new OctreeNode(center, length / 2);
                     currentNode.children[cnt] = node;
                     node.index = index;

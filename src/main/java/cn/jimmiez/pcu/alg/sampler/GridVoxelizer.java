@@ -1,7 +1,7 @@
 package cn.jimmiez.pcu.alg.sampler;
 
 import cn.jimmiez.pcu.common.graphics.BoundingBox;
-import cn.jimmiez.pcu.common.graphics.Box;
+import cn.jimmiez.pcu.common.graphics.shape.Box;
 import cn.jimmiez.pcu.common.graphics.Octree;
 
 import javax.vecmath.Point3d;

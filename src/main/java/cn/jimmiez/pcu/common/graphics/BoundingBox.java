@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.common.graphics;
 
+import cn.jimmiez.pcu.common.graphics.shape.Box;
+
 import javax.vecmath.Point3d;
 import java.util.List;
 
