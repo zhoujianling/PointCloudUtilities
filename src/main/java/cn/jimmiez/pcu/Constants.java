@@ -1,5 +1,8 @@
 package cn.jimmiez.pcu;
 
+/**
+ * This class defines a series of global constants.
+ */
 public class Constants {
     public static final Integer ERR_CODE_NO_ERROR = 200;
 

@@ -36,6 +36,10 @@ public class PlyData implements Iterable<PlyElement2>{
         bytes = Files.readAllBytes(file.toPath());
     }
 
+    public PlyHeader2 getHeader() {
+        return header;
+    }
+
     @Override
     public Iterator<PlyElement2> iterator() {
         return iterator;

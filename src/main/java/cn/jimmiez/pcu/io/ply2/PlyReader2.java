@@ -38,19 +38,56 @@ public class PlyReader2 {
     }
 
 
-    private <T> void injectData(List<List> dataContainer , PlyData data) throws InvocationTargetException, IllegalAccessException {
-
-//        int outterPointer = 0;
+//    private <T> void injectData(List<List> dataContainer, List<Integer> arraySizes, List<List<int[]>> pointerList, PlyData data) throws InvocationTargetException, IllegalAccessException {
+//        byte[] byteBuffer = null;
+//        short[] shortBuffer = null;
+//        int[] intBuffer = null;
+//        float[] floatBuffer = null;
+//        double[] doubleBuffer = null;
+//        int elementPointer = 0;
 //        for (PlyElement2 element2 : data) {
-//            int innerPointer = 0;
+//            int linePointer = 0;
+//            PlyHeader2.PlyElementHeader elementHeader = data.getHeader().getElementHeaders().get(elementPointer);
+//            int[] sizes = initBufferSize(elementHeader);
+//            byteBuffer = new byte[sizes[0]];
+//            shortBuffer = new short[sizes[1]];
+//            intBuffer = new int[sizes[2]];
+//            floatBuffer = new float[sizes[3]];
+//            doubleBuffer = new double[sizes[4]];
+//            int propertyNumber = elementHeader.getProperties().size();
 //            for (PlyProperties properties : element2) {
+//                int propertyPointer = 0;
+//                for (; propertyPointer < propertyNumber; propertyPointer ++) {
+//                    int[] positions = pointerList.get(elementPointer).get(propertyPointer);
 //
-//                innerPointer += 1;
+//                }
+//                PlyPropertyType2 type = elementHeader.getProperties().get(linePointer).getValue();
+//                linePointer += 1;
 //            }
-//            outterPointer += 1;
+//            elementPointer += 1;
 //        }
+//    }
+//
+//    private int[] initBufferSize(PlyHeader2.PlyElementHeader header) {
+//        int[] sizes = new int[5];
+//        sizes[0] = 0; sizes[1] = 0; sizes[2] = 0; sizes[3] = 0; sizes[4] = 0;
+//        for (int i = 0; i < header.getProperties().size(); i ++) {
+//            PlyPropertyType2 type = header.getProperties().get(i).getValue();
+//            if (type instanceof PlyPropertyType2.PlyScalarType) {
+//                PlyPropertyType2.PlyScalarType scalarType = (PlyPropertyType2.PlyScalarType) type;
+//                switch (scalarType.dataType()) {
+//                    case CHAR:      sizes[0] += 1;  break;
+//                    case SHORT:     sizes[1] += 1;  break;
+//                    case INT:       sizes[2] += 1;  break;
+//                    case FLOAT:     sizes[3] += 1;  break;
+//                    case DOUBLE:    sizes[4] += 1;  break;
+//                }
+//            }
+//        }
+//        return sizes;
+//    }
 
-    }
+//    private void putValue(List<List> dataContainer,)
 
     private <T> T reflect(PlyHeader2 header, PlyData data, Class<T> clazz) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         T object = clazz.newInstance();
