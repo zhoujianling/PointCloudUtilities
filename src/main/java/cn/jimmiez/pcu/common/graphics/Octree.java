@@ -32,7 +32,7 @@ public class Octree {
     protected Map<Long, OctreeNode> octreeIndices = new HashMap<>();
 
     /** the depth of this tree **/
-    protected int depth = 1;
+    protected int depth = 0;
 
     /**
      * the max depth of this tree,
@@ -42,8 +42,8 @@ public class Octree {
     private static final int MAX_DEPTH = 10;
 
     public void buildIndex(List<Point3d> points, int depth) {
-        if (depth < 1) {
-            throw new IllegalArgumentException("Depth should be larger than 0.");
+        if (depth < 0) {
+            throw new IllegalArgumentException("Depth should not be less than 0.");
         }
         this.depth = depth;
 
@@ -57,7 +57,7 @@ public class Octree {
         this.points = points;
 
         determineRootNode();
-        createOctree(1, this.root);
+        createOctree(0, this.root);
 
         for (int i = 0; i < points.size(); i ++) {
             Point3d xyz = points.get(i);
@@ -72,9 +72,9 @@ public class Octree {
      * @param points the point cloud
      */
     public void buildIndex(List<Point3d> points) {
-        int depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))) + 1);
+        int depth = (int) (Math.ceil((Math.log((points.size() + 1) / 64) / Math.log(8))));
         depth = min(depth, MAX_DEPTH);
-        depth = max(depth, 1);
+        depth = max(depth, 0);
 
         this.buildIndex(points, depth);
     }
@@ -113,12 +113,6 @@ public class Octree {
                     OctreeNode node = new OctreeNode(center, length / 2);
                     currentNode.children[cnt] = node;
                     node.index = index;
-//                    node.minX = currentNode.minX + (i + 1) / 2 * currentNode.xExtent;
-//                    node.maxX = currentNode.maxX + (i - 1) / 2 * currentNode.xExtent;
-//                    node.minY = currentNode.minY + (j + 1) / 2 * currentNode.yExtent;
-//                    node.maxY = currentNode.maxY + (j - 1) / 2 * currentNode.yExtent;
-//                    node.minZ = currentNode.minZ + (k + 1) / 2 * currentNode.zExtent;
-//                    node.maxZ = currentNode.maxZ + (k - 1) / 2 * currentNode.zExtent;
                     if (currentDepth + 1 == this.depth) this.octreeIndices.put(index, node);
                     createOctree(currentDepth + 1, node);
                     cnt += 1;
@@ -269,12 +263,10 @@ public class Octree {
         for (long leafIndex : leafIndices) {
             num += this.octreeIndices.get(leafIndex).indices.size();
         }
-//        System.out.println("num: " + num);
         if (num > k) return;
         Set<Long> indicesSet = new HashSet<>(leafIndices);
         for (Long leafIndex : leafIndices) {
             List<Long> adjacent26 = obtainAdjacent26Indices(leafIndex);
-//            System.out.println("adjacent: " + adjacent26.size());
             indicesSet.addAll(adjacent26);
         }
         leafIndices.clear();
@@ -296,18 +288,17 @@ public class Octree {
         int []coord = new int[3];//x y z
         coord[0] = 0; coord[1] = 0; coord[2] = 0;
         /** from left to right **/
-        for (int i = depth; i > 1; i --) {
-            Long temp = (index >> (i - 2) * 3) & 7L;
-            coord[0] += ((temp >> 2) & 1L) << (i - 2);
-            coord[1] += ((temp >> 1) & 1L) << (i - 2);
-            coord[2] += ((temp >> 0) & 1L) << (i - 2);
+        for (int i = depth - 1; i >= 0; i --) {
+            Long temp = (index >> i * 3) & 7L;
+            coord[0] += ((temp >> 2) & 1L) << i;
+            coord[1] += ((temp >> 1) & 1L) << i;
+            coord[2] += ((temp >> 0) & 1L) << i;
         }
         return coord;
     }
 
     /**
-     *
-     * root index  ----   ---- leaf index
+     * {@literal root index <----   ----> leaf index}
      * if index is (101 011 001 101)_2
      * the coord is [(1001), (0100), (1111)]
      * @param coord 3-d coordinate
@@ -315,10 +306,10 @@ public class Octree {
      **/
     protected Long coordinates2Index(int []coord) {
         Long index = 0L;
-        for (int i = this.depth; i > 1; i --) {
-            index |= (((coord[0] >> (i - 2)) & 1) << 2);
-            index |= (((coord[1] >> (i - 2)) & 1) << 1);
-            index |= (((coord[2] >> (i - 2)) & 1) << 0);
+        for (int i = this.depth - 1; i >= 0; i --) {
+            index |= (((coord[0] >> i) & 1) << 2);
+            index |= (((coord[1] >> i) & 1) << 1);
+            index |= (((coord[2] >> i) & 1) << 0);
             index <<= 3;
         }
         index >>= 3;
@@ -335,9 +326,9 @@ public class Octree {
                     if (coord[0] == 0 && i < 0) continue;
                     if (coord[1] == 0 && j < 0) continue;
                     if (coord[2] == 0 && k < 0) continue;
-                    if (coord[0] == Math.pow(2, this.depth - 1) - 1 && i > 0) continue;
-                    if (coord[1] == Math.pow(2, this.depth - 1) - 1 && j > 0) continue;
-                    if (coord[2] == Math.pow(2, this.depth - 1) - 1 && k > 0) continue;
+                    if (coord[0] == Math.pow(2, this.depth) - 1 && i > 0) continue;
+                    if (coord[1] == Math.pow(2, this.depth) - 1 && j > 0) continue;
+                    if (coord[2] == Math.pow(2, this.depth) - 1 && k > 0) continue;
 
                     int []newCoord = new int [] {coord[0] + i, coord[1] + j, coord[2] + k};
                     if (isValidCoordinates(newCoord))
@@ -351,9 +342,9 @@ public class Octree {
 
     private boolean isValidCoordinates(int []coord) {
         if (coord.length < 3) return false;
-        return coord[0] >= 0 && coord[0] < (int) pow(2, this.depth - 1)
-                && coord[1] >= 0 && coord[1] < (int) pow(2, this.depth - 1)
-                && coord[2] >= 0 && coord[2] < (int) pow(2, this.depth - 1);
+        return coord[0] >= 0 && coord[0] < (int) pow(2, this.depth)
+                && coord[1] >= 0 && coord[1] < (int) pow(2, this.depth)
+                && coord[2] >= 0 && coord[2] < (int) pow(2, this.depth);
     }
 
     public int getDepth() {
@@ -419,6 +410,10 @@ public class Octree {
             return children;
         }
 
+        public int depth() {
+            int depth = 0;
+            return depth;
+        }
     }
 
 }

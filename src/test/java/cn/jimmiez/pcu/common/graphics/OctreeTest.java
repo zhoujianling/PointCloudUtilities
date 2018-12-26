@@ -36,7 +36,7 @@ public class OctreeTest {
         for (Long nodeKey : octree.octreeIndices.keySet()) {
             pointNum += octree.octreeIndices.get(nodeKey).getIndices().size();
         }
-        assertTrue(octree.getDepth() == 4);
+        assertTrue(octree.getDepth() == 3);
         assertTrue(octree.octreeIndices.size() == 8 * 8 * 8);
 //        System.out.println("" + pointNum + " " + dataSize);
         assertTrue(pointNum == dataSize);
@@ -49,10 +49,10 @@ public class OctreeTest {
 
         List<Point3d> emptyData = new ArrayList<>();
         octree.buildIndex(emptyData);
-        assertTrue(octree.getDepth() == 1);
+        assertTrue(octree.getDepth() == 0);
         List<Point3d> data2 = randomData(129, 0, 1);
         octree.buildIndex(data2);
-        assertTrue(octree.getDepth() == 2);
+        assertTrue(octree.getDepth() == 1);
         assertTrue(octree.octreeIndices.size() == 8);
     }
 
