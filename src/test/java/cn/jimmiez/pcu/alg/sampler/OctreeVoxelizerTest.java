@@ -12,7 +12,7 @@ public class OctreeVoxelizerTest {
 
     @Test
     public void voxelizeTest() {
-        List<Point3d> points = DataUtil.genData(3000, 0, 3, -3, 4, 1, 8);
+        List<Point3d> points = DataUtil.generateRandData(3000, 0, 3, -3, 4, 1, 8);
         OctreeVoxelizer voxelizer = new OctreeVoxelizer();
         List<OctreeVoxelizer.OctreeNode> nodes = voxelizer.voxelize(points, 5);
         assertTrue(nodes.size() > 0 && nodes.size() < 3000);

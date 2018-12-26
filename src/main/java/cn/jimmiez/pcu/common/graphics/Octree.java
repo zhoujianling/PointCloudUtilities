@@ -85,7 +85,7 @@ public class Octree {
     private void determineRootNode() {
         Box bbox = BoundingBox.of(points);
         double maxExtent = PcuCommonUtil.max(bbox.getxExtent(), bbox.getyExtent(), bbox.getzExtent());
-        this.root = new OctreeNode(bbox.getCenter(), maxExtent);
+        this.root = new OctreeNode(bbox.getCenter(), maxExtent, 0);
     }
 
     /**
@@ -110,7 +110,7 @@ public class Octree {
 
                     double length = currentNode.getxExtent(); // xExtent == yExtent == zExtent
                     Point3d center = new Point3d(currentNode.getCenter().x + i * length / 2, currentNode.getCenter().y + j * length / 2, currentNode.getCenter().z + k * length / 2);
-                    OctreeNode node = new OctreeNode(center, length / 2);
+                    OctreeNode node = new OctreeNode(center, length / 2, currentDepth + 1);
                     currentNode.children[cnt] = node;
                     node.index = index;
                     if (currentDepth + 1 == this.depth) this.octreeIndices.put(index, node);
@@ -351,7 +351,7 @@ public class Octree {
         return depth;
     }
 
-    public class OctreeNode extends Box{
+    public class OctreeNode extends Box {
 
         /**
          * default value is root index
@@ -368,11 +368,14 @@ public class Octree {
         /** in a non-leaf node, field indices is null **/
         OctreeNode[] children = null;
 
-        OctreeNode(Point3d center, double length) {
+        int depth = 0;
+
+        OctreeNode(Point3d center, double length, int depth) {
             this.center = new Point3d(center);
             this.xExtent = length;
             this.yExtent = length;
             this.zExtent = length;
+            this.depth = depth;
         }
 
         void addPoint(Point3d point, int index) {
@@ -410,8 +413,7 @@ public class Octree {
             return children;
         }
 
-        public int depth() {
-            int depth = 0;
+        public int getDepth() {
             return depth;
         }
     }

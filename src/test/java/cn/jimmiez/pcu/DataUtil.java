@@ -7,7 +7,7 @@ import java.util.Vector;
 
 public class DataUtil {
 
-    public static List<Point3d> genData(int n, double minX, double maxX, double minY, double maxY, double minZ, double maxZ) {
+    public static List<Point3d> generateRandData(int n, double minX, double maxX, double minY, double maxY, double minZ, double maxZ) {
         List<Point3d> data = new Vector<>();
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < n; i ++) {
