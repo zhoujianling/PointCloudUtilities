@@ -135,6 +135,73 @@ public class Octree2 {
     }
 
 
+    private PriorityQueue<Integer> searchNeighborsInNodes(List<Long> candidateLeaves, final Point3d point) {
+        int capacity = 0;
+        for (long leafIndex : candidateLeaves) capacity += this.octreeIndices.get(leafIndex).indices.size();
+        PriorityQueue<Integer> queue = new PriorityQueue<>(capacity, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer pointIndex1, Integer pointIndex2) {
+                Point3d p1 = points.get(pointIndex1);
+                Point3d p2 = points.get(pointIndex2);
+                return Double.compare(p1.distance(point), p2.distance(point));
+            }
+        });
+        for (long leafIndex : candidateLeaves) {
+            queue.addAll(this.octreeIndices.get(leafIndex).indices);
+        }
+        return queue;
+    }
+
+    public List<Integer> searchNeighborsInSphere(Point3d point, double radius) {
+        List<Integer> neighborIndices = new ArrayList<>();
+        List<Long> candidateLeaves = new ArrayList<>();
+        helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
+
+        PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
+
+        while (queue.size() > 0) {
+            Integer nextIndex = queue.poll();
+            Point3d neighboringPoint = points.get(nextIndex);
+            if (point.distance(neighboringPoint) >= radius) {
+                break;
+            } else {
+                neighborIndices.add(nextIndex);
+            }
+        }
+        return neighborIndices;
+
+    }
+
+    /**
+     * @param index the index of a point
+     * @param radius radius of neighborhood
+     * @return indices of neighboring points of this point
+     */
+    public List<Integer> searchNeighborsInSphere(int index, double radius) {
+        return searchNeighborsInSphere(points.get(index), radius);
+    }
+
+    private void helpDetermineCandidatesWithRadius(double radius, Point3d point, List<Long> candidates) {
+        Sphere sphere = new Sphere(point, radius);
+        // ===========================================
+        // all octree nodes that intersects with sphere will be added into queue
+        List<OctreeNode> visitingQueue = new ArrayList<>();
+        if (Collisions.intersect(root, sphere)) visitingQueue.add(root);
+        int currentVisit = 0;
+        for (; currentVisit < visitingQueue.size(); currentVisit ++) {
+            OctreeNode visiting = visitingQueue.get(currentVisit);
+            if (visiting.isLeaf()) {
+                candidates.add(visiting.index);
+            } else {
+                for (OctreeNode child : visiting.children) {
+                    if (Collisions.intersect(child, sphere)) {
+                        visitingQueue.add(child);
+                    }
+                }
+            }
+        }
+
+    }
 
 
     public class OctreeNode extends Box {
@@ -149,7 +216,7 @@ public class Octree2 {
          * an octree node holds the indices of 3d points in the List
          * in a non-leaf node, field indices is null
          **/
-        List<Integer> indices = null;
+        List<Integer> indices = new ArrayList<>();
 
         /** in a non-leaf node, field indices is null **/
         OctreeNode[] children = null;
@@ -189,6 +256,10 @@ public class Octree2 {
 
         public int getDepth() {
             return depth;
+        }
+
+        public boolean isLeaf() {
+            return children == null;
         }
     }
 
