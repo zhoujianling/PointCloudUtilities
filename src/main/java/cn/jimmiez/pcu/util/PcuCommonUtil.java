@@ -29,4 +29,13 @@ public class PcuCommonUtil {
         }
         return result;
     }
+
+    public static double min(double... ds) {
+        double result = ds[0];
+        for (double d : ds) {
+            result = Math.min(d, result);
+        }
+        return result;
+    }
+
 }

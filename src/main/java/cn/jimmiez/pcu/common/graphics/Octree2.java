@@ -60,6 +60,109 @@ public class Octree2 {
     }
 
     /**
+     * If you want to acquire the k-nearest neighbors of a certain point p, call this function,
+     * octree will decrease the time cost
+     * @param k the number of nearest neighbors
+     * @param index the index of point p
+     * @return the indices of nearest neighbors
+     */
+    public int[] searchNearestNeighbors(int k, int index) {
+        if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
+        if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        return searchNearestNeighbors(k, points.get(index));
+    }
+
+    private double shortestDistance2Boundary(Collection<Long> range, Point3d point) {
+        double upperX = 0, lowerX = 0, upperY = 0, lowerY = 0, upperZ = 0, lowerZ = 0;
+        double minimalDistance = Double.MAX_VALUE;
+        for (Long nodeIndex : range) {
+            OctreeNode node = octreeIndices.get(nodeIndex);
+            if (node.getCenter().x + node.getxExtent() > point.x) {
+                if (abs(node.getCenter().x + node.getxExtent() - (root.getCenter().x + root.getxExtent())) > 1E-4) {
+                    upperX = max(upperX, node.getCenter().x + node.getxExtent() - point.x);
+                    minimalDistance = min(minimalDistance, upperX);
+                }
+            }
+            if (node.getCenter().x - node.getxExtent() < point.x) {
+                if (abs(node.getCenter().x - node.getxExtent() - (root.getCenter().x - root.getxExtent())) > 1E-4) {
+                    lowerX = max(lowerX, point.x - node.getCenter().x + node.getxExtent());
+                    minimalDistance = min(minimalDistance, lowerX);
+                }
+            }
+            if (node.getCenter().y + node.getyExtent() > point.y) {
+                if (abs(node.getCenter().y + node.getyExtent() - (root.getCenter().y + root.getyExtent())) > 1E-4) {
+                    upperY = max(upperY, node.getCenter().y + node.getyExtent() - point.y);
+                    minimalDistance = min(minimalDistance, upperY);
+                }
+            }
+            if (node.getCenter().y - node.getyExtent() < point.y) {
+                if (abs(node.getCenter().y - node.getyExtent() - (root.getCenter().y - root.getyExtent())) > 1E-4) {
+                    lowerY = max(lowerY, point.y - node.getCenter().y + node.getyExtent());
+                    minimalDistance = min(minimalDistance, lowerY);
+                }
+            }
+            if (node.getCenter().z + node.getzExtent() > point.z) {
+                if (abs(node.getCenter().z + node.getzExtent() - (root.getCenter().z + root.getzExtent())) > 1E-4) {
+                    upperZ = max(upperZ, node.getCenter().z + node.getzExtent() - point.z);
+                    minimalDistance = min(minimalDistance, upperZ);
+                }
+            }
+            if (node.getCenter().z - node.getzExtent() < point.z) {
+                if (abs(node.getCenter().z - node.getzExtent() - (root.getCenter().z - root.getzExtent())) > 1E-4) {
+                    lowerZ = max(lowerZ, point.z - node.getCenter().z + node.getzExtent());
+                    minimalDistance = min(minimalDistance, lowerZ);
+                }
+            }
+        }
+        return minimalDistance;
+//        return PcuCommonUtil.min(upperX, lowerX, upperY, lowerY, upperZ, lowerZ);
+    }
+
+    public int[] searchNearestNeighbors(int k, final Point3d point) {
+        long leafNodeIndex = locateOctreeNode(this.root, point);
+        PriorityQueue<Integer> queue = new PriorityQueue<>(k, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer pointIndex1, Integer pointIndex2) {
+                Point3d p1 = points.get(pointIndex1);
+                Point3d p2 = points.get(pointIndex2);
+                return Double.compare(p1.distance(point), p2.distance(point));
+            }
+        });
+        Set<Long> searchRange = new HashSet<>();
+        OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
+        searchRange.add(leafNodeIndex);
+        queue.addAll(leafNode.indices);
+        while (true) {
+            List<Integer> array = new ArrayList<>();
+            int queueSize = queue.size();
+            for(int i = 0; i < min(k, queueSize); i ++) array.add(queue.poll());
+            int furthestIndex = array.get(array.size() - 1);
+
+            Point3d furthestPoint = points.get(furthestIndex);
+            double distance = furthestPoint.distance(point);
+            queue.clear();
+            queue.addAll(array);
+
+            Set<Long> candidates = new HashSet<>();
+            determineCandidatesWithinRadius(distance, point, candidates);
+            int cnt = 0;
+            for (Long newNode : candidates) {
+                if (searchRange.contains(newNode)) continue;
+                searchRange.add(newNode);
+                queue.addAll(octreeIndices.get(newNode).indices);
+                cnt += 1;
+            }
+            if (cnt == 0) break;
+        }
+
+        int[] indices = new int[k];
+        for (int i = 0; i < k; i ++) {
+            indices[i] = queue.poll();
+        }
+        return indices;
+    }
+
+    /**
      * determine bounding box of data points, expand the box to make it cubic
      */
     private void determineRootNode() {
@@ -155,7 +258,7 @@ public class Octree2 {
     public List<Integer> searchNeighborsInSphere(Point3d point, double radius) {
         List<Integer> neighborIndices = new ArrayList<>();
         List<Long> candidateLeaves = new ArrayList<>();
-        helpDetermineCandidatesWithRadius(radius, point, candidateLeaves);
+        determineCandidatesWithinRadius(radius, point, candidateLeaves);
 
         PriorityQueue<Integer> queue = searchNeighborsInNodes(candidateLeaves, point);
 
@@ -181,7 +284,7 @@ public class Octree2 {
         return searchNeighborsInSphere(points.get(index), radius);
     }
 
-    private void helpDetermineCandidatesWithRadius(double radius, Point3d point, List<Long> candidates) {
+    private void determineCandidatesWithinRadius(double radius, Point3d point, Collection<Long> candidates) {
         Sphere sphere = new Sphere(point, radius);
         // ===========================================
         // all octree nodes that intersects with sphere will be added into queue
