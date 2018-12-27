@@ -15,6 +15,7 @@ import static java.lang.Math.*;
 /**
  * An octree can be used to build spatial index for point cloud.
  */
+@SuppressWarnings("Duplicates")
 public class Octree {
 
     /**
@@ -277,8 +278,8 @@ public class Octree {
     /**
      *
      * interpreter the index to three-dimensional Cartesian coordinates
-     * high bits   ----   ---- low bits
-     * root index  ----   ---- leaf index
+     * {@literal high bits <----   ----> low bits }
+     * {@literal root index <----   ----> leaf index}
      * eg. if index is (101 011 001 101)
      * the coord is [(1001), (0100), (1111)]
      * @param index index of an octree node
