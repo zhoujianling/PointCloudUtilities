@@ -38,7 +38,7 @@ public class Octree2 {
      **/
     private static final int MAX_DEPTH = 10;
 
-    private static final int MAX_POINTS_PER_NODE = 63;
+    private static final int MAX_POINTS_PER_NODE = 200;
 
     /**
      * build spatial index for point cloud
@@ -54,7 +54,7 @@ public class Octree2 {
         this.octreeIndices.clear();
         this.points = points;
 
-        determineRootNode();
+        createRootNode();
         createOctree(0, this.root);
 
     }
@@ -72,51 +72,6 @@ public class Octree2 {
         return searchNearestNeighbors(k, points.get(index));
     }
 
-    private double shortestDistance2Boundary(Collection<Long> range, Point3d point) {
-        double upperX = 0, lowerX = 0, upperY = 0, lowerY = 0, upperZ = 0, lowerZ = 0;
-        double minimalDistance = Double.MAX_VALUE;
-        for (Long nodeIndex : range) {
-            OctreeNode node = octreeIndices.get(nodeIndex);
-            if (node.getCenter().x + node.getxExtent() > point.x) {
-                if (abs(node.getCenter().x + node.getxExtent() - (root.getCenter().x + root.getxExtent())) > 1E-4) {
-                    upperX = max(upperX, node.getCenter().x + node.getxExtent() - point.x);
-                    minimalDistance = min(minimalDistance, upperX);
-                }
-            }
-            if (node.getCenter().x - node.getxExtent() < point.x) {
-                if (abs(node.getCenter().x - node.getxExtent() - (root.getCenter().x - root.getxExtent())) > 1E-4) {
-                    lowerX = max(lowerX, point.x - node.getCenter().x + node.getxExtent());
-                    minimalDistance = min(minimalDistance, lowerX);
-                }
-            }
-            if (node.getCenter().y + node.getyExtent() > point.y) {
-                if (abs(node.getCenter().y + node.getyExtent() - (root.getCenter().y + root.getyExtent())) > 1E-4) {
-                    upperY = max(upperY, node.getCenter().y + node.getyExtent() - point.y);
-                    minimalDistance = min(minimalDistance, upperY);
-                }
-            }
-            if (node.getCenter().y - node.getyExtent() < point.y) {
-                if (abs(node.getCenter().y - node.getyExtent() - (root.getCenter().y - root.getyExtent())) > 1E-4) {
-                    lowerY = max(lowerY, point.y - node.getCenter().y + node.getyExtent());
-                    minimalDistance = min(minimalDistance, lowerY);
-                }
-            }
-            if (node.getCenter().z + node.getzExtent() > point.z) {
-                if (abs(node.getCenter().z + node.getzExtent() - (root.getCenter().z + root.getzExtent())) > 1E-4) {
-                    upperZ = max(upperZ, node.getCenter().z + node.getzExtent() - point.z);
-                    minimalDistance = min(minimalDistance, upperZ);
-                }
-            }
-            if (node.getCenter().z - node.getzExtent() < point.z) {
-                if (abs(node.getCenter().z - node.getzExtent() - (root.getCenter().z - root.getzExtent())) > 1E-4) {
-                    lowerZ = max(lowerZ, point.z - node.getCenter().z + node.getzExtent());
-                    minimalDistance = min(minimalDistance, lowerZ);
-                }
-            }
-        }
-        return minimalDistance;
-//        return PcuCommonUtil.min(upperX, lowerX, upperY, lowerY, upperZ, lowerZ);
-    }
 
     public int[] searchNearestNeighbors(int k, final Point3d point) {
         long leafNodeIndex = locateOctreeNode(this.root, point);
@@ -165,10 +120,11 @@ public class Octree2 {
     /**
      * determine bounding box of data points, expand the box to make it cubic
      */
-    private void determineRootNode() {
+    private void createRootNode() {
         Box bbox = BoundingBox.of(points);
         double maxExtent = PcuCommonUtil.max(bbox.getxExtent(), bbox.getyExtent(), bbox.getzExtent());
         this.root = new OctreeNode(bbox.getCenter(), maxExtent, 0);
+        this.root.indices = new ArrayList<>(points.size());
         this.root.indices.addAll(PcuCommonUtil.incrementalIntegerList(points.size()));
     }
 
@@ -196,6 +152,7 @@ public class Octree2 {
                     OctreeNode node = new OctreeNode(center, length / 2, currentDepth + 1);
                     currentNode.children[cnt] = node;
                     node.index = index;
+                    node.indices = new ArrayList<>(currentNode.indices.size() / 8 + 10);
                     cnt += 1;
                 }
             }
@@ -209,6 +166,7 @@ public class Octree2 {
             int childIndex = xi * 4 + yj * 2 + zk * 1;
             currentNode.children[childIndex].indices.add(index);
         }
+        currentNode.indices = null;
         for (OctreeNode node : currentNode.children) {
             createOctree(currentDepth + 1, node);
         }
@@ -319,7 +277,7 @@ public class Octree2 {
          * an octree node holds the indices of 3d points in the List
          * in a non-leaf node, field indices is null
          **/
-        List<Integer> indices = new ArrayList<>();
+        List<Integer> indices = null;
 
         /** in a non-leaf node, field indices is null **/
         OctreeNode[] children = null;
