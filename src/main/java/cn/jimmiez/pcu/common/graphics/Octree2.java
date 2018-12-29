@@ -90,27 +90,23 @@ public class Octree2 {
 
         long leafNodeIndex = locateOctreeNode(this.root, point);
         List<Integer> queue = new ArrayList<>();
-        Set<Long> searchRange = new HashSet<>();
+        Set<Long> visited = new HashSet<>();
         OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
-        searchRange.add(leafNodeIndex);
-        queue.addAll(leafNode.indices);
-        double currentSearchRadius = .0D;
-        while (true) {
-            Collections.sort(queue, comparator);
-            while (queue.size() > k) queue.remove(queue.size() - 1);
-            currentSearchRadius = max(currentSearchRadius, points.get(queue.get(queue.size() - 1)).distance(point));
-            if (queue.size() < k) currentSearchRadius *= 2;
+//        queue.addAll(leafNode.indices);
+        double leafSize = leafNode.getxExtent();
+        double currentSearchRadius = leafSize;
 
+        while (queue.size() < k) {
             Set<Long> candidates = new HashSet<>();
             determineCandidatesWithinRadius(currentSearchRadius, point, candidates);
-            int cnt = 0;
             for (Long newNode : candidates) {
-                if (searchRange.contains(newNode)) continue;
-                searchRange.add(newNode);
+                if (visited.contains(newNode)) continue;
+                visited.add(newNode);
                 queue.addAll(octreeIndices.get(newNode).indices);
-                cnt += 1;
             }
-            if (cnt == 0) break;
+            Collections.sort(queue, comparator);
+            while (queue.size() > k) queue.remove(queue.size() - 1);
+            currentSearchRadius = currentSearchRadius + leafSize;
         }
 
         int[] indices = new int[k];
@@ -120,6 +116,7 @@ public class Octree2 {
         }
         return indices;
     }
+    
     /**
      * determine bounding box of data points, expand the box to make it cubic
      */
