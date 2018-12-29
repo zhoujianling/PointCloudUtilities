@@ -1,15 +1,15 @@
 package cn.jimmiez.pcu.alg.sampler;
 
-import cn.jimmiez.pcu.common.graphics.Octree2;
+import cn.jimmiez.pcu.common.graphics.Octree;
 
 import javax.vecmath.Point3d;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class OctreeVoxelizer extends Octree2 {
+public class OctreeVoxelizer extends Octree {
 
-    public List<OctreeNode> voxelize(List<Point3d> data, int depth) {
+    public List<OctreeNode> voxelize(List<Point3d> data, int maxPointsPerNode) {
+        super.setMaxPointsPerNode(maxPointsPerNode);
         super.buildIndex(data);
         List<OctreeNode> leaves = new ArrayList<>();
         for (Long index : super.octreeIndices.keySet()) {

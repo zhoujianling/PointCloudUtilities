@@ -1,7 +1,6 @@
 package cn.jimmiez.pcu.alg.normal;
 
 import Jama.Matrix;
-import cn.jimmiez.pcu.alg.normal.NormalEstimator;
 import cn.jimmiez.pcu.common.graphics.Octree;
 import com.mkobos.pca_transform.covmatrixevd.EVD;
 

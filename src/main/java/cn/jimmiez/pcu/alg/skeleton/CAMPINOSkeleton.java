@@ -1,8 +1,6 @@
 package cn.jimmiez.pcu.alg.skeleton;
 
 
-import cn.jimmiez.pcu.common.graphics.Octree;
-
 import javax.vecmath.Point3d;
 import java.util.List;
 
@@ -29,7 +27,4 @@ public class CAMPINOSkeleton implements Skeletonization {
         return null;
     }
 
-    private class AdaptiveOctree extends Octree {
-
-    }
 }
