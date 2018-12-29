@@ -72,34 +72,37 @@ public class Octree2 {
         return searchNearestNeighbors(k, points.get(index));
     }
 
-
-    public int[] searchNearestNeighbors(int k, final Point3d point) {
-        long leafNodeIndex = locateOctreeNode(this.root, point);
-        PriorityQueue<Integer> queue = new PriorityQueue<>(k, new Comparator<Integer>() {
+    private Comparator<Integer> distanceComparator(final Point3d point) {
+        return new Comparator<Integer>() {
             @Override
             public int compare(Integer pointIndex1, Integer pointIndex2) {
                 Point3d p1 = points.get(pointIndex1);
                 Point3d p2 = points.get(pointIndex2);
                 return Double.compare(p1.distance(point), p2.distance(point));
             }
-        });
+        };
+    }
+
+    public int[] searchNearestNeighbors(int k, final Point3d point) {
+        if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
+        if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        Comparator<Integer> comparator = distanceComparator(point);
+
+        long leafNodeIndex = locateOctreeNode(this.root, point);
+        List<Integer> queue = new ArrayList<>();
         Set<Long> searchRange = new HashSet<>();
         OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
         searchRange.add(leafNodeIndex);
         queue.addAll(leafNode.indices);
+        double currentSearchRadius = .0D;
         while (true) {
-            List<Integer> array = new ArrayList<>();
-            int queueSize = queue.size();
-            for(int i = 0; i < min(k, queueSize); i ++) array.add(queue.poll());
-            int furthestIndex = array.get(array.size() - 1);
-
-            Point3d furthestPoint = points.get(furthestIndex);
-            double distance = furthestPoint.distance(point);
-            queue.clear();
-            queue.addAll(array);
+            Collections.sort(queue, comparator);
+            while (queue.size() > k) queue.remove(queue.size() - 1);
+            currentSearchRadius = max(currentSearchRadius, points.get(queue.get(queue.size() - 1)).distance(point));
+            if (queue.size() < k) currentSearchRadius *= 2;
 
             Set<Long> candidates = new HashSet<>();
-            determineCandidatesWithinRadius(distance, point, candidates);
+            determineCandidatesWithinRadius(currentSearchRadius, point, candidates);
             int cnt = 0;
             for (Long newNode : candidates) {
                 if (searchRange.contains(newNode)) continue;
@@ -111,12 +114,12 @@ public class Octree2 {
         }
 
         int[] indices = new int[k];
+//        System.out.println("" + points.size() + " " + k + " " + queue.size());
         for (int i = 0; i < k; i ++) {
-            indices[i] = queue.poll();
+            indices[i] = queue.get(i);
         }
         return indices;
     }
-
     /**
      * determine bounding box of data points, expand the box to make it cubic
      */
@@ -252,6 +255,7 @@ public class Octree2 {
         for (; currentVisit < visitingQueue.size(); currentVisit ++) {
             OctreeNode visiting = visitingQueue.get(currentVisit);
             if (visiting.isLeaf()) {
+                if (octreeIndices.get(visiting.index) == null) continue;
                 candidates.add(visiting.index);
             } else {
                 for (OctreeNode child : visiting.children) {

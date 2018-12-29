@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.alg.projector;
 
 import cn.jimmiez.pcu.common.graphics.BoundingBox;
 import cn.jimmiez.pcu.common.graphics.Octree;
+import cn.jimmiez.pcu.common.graphics.Octree2;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -54,7 +55,7 @@ public class WeightedLocallyOptimalProjector {
     /**
      * the octree used to search nearest neighbors in original data set
      */
-    private Octree originalOctree;
+    private Octree2 originalOctree;
 
     /**
      * The ctor of WLOP.
@@ -62,7 +63,7 @@ public class WeightedLocallyOptimalProjector {
      */
     public WeightedLocallyOptimalProjector(List<Point3d> originals) {
         this.originals = originals;
-        originalOctree = new Octree();
+        originalOctree = new Octree2();
         originalOctree.buildIndex(originals);
         for (int i = 0; i < originals.size(); i ++) originalDensity.add(1.0);
         BoundingBox box = BoundingBox.of(originals);

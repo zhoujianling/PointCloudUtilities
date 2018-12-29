@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.alg.sampler;
 
 import cn.jimmiez.pcu.DataUtil;
 import cn.jimmiez.pcu.common.graphics.Octree;
+import cn.jimmiez.pcu.common.graphics.Octree2;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
@@ -16,7 +17,7 @@ public class OctreeVoxelizerTest {
         OctreeVoxelizer voxelizer = new OctreeVoxelizer();
         List<OctreeVoxelizer.OctreeNode> nodes = voxelizer.voxelize(points, 5);
         assertTrue(nodes.size() > 0 && nodes.size() < 3000);
-        for (Octree.OctreeNode node : nodes) {
+        for (Octree2.OctreeNode node : nodes) {
             assertTrue(node.getChildren() == null);
             assertTrue(node.getIndices().size() > 0);
         }

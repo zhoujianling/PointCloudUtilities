@@ -1,5 +1,6 @@
 package cn.jimmiez.pcu.common.graphics;
 
+import cn.jimmiez.pcu.DataUtil;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
@@ -24,6 +25,17 @@ public class Octree2Test {
 
     @Test
     public void searchNearestNeighborsTest() {
+        Random random = new Random(System.currentTimeMillis());
+        for (int i = 0; i < 3; i ++) {
+            List<Point3d> testData1 = DataUtil.generateRandData(20, 0, 3, 3, 5, -3, -1);
+            Octree2 o2 = new Octree2();
+            o2.buildIndex(testData1);
+            for (int k = 1; k < 20; k ++) {
+                int[] indices = o2.searchNearestNeighbors(k, random.nextInt(20));
+                assertTrue(indices.length == k);
+            }
+        }
+
         List<Point3d> data = randomData(42349, 1, 11.5);
         Octree2 octree = new Octree2();
         octree.buildIndex(data);
@@ -46,7 +58,6 @@ public class Octree2Test {
 
 //         TEST searchNearestNeighbors(int, Point3d)
         BoundingBox box = BoundingBox.of(data);
-        Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
             double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
             double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
