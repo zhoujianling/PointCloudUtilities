@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.ReadableByteChannel;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -137,7 +136,17 @@ public class PlyElement2 implements Iterable<PlyProperties>{
                 }
 
                 @Override
-                public int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType) {
+                public byte[] nextPropertyAsListB(PcuDataType sizeType) {
+                    int length = scanner.nextInt();
+                    byte[] array = new byte[length];
+                    for (int i = 0; i < length; i ++) {
+                        array[i] = scanner.nextByte();
+                    }
+                    return array;
+                }
+
+                @Override
+                public int[] nextPropertyAsListI(PcuDataType sizeType) {
                     int length = scanner.nextInt();
                     int[] array = new int[length];
                     for (int i = 0; i < length; i ++) {
@@ -147,11 +156,31 @@ public class PlyElement2 implements Iterable<PlyProperties>{
                 }
 
                 @Override
-                public double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType) {
+                public short[] nextPropertyAsListS(PcuDataType sizeType) {
+                    int length = scanner.nextInt();
+                    short[] array = new short[length];
+                    for (int i = 0; i < length; i ++) {
+                        array[i] = scanner.nextShort();
+                    }
+                    return array;
+                }
+
+                @Override
+                public double[] nextPropertyAsListD(PcuDataType sizeType) {
                     int length = scanner.nextInt();
                     double[] array = new double[length];
                     for (int i = 0; i < length; i ++) {
                         array[i] = scanner.nextDouble();
+                    }
+                    return array;
+                }
+
+                @Override
+                public float[] nextPropertyAsListF(PcuDataType sizeType) {
+                    int length = scanner.nextInt();
+                    float[] array = new float[length];
+                    for (int i = 0; i < length; i ++) {
+                        array[i] = scanner.nextFloat();
                     }
                     return array;
                 }
@@ -213,12 +242,26 @@ public class PlyElement2 implements Iterable<PlyProperties>{
                 }
 
                 @Override
-                public int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType) {
+                public byte[] nextPropertyAsListB(PcuDataType sizeType) {
+                    try {
+                        int size = parseInt(buffer, sizeType);
+                        byte[] list = new byte[size];
+                        for (int i = 0; i < size; i ++)
+                            list[i] = buffer.get();
+                        return list;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return new byte[0];
+                }
+
+                @Override
+                public int[] nextPropertyAsListI(PcuDataType sizeType) {
                     try {
                         int size = parseInt(buffer, sizeType);
                         int[] list = new int[size];
                         for (int i = 0; i < size; i ++)
-                            list[i] = parseInt(buffer, dataType);
+                            list[i] = buffer.getInt();
                         return list;
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -227,17 +270,45 @@ public class PlyElement2 implements Iterable<PlyProperties>{
                 }
 
                 @Override
-                public double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType) {
+                public short[] nextPropertyAsListS(PcuDataType sizeType) {
+                    try {
+                        int size = parseInt(buffer, sizeType);
+                        short[] list = new short[size];
+                        for (int i = 0; i < size; i ++)
+                            list[i] = buffer.getShort();
+                        return list;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return new short[0];
+                }
+
+                @Override
+                public double[] nextPropertyAsListD(PcuDataType sizeType) {
                     try {
                         int size = parseInt(buffer, sizeType);
                         double[] list = new double[size];
                         for (int i = 0; i < size; i ++)
-                            list[i] = parseDouble(buffer, dataType);
+                            list[i] = buffer.getDouble();
                         return list;
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     return new double[0];
+                }
+
+                @Override
+                public float[] nextPropertyAsListF(PcuDataType sizeType) {
+                    try {
+                        int size = parseInt(buffer, sizeType);
+                        float[] list = new float[size];
+                        for (int i = 0; i < size; i ++)
+                            list[i] = buffer.getFloat();
+                        return list;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return new float[0];
                 }
             };
             linePointer += 1;

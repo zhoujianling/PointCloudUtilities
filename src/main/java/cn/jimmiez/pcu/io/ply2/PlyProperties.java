@@ -12,8 +12,14 @@ public interface PlyProperties {
 
     short nextPropertyAsShort();
 
-    int[] nextPropertyAsListI(PcuDataType sizeType, PcuDataType dataType);
+    byte[] nextPropertyAsListB(PcuDataType sizeType);
 
-    double[] nextPropertyAsListF(PcuDataType sizeType, PcuDataType dataType);
+    int[] nextPropertyAsListI(PcuDataType sizeType);
+
+    short[] nextPropertyAsListS(PcuDataType sizeType);
+
+    double[] nextPropertyAsListD(PcuDataType sizeType);
+
+    float[] nextPropertyAsListF(PcuDataType sizeType);
 
 }

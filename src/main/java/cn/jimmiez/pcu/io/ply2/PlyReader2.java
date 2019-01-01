@@ -11,10 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class PlyReader2 {
@@ -49,23 +46,66 @@ public class PlyReader2 {
 //            int linePointer = 0;
 //            PlyHeader2.PlyElementHeader elementHeader = data.getHeader().getElementHeaders().get(elementPointer);
 //            int[] sizes = initBufferSize(elementHeader);
-//            byteBuffer = new byte[sizes[0]];
-//            shortBuffer = new short[sizes[1]];
-//            intBuffer = new int[sizes[2]];
-//            floatBuffer = new float[sizes[3]];
-//            doubleBuffer = new double[sizes[4]];
+//            byteBuffer = new byte[sizes[0]];        int byteValuePointer = 0;
+//            shortBuffer = new short[sizes[1]];      int shortValuePointer = 0;
+//            intBuffer = new int[sizes[2]];          int intValuePointer = 0;
+//            floatBuffer = new float[sizes[3]];      int floatValuePointer = 0;
+//            doubleBuffer = new double[sizes[4]];    int doubleValuePointer = 0;
 //            int propertyNumber = elementHeader.getProperties().size();
 //            for (PlyProperties properties : element2) {
 //                int propertyPointer = 0;
 //                for (; propertyPointer < propertyNumber; propertyPointer ++) {
 //                    int[] positions = pointerList.get(elementPointer).get(propertyPointer);
-//
+//                    PlyPropertyType2 type = elementHeader.getProperties().get(propertyPointer).getValue();
+//                    if (type instanceof PlyPropertyType2.PlyListType) {
+//                        PlyPropertyType2.PlyListType listType = (PlyPropertyType2.PlyListType) type;
+//                        putList(dataContainer, properties, listType, positions[0]);
+//                    } else if (type instanceof PlyPropertyType2.PlyScalarType) {
+//                        PlyPropertyType2.PlyScalarType scalarType = (PlyPropertyType2.PlyScalarType) type;
+//                    }
 //                }
 //                PlyPropertyType2 type = elementHeader.getProperties().get(linePointer).getValue();
 //                linePointer += 1;
 //            }
 //            elementPointer += 1;
 //        }
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    private void putList(List<List> dataContainer, PlyProperties properties, PlyPropertyType2.PlyListType type, int i) {
+//        switch (type.dataType()) {
+//            case CHAR:
+//            case UCHAR: {
+//                byte[] array = properties.nextPropertyAsListB(type.sizeType());
+//                dataContainer.get(i).add(array);
+//                break;
+//            }
+//            case SHORT:
+//            case USHORT: {
+//                short[] array = properties.nextPropertyAsListS(type.sizeType());
+//                dataContainer.get(i).add(array);
+//                break;
+//            }
+//            case INT:
+//            case UINT: {
+//                int[] array = properties.nextPropertyAsListI(type.sizeType());
+//                dataContainer.get(i).add(array);
+//                break;
+//            }
+//            case FLOAT: {
+//                float[] array = properties.nextPropertyAsListF(type.sizeType());
+//                dataContainer.get(i).add(array);
+//                break;
+//            }
+//            case DOUBLE:
+//                double[] array = properties.nextPropertyAsListD(type.sizeType());
+//                dataContainer.get(i).add(array);
+//                break;
+//        }
+//    }
+//
+//    private void putScalar(List<List> dataContainer, PlyProperties properties, PlyPropertyType2.PlyScalarType type, int i, int j) {
+//
 //    }
 //
 //    private int[] initBufferSize(PlyHeader2.PlyElementHeader header) {
