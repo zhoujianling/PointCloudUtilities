@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DirectedGraph implements Graph{
+public class DirectedGraph implements Graph {
 
     protected Map<Integer, Map<Integer, Double>> edges = new HashMap<>();
 
@@ -37,6 +37,11 @@ public class DirectedGraph implements Graph{
 
     @Override
     public void removeVertex(int vi) {
+        for (int v : edges.keySet()) {
+            if (edges.get(v).keySet().contains(vi)) {
+                edges.get(v).remove(vi);
+            }
+        }
         edges.remove(vi);
     }
 
