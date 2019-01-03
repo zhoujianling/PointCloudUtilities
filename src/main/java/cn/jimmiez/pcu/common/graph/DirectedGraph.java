@@ -9,6 +9,9 @@ public class DirectedGraph implements Graph {
     protected Map<Integer, Map<Integer, Double>> edges = new HashMap<>();
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void addEdge(int vi, int vj, double weight) {
         if (vi >= edges.size() || vj >= edges.size()) {
@@ -17,6 +20,9 @@ public class DirectedGraph implements Graph {
         edges.get(vi).put(vj, weight);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void removeEdge(int vi, int vj) {
         if (vi >= edges.size() || vj >= edges.size()) {
@@ -25,16 +31,25 @@ public class DirectedGraph implements Graph {
         edges.get(vi).remove(vj);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void updateEdge(int vi, int vj, double weight) {
         addEdge(vi, vj, weight);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void addVertex(int vi) {
         edges.put(vi, new HashMap<Integer, Double>());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void removeVertex(int vi) {
         for (int v : edges.keySet()) {
@@ -50,6 +65,9 @@ public class DirectedGraph implements Graph {
         return edges.keySet();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double edgeWeight(int i, int j) {
         Double weight = edges.get(i).get(j);
