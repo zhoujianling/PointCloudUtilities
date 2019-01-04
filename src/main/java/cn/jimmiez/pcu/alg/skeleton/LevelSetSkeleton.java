@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.common.graph.*;
 import cn.jimmiez.pcu.common.graphics.Octree;
+import cn.jimmiez.pcu.model.Skeleton;
 import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 

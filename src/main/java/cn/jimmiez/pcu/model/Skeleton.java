@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.alg.skeleton;
+package cn.jimmiez.pcu.model;
 
 
 import javax.vecmath.Point3d;
@@ -7,18 +7,19 @@ import java.util.List;
 import java.util.Map;
 
 import cn.jimmiez.pcu.common.graph.DirectedGraph;
+import cn.jimmiez.pcu.common.graph.UndirectedGraph;
 import cn.jimmiez.pcu.io.ply.PlyPropertyType;
 import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import cn.jimmiez.pcu.io.ply.WriteListToPly;
 import cn.jimmiez.pcu.io.ply.WriteScalarToPly;
 
 /**
- * Use a directed acyclic graph for representing a curve skeleton
+ * Use a undirected acyclic graph for representing a curve skeleton
  */
-public class Skeleton extends DirectedGraph{
+public class Skeleton extends DirectedGraph {
     private List<Point3d> skeletonNodes = new ArrayList<>();
 
-    public synchronized int addNode(Point3d p) {
+    public int addNode(Point3d p) {
         skeletonNodes.add(p);
         super.addVertex(skeletonNodes.size() - 1);
         return skeletonNodes.size() - 1;
@@ -37,16 +38,6 @@ public class Skeleton extends DirectedGraph{
     public void clear() {
         skeletonNodes.clear();
         edges.clear();
-    }
-
-    @Override
-    public final void addVertex(int vi) {
-        // do nothing
-    }
-
-    @Override
-    public final void removeVertex(int vi) {
-        // do nothing
     }
 
     public List<Point3d> getSkeletonNodes() {

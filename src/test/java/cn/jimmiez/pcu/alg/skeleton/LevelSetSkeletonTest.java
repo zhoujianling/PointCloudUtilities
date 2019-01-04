@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.model.PointCloud3f;
+import cn.jimmiez.pcu.model.Skeleton;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 import org.junit.Test;
 

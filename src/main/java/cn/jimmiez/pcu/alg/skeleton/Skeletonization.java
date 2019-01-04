@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.alg.skeleton;
 
+import cn.jimmiez.pcu.model.Skeleton;
+
 import javax.vecmath.Point3d;
 import java.util.List;
 
