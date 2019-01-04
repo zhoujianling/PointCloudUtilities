@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 public class GraphsTest {
 
     @Test
-    public void knnGraphTest() {
+    public void testKnnGraph() {
         List<Point3d> vertices = new Vector<>();
         vertices.add(new Point3d(0, 0, 0));
         vertices.add(new Point3d(0, 0, 1));
@@ -36,13 +36,13 @@ public class GraphsTest {
     }
 
     @Test
-    public void edgesCountTest() {
+    public void testEdgesCount() {
         GraphStatic graph = generateGraph();
         assertTrue(Graphs.edgesCountOf(graph) == 18);
     }
 
     @Test
-    public void connectedComponentTest() {
+    public void testConnectedComponent() {
         GraphStatic graph = generateGraph();
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
         assertTrue(conns.size() == 2);

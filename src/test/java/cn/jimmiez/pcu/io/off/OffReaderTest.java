@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class OffReaderTest {
 
     @Test
-    public void readTest1() throws FileNotFoundException {
+    public void testRead1() throws FileNotFoundException {
         File file = new File(OffReaderTest.class.getClassLoader().getResource("model/off/cube.off").getFile());
         OffReader reader = new OffReader();
         OffData data =  reader.read(file);
@@ -29,7 +29,7 @@ public class OffReaderTest {
     }
 
     @Test
-    public void readTest2() throws FileNotFoundException {
+    public void testRead2() throws FileNotFoundException {
         File file = new File(OffReaderTest.class.getClassLoader().getResource("model/off/cube2.off").getFile());
         OffReader reader = new OffReader();
         OffData data =  reader.read(file);

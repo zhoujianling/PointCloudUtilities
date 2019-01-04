@@ -12,7 +12,7 @@ import java.util.List;
 public class LevelSetSkeletonTest {
 
     @Test
-    public void skeletonizeTest() {
+    public void testSkeletonize() {
         PlyReader reader = new PlyReader();
         File file = new File(LevelSetSkeleton.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PointCloud3f pointCloud3f = reader.read(file, PointCloud3f.class);

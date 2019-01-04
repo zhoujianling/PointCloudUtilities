@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 public class BoundingBoxTest {
 
     @Test
-    public void ofTest() {
+    public void testOf() {
         BoundingBox box = BoundingBox.of(DataUtil.generateRandomData(500,1, 3, 5, 7, 9, 11));
 
         assertTrue(box.getCenter().x + box.getxExtent() <= 3 && box.getCenter().x - box.getxExtent() >= 1);

@@ -9,6 +9,7 @@ import java.util.*;
 import static org.junit.Assert.assertTrue;
 
 public class OctreeTest {
+
     private List<Point3d> randomData(int number, double min, double max) {
         List<Point3d> list = new ArrayList<>();
         Random random = new Random(System.currentTimeMillis());
@@ -24,7 +25,7 @@ public class OctreeTest {
     }
 
     @Test
-    public void searchNearestNeighborsTest() {
+    public void testSearchNearestNeighbors() {
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
             List<Point3d> testData1 = DataUtil.generateRandomData(20, 0, 3, 3, 5, -3, -1);
@@ -82,7 +83,7 @@ public class OctreeTest {
     }
 
     @Test
-    public void searchNeighborsInSphereTest() {
+    public void testSearchNeighborsInSphere() {
         int dataSize = 3127;
         List<Point3d> data = randomData(dataSize, 0.5, 11.5);
         Octree octree = new Octree();

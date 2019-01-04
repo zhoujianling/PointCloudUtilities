@@ -55,7 +55,7 @@ public class PlyWriterTest {
     }
 
     @Test
-    public void prepareChainBinaryTest() {
+    public void testPrepareChainBinary() {
         List<float[]> vertexData = new Vector<>();
         vertexData.add(new float[] {0.101f, -3f, 0.7f});
         vertexData.add(new float[] {0.301f, +3f, 0.9f});
@@ -104,7 +104,7 @@ public class PlyWriterTest {
     }
 
     @Test
-    public void writeTest() {
+    public void testWrite() {
         String userDir = System.getProperty("user.home");
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
@@ -117,7 +117,7 @@ public class PlyWriterTest {
     }
 
     @Test
-    public void prepareChainAsciiTest() {
+    public void testPrepareChainAscii() {
         List<float[]> vertexData = new Vector<>();
         vertexData.add(new float[] {0.101f, -3f, 0.7f});
         vertexData.add(new float[] {0.301f, +3f, 0.9f});

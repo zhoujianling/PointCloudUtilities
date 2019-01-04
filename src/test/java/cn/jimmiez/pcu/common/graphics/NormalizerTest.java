@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 public class NormalizerTest {
 
     @Test
-    public void normalizeTest() {
+    public void testNormalize() {
         Normalizer normalizer = new Normalizer();
 
         BoundingBox box = new BoundingBox(-1, 3, 2, 4, 3, 5);

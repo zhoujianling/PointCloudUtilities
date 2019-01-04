@@ -15,7 +15,7 @@ public class HoppeEstimatorTest {
     private static double THRESHOLD = Math.PI / 4;
 
     @Test
-    public void estimateNormalsTest() {
+    public void testEstimateNormals() {
         HoppeEstimator estimator = new HoppeEstimator();
         List<Point3d> data = generatePlaneData();
         List<Vector3d> normals = estimator.estimateNormals(data);

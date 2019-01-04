@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class CollisionsTest {
 
     @Test
-    public void boxIntersectsSphereTest() {
+    public void testBoxIntersectsSphere() {
         Box box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
         Sphere sphere = new Sphere(new Point3d(0, 0, 0), 2);
         assertTrue(Collisions.intersect(box, sphere));
@@ -26,7 +26,7 @@ public class CollisionsTest {
     }
 
     @Test
-    public void boxContainsSphereTest() {
+    public void testBoxContainsSphere() {
         Box box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
         Sphere sphere = new Sphere(new Point3d(0, 0, 0), 2);
         assertTrue(Collisions.contains(box, sphere));

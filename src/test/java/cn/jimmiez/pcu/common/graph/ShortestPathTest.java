@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 public class ShortestPathTest {
 
     @Test
-    public void dijkstraTest() {
+    public void testDijkstra() {
         GraphStatic graph = genData();
         Map<Integer, Pair<List<Integer>, Double>> result = ShortestPath.dijkstra(graph, 0);
 

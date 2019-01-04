@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class ObjReaderTest {
 
     @Test
-    public void objDataReadTest() {
+    public void testReadObjData() {
         ObjReader reader = new ObjReader();
         File file = new File(ObjReaderTest.class.getClassLoader().getResource("model/obj/bunny.obj").getFile());
         Map<ObjReader.ObjDataType, List<float[]>> dataMap = reader.read(file);

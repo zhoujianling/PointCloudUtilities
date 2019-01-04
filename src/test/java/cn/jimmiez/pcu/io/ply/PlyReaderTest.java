@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 public class PlyReaderTest {
 
     @Test
-    public void readAsciiPlyHeaderTest() throws IOException {
+    public void testReadAsciiPlyHeader() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PlyHeader header = reader.readHeaderThenCloseFile(file);
@@ -34,7 +34,7 @@ public class PlyReaderTest {
     }
 
     @Test
-    public void readAsciiPlyDataTest() throws IOException {
+    public void testReadAsciiPlyData() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PointCloud3f pointCloud = reader.read(file, PointCloud3f.class);
@@ -45,7 +45,7 @@ public class PlyReaderTest {
 
 
     @Test
-    public void readAsciiPlyDataTest2() throws IOException {
+    public void testReadAsciiPlyData2() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
         PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
@@ -57,7 +57,7 @@ public class PlyReaderTest {
 
 
     @Test
-    public void readBinaryLittleEndianPlyDataTest() {
+    public void testReadBinaryLittleEndianPlyData() {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/tree_bin.ply").getFile());
         MeshWithColor4b mesh = reader.read(file, MeshWithColor4b.class);
