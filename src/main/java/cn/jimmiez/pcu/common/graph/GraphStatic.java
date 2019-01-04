@@ -13,7 +13,7 @@ public interface GraphStatic {
     /**
      * @param i the index of one vertex
      * @param j the index of another vertex
-     * @return the weight of edge
+     * @return the weight of edge, if there is no edge between vi and vj, return {@link GraphStatic#N}
      */
     double edgeWeight(int i, int j);
 
@@ -24,6 +24,7 @@ public interface GraphStatic {
     Collection<Integer> adjacentVertices(int i);
 
     /**
+     * the vertices of this graph
      * @return the collection of indices of vertex
      */
     Collection<Integer> vertices();

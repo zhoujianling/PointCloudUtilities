@@ -27,7 +27,7 @@ public class OctreeTest {
     public void searchNearestNeighborsTest() {
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
-            List<Point3d> testData1 = DataUtil.generateRandData(20, 0, 3, 3, 5, -3, -1);
+            List<Point3d> testData1 = DataUtil.generateRandomData(20, 0, 3, 3, 5, -3, -1);
             Octree o2 = new Octree();
             o2.buildIndex(testData1);
             for (int k = 1; k < 20; k ++) {
