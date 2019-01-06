@@ -11,6 +11,7 @@ public class Graphs {
     public static List<List<Integer>> connectedComponents(BaseGraph graph) {
         List<List<Integer>> subGraphs = new Vector<>();
         Set<Integer> visited = new HashSet<>();
+//        System.out.println("num of vertices: " + graph.vertices().size());
         for (int i : graph.vertices()) {
             if (visited.contains(i)) continue;
             List<Integer> subGraph = new ArrayList<>();

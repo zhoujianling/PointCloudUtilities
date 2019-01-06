@@ -57,13 +57,11 @@ public class GraphsTest {
         conns = Graphs.connectedComponents(fcg);
         assertTrue(conns.size() == 1);
 
-        for (int i = 0; i < 3; i ++) {
+        for (int i = 0; i < 5; i ++) {
             Random r = new Random(System.currentTimeMillis());
             int num = 1 + r.nextInt(7);
-            BaseGraph randomGraph = DataUtil.generateRandomGraph(num, true);
-            assertTrue(Graphs.connectedComponents(randomGraph).size() == num);
-            randomGraph = DataUtil.generateRandomGraph(num, false);
-            assertTrue(Graphs.connectedComponents(randomGraph).size() == num);
+            BaseGraph randomGraph2 = DataUtil.generateRandomGraph(num, false);
+            assertEquals(num, Graphs.connectedComponents(randomGraph2).size());
         }
     }
 

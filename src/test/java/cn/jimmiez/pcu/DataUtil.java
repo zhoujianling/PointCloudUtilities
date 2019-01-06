@@ -28,7 +28,7 @@ public class DataUtil {
      * @return the graph
      */
     public static BaseGraph generateRandomGraph(int conn, boolean directed) {
-        if (conn <= 1) return Graphs.empty();
+        if (conn < 1) return Graphs.empty();
         Random random = new Random(System.currentTimeMillis());
         AtomicInteger generator = new AtomicInteger();
         Graph graph = directed ? new DirectedGraph() : new UndirectedGraph();
