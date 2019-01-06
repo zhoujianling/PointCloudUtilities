@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Graphs {
 
-    public static List<List<Integer>> connectedComponents(GraphStatic graph) {
+    public static List<List<Integer>> connectedComponents(BaseGraph graph) {
         List<List<Integer>> subGraphs = new Vector<>();
         boolean[] visited = new boolean[graph.vertices().size()];
         for (int i = 0; i < graph.vertices().size(); i ++) visited[i] = false;
@@ -40,7 +40,7 @@ public class Graphs {
      * @param vertices indices of vertices
      * @return the sub-graph
      */
-    public static GraphStatic subGraph(final GraphStatic graph, final Set<Integer> vertices) {
+    public static BaseGraph subGraph(final BaseGraph graph, final Set<Integer> vertices) {
         final Map<Integer, List<Integer>> adjacencyMap = new HashMap<>();
         for (int vertexIndex : vertices) {
             Collection<Integer> adjacents = graph.adjacentVertices(vertexIndex);
@@ -52,7 +52,7 @@ public class Graphs {
             }
             adjacencyMap.put(vertexIndex, adjacentsInSubGraph);
         }
-        return new GraphStatic() {
+        return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
                 if (vertices.contains(i) && vertices.contains(j))
@@ -77,7 +77,7 @@ public class Graphs {
      * @param graph a graph
      * @return number of edges( e_ij e_ji are seen as two different edges )
      */
-    public static int edgesCountOf(GraphStatic graph) {
+    public static int edgesCountOf(BaseGraph graph) {
         int result = 0;
         for (int vertexIndex : graph.vertices()) {
             result += graph.adjacentVertices(vertexIndex).size();
@@ -85,10 +85,10 @@ public class Graphs {
         return result;
     }
 
-    public static GraphStatic fullConnectedGraph(final List<Point3d> vertices) {
+    public static BaseGraph fullConnectedGraph(final List<Point3d> vertices) {
         final List<Integer> vt = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++) vt.add(i);
-        return new GraphStatic() {
+        return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
                 return vertices.get(i).distance(vertices.get(j));
@@ -107,7 +107,7 @@ public class Graphs {
     }
 
 
-    public static GraphStatic knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
+    public static BaseGraph knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
         final Set<Pair<Integer, Integer>> knnEdges = new HashSet<>();
         final List<Integer> verticesIndices = new ArrayList<>();
         for (int i = 0; i < knnIndices.size(); i ++) {
@@ -117,7 +117,7 @@ public class Graphs {
             }
         }
         final List<List<Integer>> knnIndicesList = adjacentMatrix2List(knnIndices);
-        return new GraphStatic() {
+        return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
                 Pair<Integer, Integer> p = new Pair<>(i, j);
@@ -162,10 +162,10 @@ public class Graphs {
     }
 
 
-    public static GraphStatic graph(final double[][]edges, final int[][]adjacency) {
+    public static BaseGraph graph(final double[][]edges, final int[][]adjacency) {
         final List<List<Integer>> adjacencies = adjacentMatrix2List(adjacency);
         final List<Integer> vertices = PcuCommonUtil.incrementalIntegerList(edges.length);
-        return new GraphStatic() {
+        return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
                 return edges[i][j];
@@ -197,12 +197,12 @@ public class Graphs {
         return graph;
     }
 
-    public static GraphStatic empty() {
+    public static BaseGraph empty() {
         final List<Integer> vertices = new ArrayList<>();
-        return new GraphStatic() {
+        return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
-                return GraphStatic.N;
+                return BaseGraph.N;
             }
 
             @Override

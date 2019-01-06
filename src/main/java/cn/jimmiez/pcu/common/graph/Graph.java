@@ -1,12 +1,10 @@
 package cn.jimmiez.pcu.common.graph;
 
-import java.util.Collection;
-
 /**
- * An abstract graph that support more operations compared to {@link GraphStatic}
+ * An abstract graph that support more operations compared to {@link BaseGraph}
  *
  */
-public interface Graph extends GraphStatic {
+public interface Graph extends BaseGraph {
 
     /**
      * add an edge to the graph
@@ -43,4 +41,8 @@ public interface Graph extends GraphStatic {
      */
     void removeVertex(int vi);
 
+    /**
+     * clear all edges.
+     */
+    void clear();
 }

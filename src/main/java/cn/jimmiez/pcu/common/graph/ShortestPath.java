@@ -13,7 +13,7 @@ public class ShortestPath {
      * @param rootIndex index of root vertex
      * @return list of pairs, for each pair, the key is the path, the value is length of shortest path
      */
-    public static Map<Integer, Pair<List<Integer>, Double>> dijkstra(GraphStatic graph, int rootIndex) {
+    public static Map<Integer, Pair<List<Integer>, Double>> dijkstra(BaseGraph graph, int rootIndex) {
         Map<Integer, Pair<List<Integer>, Double>> result = new HashMap<>();
 //        if (rootIndex < 0 || rootIndex >= graph.vertices().size()) {
 //            throw new IllegalArgumentException("Invalid root index");

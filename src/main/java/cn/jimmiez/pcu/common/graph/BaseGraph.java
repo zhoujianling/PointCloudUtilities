@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * a read-only graph interface
  */
-public interface GraphStatic {
+public interface BaseGraph {
 
     /** weight between two unreachable vertices **/
     double N = Double.POSITIVE_INFINITY;
@@ -13,7 +13,7 @@ public interface GraphStatic {
     /**
      * @param i the index of one vertex
      * @param j the index of another vertex
-     * @return the weight of edge, if there is no edge between vi and vj, return {@link GraphStatic#N}
+     * @return the weight of edge, if there is no edge between vi and vj, return {@link BaseGraph#N}
      */
     double edgeWeight(int i, int j);
 

@@ -69,6 +69,11 @@ public class DirectedGraph implements Graph {
         edges.remove(vi);
     }
 
+    @Override
+    public void clear() {
+        edges.clear();
+    }
+
     /**
      * {@inheritDoc}
      */

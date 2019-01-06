@@ -69,6 +69,11 @@ public class UndirectedGraph implements Graph {
         edges.remove(vi);
     }
 
+    @Override
+    public void clear() {
+        edges.clear();
+    }
+
     /**
      * {@inheritDoc}
      */

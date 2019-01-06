@@ -25,10 +25,10 @@ public class LevelSetSkeleton implements Skeletonization{
     private Octree octree = null;
 
     /** constructed by connecting n nearest neighbors of each vertex  **/
-    private GraphStatic neighborhoodGraph = null;
+    private BaseGraph neighborhoodGraph = null;
 
     /** composed of shortest paths from source point to each other vertex **/
-    private GraphStatic geodesicGraph = null;
+    private BaseGraph geodesicGraph = null;
 
     /** each level set is composed of connected subGraphs  **/
     private List<LevelSet> levelSets = null;
@@ -154,7 +154,7 @@ public class LevelSetSkeleton implements Skeletonization{
                 }
             }
         }
-        geodesicGraph = new GraphStatic() {
+        geodesicGraph = new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
                 return data.get(i).distance(data.get(j));
@@ -241,8 +241,8 @@ public class LevelSetSkeleton implements Skeletonization{
             for (int subGraphIndex = 0; subGraphIndex < levelSet.subGraphs.size(); subGraphIndex ++) {
                 List<Integer> subGraph = levelSet.subGraphs.get(subGraphIndex);
                 // the barycenter of each connected component is the skeleton node
-                skeleton.addNode(baryCenter(levelSet.points, subGraph));
-                levelSet.skeletonNodeIndices.add(skeleton.getSkeletonNodes().size() - 1);
+                int nodeId = skeleton.addVertex(baryCenter(levelSet.points, subGraph));
+                levelSet.skeletonNodeIndices.add(nodeId);
 //                Point3d p = skeleton.getSkeletonNodes().get(skeleton.getSkeletonNodes().size() - 1);
 //                System.out.println("" + p.x + " " + p.y + " " + p.z);
             }
@@ -255,7 +255,8 @@ public class LevelSetSkeleton implements Skeletonization{
                 int adjacentLevelSetIndex = levelSet.adjacency.get(subGraphIndex).getKey();
                 int adjacentSubGraphIndex = levelSet.adjacency.get(subGraphIndex).getValue();
                 int v2 = levelSets.get(adjacentLevelSetIndex).skeletonNodeIndices.get(adjacentSubGraphIndex);
-                double weight = skeleton.getSkeletonNodes().get(v1).distance(skeleton.getSkeletonNodes().get(v2));
+
+                double weight = skeleton.getVertex(v1).distance(skeleton.getVertex(v2));
                 skeleton.addEdge(v1, v2, weight);
             }
         }
@@ -444,7 +445,7 @@ public class LevelSetSkeleton implements Skeletonization{
 
     public int getK() {return this.k;}
 
-    public GraphStatic getNeighborhoodGraph() {
+    public BaseGraph getNeighborhoodGraph() {
         return neighborhoodGraph;
     }
 }
