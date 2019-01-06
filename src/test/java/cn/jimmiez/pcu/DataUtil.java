@@ -1,11 +1,10 @@
 package cn.jimmiez.pcu;
 
-import cn.jimmiez.pcu.common.graph.Graph;
+import cn.jimmiez.pcu.common.graph.*;
 
 import javax.vecmath.Point3d;
-import java.util.List;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataUtil {
 
@@ -22,8 +21,37 @@ public class DataUtil {
         return data;
     }
 
-//    public static Graph generateRandomGraph(int vn, int en) {
-//
-//    }
+    /**
+     * generate graph data for unit tests
+     * @param conn the number of connected components
+     * @param directed if this graph is directed
+     * @return the graph
+     */
+    public static BaseGraph generateRandomGraph(int conn, boolean directed) {
+        if (conn <= 1) return Graphs.empty();
+        Random random = new Random(System.currentTimeMillis());
+        AtomicInteger generator = new AtomicInteger();
+        Graph graph = directed ? new DirectedGraph() : new UndirectedGraph();
+        List<List<Integer>> vertices = new ArrayList<>();
+        for (int i = 0; i < conn; i ++) {
+            List<Integer> componentVertices = new ArrayList<>();
+            for (int j = 0; j < 15 + random.nextInt(20); j ++) {
+                int id = generator.incrementAndGet();
+                componentVertices.add(id);
+                graph.addVertex(id);
+            }
+            vertices.add(componentVertices);
+        }
+        for (List<Integer> componentVertices : vertices) {
+            for (int id : componentVertices) {
+                for (int i = 0; i < componentVertices.size() / 3; i ++) {
+                    int anotherId = componentVertices.get(random.nextInt(componentVertices.size()));
+                    graph.addEdge(id, anotherId, 1);
+                }
+            }
+        }
+        return graph;
+    }
+
 
 }

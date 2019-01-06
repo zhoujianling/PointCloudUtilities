@@ -1,7 +1,5 @@
 package cn.jimmiez.pcu.common.graph;
 
-
-
 import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 
@@ -12,19 +10,17 @@ public class Graphs {
 
     public static List<List<Integer>> connectedComponents(BaseGraph graph) {
         List<List<Integer>> subGraphs = new Vector<>();
-        boolean[] visited = new boolean[graph.vertices().size()];
-        for (int i = 0; i < graph.vertices().size(); i ++) visited[i] = false;
-        for (int i = 0; i < graph.vertices().size(); i ++) {
-//            System.out.println("i = " + i);
-            if (visited[i]) continue;
+        Set<Integer> visited = new HashSet<>();
+        for (int i : graph.vertices()) {
+            if (visited.contains(i)) continue;
             List<Integer> subGraph = new ArrayList<>();
 
             List<Integer> visitQueue = new Vector<>();
             visitQueue.add(i);
             for (int ptr = 0; ptr < visitQueue.size(); ptr ++) {
                 int visiting = visitQueue.get(ptr);
-                if (! visited[visiting]) {
-                    visited[visiting] = true;
+                if (! visited.contains(visiting)) {
+                    visited.add(visiting);
                     subGraph.add(visiting);
                     for (int adjacentVertex : graph.adjacentVertices(visiting)) visitQueue.add(adjacentVertex);
                 }

@@ -1,12 +1,11 @@
 package cn.jimmiez.pcu.common.graph;
 
+import cn.jimmiez.pcu.DataUtil;
 import cn.jimmiez.pcu.common.graphics.Octree;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
-import java.util.List;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 import static cn.jimmiez.pcu.common.graph.BaseGraph.N;
 
@@ -47,16 +46,25 @@ public class GraphsTest {
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
         assertTrue(conns.size() == 2);
 
-        BaseGraph graph2 = genData2();
+        BaseGraph graph2 = generateGraph2();
         conns = Graphs.connectedComponents(graph2);
         assertTrue(conns.size() == 3);
 
         conns = Graphs.connectedComponents(Graphs.empty());
         assertTrue(conns.size() == 0);
 
-        BaseGraph fcg = genData3();
+        BaseGraph fcg = generateGraph3();
         conns = Graphs.connectedComponents(fcg);
         assertTrue(conns.size() == 1);
+
+        for (int i = 0; i < 3; i ++) {
+            Random r = new Random(System.currentTimeMillis());
+            int num = 1 + r.nextInt(7);
+            BaseGraph randomGraph = DataUtil.generateRandomGraph(num, true);
+            assertTrue(Graphs.connectedComponents(randomGraph).size() == num);
+            randomGraph = DataUtil.generateRandomGraph(num, false);
+            assertTrue(Graphs.connectedComponents(randomGraph).size() == num);
+        }
     }
 
     private BaseGraph generateGraph() {
@@ -81,7 +89,7 @@ public class GraphsTest {
         return Graphs.graph(edges, adjacency);
     }
 
-    private BaseGraph genData2() {
+    private BaseGraph generateGraph2() {
         final double[][] edges = new double[][] {
                 {0,   N,  N},
                 {N,   0,  N},
@@ -95,12 +103,13 @@ public class GraphsTest {
         return Graphs.graph(edges, adjacency);
     }
 
-    private BaseGraph genData3() {
+    private BaseGraph generateGraph3() {
         Random random = new Random(System.currentTimeMillis());
         List<Point3d> vertices = new Vector<>();
-        for (int i = 0; i < 3000; i ++) {
+        for (int i = 0; i < 1000; i ++) {
             vertices.add(new Point3d(random.nextDouble(), random.nextDouble(), random.nextDouble()));
         }
         return Graphs.fullConnectedGraph(vertices);
     }
+
 }
