@@ -8,6 +8,7 @@
 ## Description
 This is a util for point cloud processing. 
 ![](https://jimmie00x0000.github.io/img/Normals.png)
+![](https://jimmie00x0000.github.io/img/Skeleton.png)
 
 ## Features
 * Read and write a *PLY* file.
