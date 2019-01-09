@@ -30,6 +30,7 @@ public class OctreeTest {
     private void assertKNearestNeighborsHelp(List<Point3d> data, Point3d point, Set<Integer> set, double radius) {
         for (int index = 0; index < data.size(); index ++) {
             if (set.contains(index)) continue;
+            if (point == data.get(index)) continue;
             double distance = data.get(index).distance(point);
             assertTrue("the distance " + distance + " should be larger than " + radius, distance >= radius);
         }
@@ -39,7 +40,14 @@ public class OctreeTest {
         if (nearestIndices.length < 1) return;
         double radius = data.get(nearestIndices[nearestIndices.length - 1]).distance(point);
         Set<Integer> set = new HashSet<>();
-        for (int i : nearestIndices) set.add(i);
+        for (int i : nearestIndices) {
+            assertTrue("There should't be duplicate numbers", ! set.contains(i));
+            if (data.get(i) == point) {
+                fail("A point's nearest neighbor shouldn't be it self.");
+            } else {
+                set.add(i);
+            }
+        }
         assertKNearestNeighborsHelp(data, point, set, radius);
     }
 
@@ -47,7 +55,10 @@ public class OctreeTest {
         if (nearestIndices.size() < 1) return;
         double radius = data.get(nearestIndices.get(nearestIndices.size() - 1)).distance(point);
         Set<Integer> set = new HashSet<>();
-        set.addAll(nearestIndices);
+        for (int i : nearestIndices) {
+            assertTrue("There should't be duplicate numbers", ! set.contains(i));
+            set.add(i);
+        }
         assertKNearestNeighborsHelp(data, point, set, radius);
     }
 

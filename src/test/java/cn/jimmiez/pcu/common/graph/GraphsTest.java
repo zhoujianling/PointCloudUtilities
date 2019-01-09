@@ -28,7 +28,7 @@ public class GraphsTest {
         octree.buildIndex(vertices);
         List<int[]> nnIndices = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++)
-            nnIndices.add(octree.searchNearestNeighbors(2, i));
+            nnIndices.add(octree.searchNearestNeighbors(3, i));
         BaseGraph knnGraph = Graphs.knnGraph(vertices, nnIndices);
         assertEquals(1, knnGraph.edgeWeight(0, 1),1e-7);
         assertEquals(Double.POSITIVE_INFINITY, knnGraph.edgeWeight(0, 7),1e-7);

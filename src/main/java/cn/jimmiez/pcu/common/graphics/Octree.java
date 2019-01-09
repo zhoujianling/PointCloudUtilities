@@ -102,11 +102,12 @@ public class Octree {
         long leafNodeIndex = locateOctreeNode(this.root, point);
 //        List<Integer> queue = new ArrayList<>();
         PriorityQueue<Integer> queue = new PriorityQueue<>(k, comparator);
+        Set<Point3d> set = new HashSet<>(k * 2);
         Set<Long> visitedBoxes = new HashSet<>();
         OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
         double leafSize = leafNode.getxExtent();
-//        double currentSearchRadius = leafSize;
         Sphere searchRange = new Sphere(point, leafSize);
+        set.add(point);
 
         while (queue.size() < k) {
             Set<Long> candidates = new HashSet<>();
@@ -116,7 +117,11 @@ public class Octree {
                 if (visitedBoxes.contains(newNode)) continue;
                 if (Collisions.contains(searchRange, octreeIndices.get(newNode))) visitedBoxes.add(newNode);
                 for (int index : octreeIndices.get(newNode).indices) {
-                    if (points.get(index).distance(point) <= searchRange.getRadius()) queue.add(index);
+                    if (set.contains(points.get(index))) continue;
+                    if (points.get(index).distance(point) <= searchRange.getRadius()) {
+                        queue.add(index);
+                        set.add(points.get(index));
+                    }
                     if (queue.size() > k) queue.poll();
                 }
 //                queue.addAll(octreeIndices.get(newNode).indices);
