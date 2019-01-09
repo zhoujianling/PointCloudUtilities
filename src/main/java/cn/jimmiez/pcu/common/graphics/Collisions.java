@@ -47,4 +47,20 @@ public class Collisions {
                 c1c2.z + sphere.getRadius() <= box.getzExtent();
     }
 
+    /**
+     * test if a sphere contains a box
+     * @param sphere the sphere
+     * @param box the box
+     * @return test result
+     */
+    public static boolean contains(Sphere sphere, Box box) {
+        Point3d c1 = box.getCenter();
+        Point3d c2 = sphere.getCenter();
+        Vector3d c1c2 = new Vector3d(c2.x - c1.x, c2.y - c1.y, c2.z - c1.z);
+        c1c2.absolute();
+        Vector3d hemiDiagonal = new Vector3d(box.getxExtent(), box.getyExtent(), box.getzExtent());
+        c1c2.add(hemiDiagonal);
+        return c1c2.length() <= sphere.getRadius();
+    }
+
 }

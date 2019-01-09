@@ -6,7 +6,7 @@
 
   <groupId>cn.jimmiez</groupId>
   <artifactId>pcutil</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
   <description>A 3d point cloud utility.</description>
   <name>pcutil</name>
   <url>http://www.jimmiez.cn/pcu/</url>

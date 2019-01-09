@@ -6,6 +6,7 @@ import org.junit.Test;
 import javax.vecmath.Point3d;
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class OctreeTest {
@@ -24,18 +25,44 @@ public class OctreeTest {
         return list;
     }
 
+    private void assertKNearestNeighborsHelp(List<Point3d> data, Point3d point, Set<Integer> set, double radius) {
+        for (int index = 0; index < data.size(); index ++) {
+            if (set.contains(index)) continue;
+            double distance = data.get(index).distance(point);
+            assertTrue("the distance " + distance + " should be larger than " + radius, distance >= radius);
+        }
+    }
+
+    private void assertKNearestNeighbors(List<Point3d> data, Point3d point, int[] nearestIndices) {
+        if (nearestIndices.length < 1) return;
+        double radius = data.get(nearestIndices[nearestIndices.length - 1]).distance(point);
+        Set<Integer> set = new HashSet<>();
+        for (int i : nearestIndices) set.add(i);
+        assertKNearestNeighborsHelp(data, point, set, radius);
+    }
+
+    private void assertNeighborsWithinRadius(List<Point3d> data, Point3d point, List<Integer> nearestIndices) {
+        if (nearestIndices.size() < 1) return;
+        double radius = data.get(nearestIndices.get(nearestIndices.size() - 1)).distance(point);
+        Set<Integer> set = new HashSet<>();
+        set.addAll(nearestIndices);
+        assertKNearestNeighborsHelp(data, point, set, radius);
+    }
+
     @Test
     public void testSearchNearestNeighbors() {
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 3; i ++) {
-            List<Point3d> testData1 = DataUtil.generateRandomData(20, 0, 3, 3, 5, -3, -1);
+            int testSize = 20;
+            List<Point3d> testData1 = DataUtil.generateRandomData(testSize, 0, 3, 3, 5, -3, -1);
             Octree o2 = new Octree();
             o2.buildIndex(testData1);
-            for (int k = 1; k < 20; k ++) {
-                int[] indices = o2.searchNearestNeighbors(k, random.nextInt(20));
-                assertTrue(indices.length == k);
+            for (int k = 1; k < testSize; k ++) {
+                int[] indices = o2.searchNearestNeighbors(k, random.nextInt(testSize));
+                assertEquals(k, indices.length);
             }
         }
+//        System.out.println("ok");
 
         List<Point3d> data = randomData(42349, 1, 11.5);
         Octree octree = new Octree();
@@ -47,17 +74,22 @@ public class OctreeTest {
         double dis3 = data.get(3).distance(data.get(indices[2]));
         assertTrue(dis1 < dis2);
         assertTrue(dis2 < dis3);
+        assertKNearestNeighbors(data, data.get(3), indices);
 
         int k = 325;
-        indices = octree.searchNearestNeighbors(k, 90);
+        int pointIndex = 90;
+        indices = octree.searchNearestNeighbors(k, pointIndex);
         assertTrue(indices.length == k);
+        // test order of index
         for (int i = 1; i < k; i ++) {
-            double distance1 = data.get(90).distance(data.get(indices[i - 1]));
-            double distance2 = data.get(90).distance(data.get(indices[i]));
+            double distance1 = data.get(pointIndex).distance(data.get(indices[i - 1]));
+            double distance2 = data.get(pointIndex).distance(data.get(indices[i]));
             assertTrue(distance1 < distance2);
         }
+        // test order of index
+//        assertKNearestNeighbors(data, data.get(pointIndex), indices);
 
-//         TEST searchNearestNeighbors(int, Point3d)
+        // test searchNearestNeighbors(int, Point3d)
         BoundingBox box = BoundingBox.of(data);
         for (int i = 0; i < 3; i ++) {
             double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
@@ -83,21 +115,22 @@ public class OctreeTest {
     }
 
     @Test
-    public void testSearchNeighborsInSphere() {
+    public void testSearchAllNeighborsWithinDistance() {
         int dataSize = 3127;
         List<Point3d> data = randomData(dataSize, 0.5, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
 
-        double radius = 1.9;
+        double radius = 3.9;
         for (int index = 0; index < dataSize; index ++) {
-            List<Integer> neighbors = octree.searchNeighborsInSphere(index, radius);
+            List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(index, radius);
             assertTrue(neighbors.size() > 0);
             for (Integer pointIndex : neighbors) {
                 Point3d point = data.get(pointIndex);
                 double distance = point.distance(data.get(index));
                 assertTrue(distance <= radius);
             }
+            if (index % 10 == 0) assertNeighborsWithinRadius(data, data.get(index), neighbors);
         }
 
         // TEST searchNearestNeighbors(int, Point3d)
@@ -109,7 +142,7 @@ public class OctreeTest {
             double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
             double randomRadius = Math.min(box.getxExtent(), Math.min(box.getyExtent(), box.getzExtent())) * 0.3;
-            List<Integer> neighbors = octree.searchNeighborsInSphere(p, randomRadius);
+            List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(p, randomRadius);
             Set<Integer> set = new HashSet<>();
             set.addAll(neighbors);
             for (int j = 0; j < 25; j ++) {

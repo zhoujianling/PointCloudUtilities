@@ -41,4 +41,25 @@ public class CollisionsTest {
 
     }
 
+    @Test
+    public void testSphereContainsBox() {
+        Box box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
+        Sphere sphere = new Sphere(new Point3d(0, 0, 0), 2);
+        assertFalse(Collisions.contains(sphere, box));
+
+        box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
+        sphere = new Sphere(new Point3d(0, 0, 0), 8);
+        assertTrue(Collisions.contains(sphere, box));
+
+        box = new Box(new Point3d(-0.3, 0.2, -1.9), 3, 4, 5);
+        sphere = new Sphere(new Point3d(0.5, -3.5, -4.5), 2);
+        assertFalse(Collisions.contains(sphere, box));
+
+        box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
+        sphere = new Sphere(new Point3d(0, 3.5, 4.5), 12.48);
+        assertTrue(Collisions.contains(sphere, box));
+
+
+    }
+
 }

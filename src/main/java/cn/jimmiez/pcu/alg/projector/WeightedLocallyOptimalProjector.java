@@ -177,8 +177,8 @@ public class WeightedLocallyOptimalProjector {
         originalSelfNeighbors.clear();
 
         for (int i = 0; i < samples.size(); i ++) {
-            sampleSelfNeighbors.add(sampleOctree.searchNeighborsInSphere(i, h));
-            sampleOriginalNeighbors.add(originalOctree.searchNeighborsInSphere(samples.get(i), h));
+            sampleSelfNeighbors.add(sampleOctree.searchAllNeighborsWithinDistance(i, h));
+            sampleOriginalNeighbors.add(originalOctree.searchAllNeighborsWithinDistance(samples.get(i), h));
         }
 
         final double MAGIC_RATIO = 0.95;
@@ -186,7 +186,7 @@ public class WeightedLocallyOptimalProjector {
         if (iter == 0) {
             // compute density of original points
             for (int i = 0; i < originals.size(); i ++) {
-                originalSelfNeighbors.add(originalOctree.searchNeighborsInSphere(i, h));
+                originalSelfNeighbors.add(originalOctree.searchAllNeighborsWithinDistance(i, h));
             }
             computeDensity(originals, originalDensity, originalSelfNeighbors, h * MAGIC_RATIO, true);
         }

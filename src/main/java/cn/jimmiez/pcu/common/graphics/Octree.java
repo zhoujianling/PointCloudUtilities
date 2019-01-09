@@ -91,6 +91,7 @@ public class Octree {
 
         long leafNodeIndex = locateOctreeNode(this.root, point);
         List<Integer> queue = new ArrayList<>();
+//        Set<Integer> queue = new TreeSet<>(comparator);
         Set<Long> visited = new HashSet<>();
         OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
 //        queue.addAll(leafNode.indices);
@@ -103,8 +104,12 @@ public class Octree {
             for (Long newNode : candidates) {
                 if (visited.contains(newNode)) continue;
                 visited.add(newNode);
+//                for (int index : octreeIndices.get(newNode).indices) {
+//                    if (points.get(index).distance(point) <= currentSearchRadius) queue.add(index);
+//                }
                 queue.addAll(octreeIndices.get(newNode).indices);
             }
+//            System.out.println("queue size: " + queue.size());
             Collections.sort(queue, comparator);
             while (queue.size() > k) queue.remove(queue.size() - 1);
             currentSearchRadius = currentSearchRadius + leafSize;
@@ -214,7 +219,7 @@ public class Octree {
         return queue;
     }
 
-    public List<Integer> searchNeighborsInSphere(Point3d point, double radius) {
+    public List<Integer> searchAllNeighborsWithinDistance(Point3d point, double radius) {
         List<Integer> neighborIndices = new ArrayList<>();
         List<Long> candidateLeaves = new ArrayList<>();
         determineCandidatesWithinRadius(radius, point, candidateLeaves);
@@ -239,8 +244,8 @@ public class Octree {
      * @param radius radius of neighborhood
      * @return indices of neighboring points of this point
      */
-    public List<Integer> searchNeighborsInSphere(int index, double radius) {
-        return searchNeighborsInSphere(points.get(index), radius);
+    public List<Integer> searchAllNeighborsWithinDistance(int index, double radius) {
+        return searchAllNeighborsWithinDistance(points.get(index), radius);
     }
 
     private void determineCandidatesWithinRadius(double radius, Point3d point, Collection<Long> candidates) {
