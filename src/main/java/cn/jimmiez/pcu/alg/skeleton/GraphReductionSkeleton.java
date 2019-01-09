@@ -6,7 +6,7 @@ import cn.jimmiez.pcu.model.Skeleton;
 import javax.vecmath.Point3d;
 import java.util.List;
 
-public class CAMPINOSkeleton implements Skeletonization {
+public class GraphReductionSkeleton implements Skeletonization {
 
 
     private void generateOctree() {

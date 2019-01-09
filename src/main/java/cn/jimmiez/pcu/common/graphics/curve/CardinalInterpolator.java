@@ -1,5 +1,6 @@
 package cn.jimmiez.pcu.common.graphics.curve;
 
+import cn.jimmiez.pcu.common.graph.EntityGraph;
 import cn.jimmiez.pcu.util.Function;
 
 import javax.vecmath.Point3d;
@@ -30,9 +31,8 @@ public class CardinalInterpolator implements Interpolator{
     }
 
     @Override
-    public List<Point3d> interpolate(List<Point3d> points) {
+    public void interpolate(EntityGraph<Point3d> points) {
         // // TODO: 2018/11/15
-        return null;
     }
 
     public void setT(double t) {

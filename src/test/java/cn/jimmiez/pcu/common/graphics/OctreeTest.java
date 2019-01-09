@@ -8,6 +8,8 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static cn.jimmiez.pcu.CommonAssertions.*;
+import static org.junit.Assert.fail;
 
 public class OctreeTest {
 
@@ -52,42 +54,45 @@ public class OctreeTest {
     @Test
     public void testSearchNearestNeighbors() {
         Random random = new Random(System.currentTimeMillis());
+
+        // test small data
         for (int i = 0; i < 3; i ++) {
-            int testSize = 20;
+            int testSize = 30;
             List<Point3d> testData1 = DataUtil.generateRandomData(testSize, 0, 3, 3, 5, -3, -1);
             Octree o2 = new Octree();
             o2.buildIndex(testData1);
             for (int k = 1; k < testSize; k ++) {
-                int[] indices = o2.searchNearestNeighbors(k, random.nextInt(testSize));
+                int pointIndex = random.nextInt(testSize);
+                int[] indices = o2.searchNearestNeighbors(k, pointIndex);
                 assertEquals(k, indices.length);
+                assertKNearestNeighbors(testData1, testData1.get(pointIndex), indices);
+            }
+            try {
+                o2.searchNearestNeighbors(testSize + 1, 0);
+                fail("Should throw exception");
+            } catch (IllegalArgumentException e) {
             }
         }
-//        System.out.println("ok");
 
         List<Point3d> data = randomData(42349, 1, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
-        int[] indices = octree.searchNearestNeighbors(5, 3);
-        assertTrue(indices.length == 5);
-        double dis1 = data.get(3).distance(data.get(indices[0]));
-        double dis2 = data.get(3).distance(data.get(indices[1]));
-        double dis3 = data.get(3).distance(data.get(indices[2]));
-        assertTrue(dis1 < dis2);
-        assertTrue(dis2 < dis3);
-        assertKNearestNeighbors(data, data.get(3), indices);
 
-        int k = 325;
-        int pointIndex = 90;
-        indices = octree.searchNearestNeighbors(k, pointIndex);
-        assertTrue(indices.length == k);
-        // test order of index
-        for (int i = 1; i < k; i ++) {
-            double distance1 = data.get(pointIndex).distance(data.get(indices[i - 1]));
-            double distance2 = data.get(pointIndex).distance(data.get(indices[i]));
-            assertTrue(distance1 < distance2);
+        // test large data
+        for (int iter = 0; iter < 3; iter ++) {
+            int k = 350 + random.nextInt(100);
+            int pointIndex = random.nextInt(data.size());
+            int[] indices = octree.searchNearestNeighbors(k, pointIndex);
+            assertEquals(k, indices.length);
+            // test order of index
+            for (int i = 1; i < k; i ++) {
+                double distance1 = data.get(pointIndex).distance(data.get(indices[i - 1]));
+                double distance2 = data.get(pointIndex).distance(data.get(indices[i]));
+                assertLessEqualThan(distance1, distance2);
+            }
+            // test order of index
+            assertKNearestNeighbors(data, data.get(pointIndex), indices);
         }
-        // test order of index
-//        assertKNearestNeighbors(data, data.get(pointIndex), indices);
 
         // test searchNearestNeighbors(int, Point3d)
         BoundingBox box = BoundingBox.of(data);
@@ -101,14 +106,14 @@ public class OctreeTest {
             int[] neighbors = octree.searchNearestNeighbors(randomK, p);
             Set<Integer> set = new HashSet<>();
             for (int index : neighbors) set.add(index);
-            assertTrue(neighbors.length == randomK);
+            assertEquals(randomK, neighbors.length);
             for (int j = 0; j < 30; j ++) {
                 int randomIndex = random.nextInt(data.size());
                 while (set.contains(randomIndex))  randomIndex = random.nextInt(data.size());
                 double distance1 = p.distance(data.get(randomIndex));
                 for (int kNeighborIndex : neighbors) {
                     double neighborDistance = data.get(kNeighborIndex).distance(p);
-                    assertTrue(distance1 >= neighborDistance);
+                    assertLessEqualThan(neighborDistance, distance1);
                 }
             }
         }

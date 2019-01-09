@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.common.graphics;
 
 import cn.jimmiez.pcu.common.graphics.shape.Box;
 import cn.jimmiez.pcu.common.graphics.shape.Sphere;
+import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 
 import javax.vecmath.Point3d;
@@ -73,7 +74,8 @@ public class Octree {
         return searchNearestNeighbors(k, points.get(index));
     }
 
-    private Comparator<Integer> distanceComparator(final Point3d point) {
+    private Comparator<Integer> distanceComparator(final Point3d point, boolean smallFirst) {
+        if (smallFirst)
         return new Comparator<Integer>() {
             @Override
             public int compare(Integer pointIndex1, Integer pointIndex2) {
@@ -82,44 +84,55 @@ public class Octree {
                 return Double.compare(p1.distance(point), p2.distance(point));
             }
         };
+        return new Comparator<Integer>() {
+            @Override
+            public int compare(Integer pointIndex1, Integer pointIndex2) {
+                Point3d p1 = points.get(pointIndex1);
+                Point3d p2 = points.get(pointIndex2);
+                return - Double.compare(p1.distance(point), p2.distance(point));
+            }
+        };
     }
 
     public int[] searchNearestNeighbors(int k, final Point3d point) {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
         if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
-        Comparator<Integer> comparator = distanceComparator(point);
+        Comparator<Integer> comparator = distanceComparator(point, false);
 
         long leafNodeIndex = locateOctreeNode(this.root, point);
-        List<Integer> queue = new ArrayList<>();
-//        Set<Integer> queue = new TreeSet<>(comparator);
-        Set<Long> visited = new HashSet<>();
+//        List<Integer> queue = new ArrayList<>();
+        PriorityQueue<Integer> queue = new PriorityQueue<>(k, comparator);
+        Set<Long> visitedBoxes = new HashSet<>();
         OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
-//        queue.addAll(leafNode.indices);
         double leafSize = leafNode.getxExtent();
-        double currentSearchRadius = leafSize;
+//        double currentSearchRadius = leafSize;
+        Sphere searchRange = new Sphere(point, leafSize);
 
         while (queue.size() < k) {
             Set<Long> candidates = new HashSet<>();
-            determineCandidatesWithinRadius(currentSearchRadius, point, candidates);
+//            determineCandidatesWithinRadius(currentSearchRadius, point, candidates);
+            determineCandidatesWithinRadius(searchRange.getRadius(), searchRange.getCenter(), candidates);
             for (Long newNode : candidates) {
-                if (visited.contains(newNode)) continue;
-                visited.add(newNode);
-//                for (int index : octreeIndices.get(newNode).indices) {
-//                    if (points.get(index).distance(point) <= currentSearchRadius) queue.add(index);
-//                }
-                queue.addAll(octreeIndices.get(newNode).indices);
+                if (visitedBoxes.contains(newNode)) continue;
+                if (Collisions.contains(searchRange, octreeIndices.get(newNode))) visitedBoxes.add(newNode);
+                for (int index : octreeIndices.get(newNode).indices) {
+                    if (points.get(index).distance(point) <= searchRange.getRadius()) queue.add(index);
+                    if (queue.size() > k) queue.poll();
+                }
+//                queue.addAll(octreeIndices.get(newNode).indices);
             }
-//            System.out.println("queue size: " + queue.size());
-            Collections.sort(queue, comparator);
-            while (queue.size() > k) queue.remove(queue.size() - 1);
-            currentSearchRadius = currentSearchRadius + leafSize;
+//            Collections.sort(queue, comparator);
+//            while (queue.size() > k) queue.remove(queue.size() - 1);
+            searchRange.setRadius(searchRange.getRadius() + leafSize);
         }
 
         int[] indices = new int[k];
 //        System.out.println("" + points.size() + " " + k + " " + queue.size());
         for (int i = 0; i < k; i ++) {
-            indices[i] = queue.get(i);
+//            indices[i] = queue.get(i);
+            indices[i] = queue.poll();
         }
+        PcuArrayUtil.reverse(indices);
         return indices;
     }
 
