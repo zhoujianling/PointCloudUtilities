@@ -11,7 +11,16 @@ import static cn.jimmiez.pcu.common.graph.BaseGraph.N;
 
 import static org.junit.Assert.*;
 
+
 public class GraphsTest {
+
+    private static final double COMPARE_DOUBLE_TOLERANCE = 1E-5;
+
+    @Test
+    public void testEmpty() {
+        BaseGraph empty = Graphs.empty();
+        assertEquals(0, empty.vertices().size());
+    }
 
     @Test
     public void testKnnGraph() {
@@ -30,38 +39,151 @@ public class GraphsTest {
         for (int i = 0; i < vertices.size(); i ++)
             nnIndices.add(octree.searchNearestNeighbors(3, i));
         BaseGraph knnGraph = Graphs.knnGraph(vertices, nnIndices);
-        assertEquals(1, knnGraph.edgeWeight(0, 1),1e-7);
-        assertEquals(Double.POSITIVE_INFINITY, knnGraph.edgeWeight(0, 7),1e-7);
+        assertEquals(1, knnGraph.edgeWeight(0, 1), COMPARE_DOUBLE_TOLERANCE);
+        assertEquals(Double.POSITIVE_INFINITY, knnGraph.edgeWeight(0, 7), COMPARE_DOUBLE_TOLERANCE);
     }
 
     @Test
     public void testEdgesCount() {
+        Random r = new Random(System.currentTimeMillis());
+
+        // test empty graph
+        BaseGraph empty = Graphs.empty();
+        assertEquals(0, Graphs.edgesCountOf(empty));
+
+        // test the case that <v0, v0>, <v1, v1>
+        BaseGraph graph1 = Graphs.graph(new double[][] {
+                {0, N}, {N, 0}},
+                new int[][] {{},{}});
+        assertEquals(0, Graphs.edgesCountOf(graph1));
+
+        // test directed graph
+        for (int iter = 0; iter < 3; iter ++) {
+            int verticesCnt = 100 + r.nextInt(80);
+            int edgesCnt = 0;
+            DirectedGraph directedGraph = new DirectedGraph();
+            for (int i = 0; i < verticesCnt; i ++) {
+                directedGraph.addVertex(i);
+            }
+            int edgeVertexCnt = verticesCnt / 3 + r.nextInt(verticesCnt / 3);
+            for (int j = 0; j < edgeVertexCnt; j ++) {
+                int vi = (edgeVertexCnt + j) % verticesCnt;
+                int adjacentCnt = 1 + r.nextInt(10);
+                for (int k = 0; k < adjacentCnt; k ++) {
+                    int vj = (vi + 1 + k) % verticesCnt;
+                    directedGraph.addEdge(vi, vj, 1);
+                    edgesCnt += 1;
+                }
+            }
+            assertEquals(edgesCnt, Graphs.edgesCountOf(directedGraph));
+        }
+
+        // test undirected graph
+        for (int iter = 0; iter < 3; iter ++) {
+            int verticesCnt = 100 + r.nextInt(80);
+            int edgesCnt = 0;
+            UndirectedGraph undirectedGraph = new UndirectedGraph();
+            for (int i = 0; i < verticesCnt; i ++) {
+                undirectedGraph.addVertex(i);
+            }
+            int edgeVertexCnt = verticesCnt / 3 + r.nextInt(verticesCnt / 3);
+            for (int j = 0; j < edgeVertexCnt; j ++) {
+                int vi = (edgeVertexCnt + j) % verticesCnt;
+                int adjacentCnt = 1 + r.nextInt(15);
+                for (int k = 0; k < adjacentCnt; k ++) {
+                    int vj = (vi + 1 + k) % verticesCnt;
+                    if (undirectedGraph.edgeWeight(vi, vj) != BaseGraph.N) {
+                        undirectedGraph.addEdge(vi, vj, 1);
+                        edgesCnt += 1;
+                    }
+                }
+            }
+            assertEquals(edgesCnt * 2, Graphs.edgesCountOf(undirectedGraph));
+        }
+
+        // test static data
         BaseGraph graph = generateGraph();
-        assertTrue(Graphs.edgesCountOf(graph) == 18);
+        assertEquals(18, Graphs.edgesCountOf(graph));
+    }
+
+    @Test
+    public void testContainsCycle() {
+        // test empty graph
+//        BaseGraph empty = Graphs.empty();
+//        assertFalse(Graphs.containsCycle(empty));
+
+        // test
     }
 
     @Test
     public void testConnectedComponent() {
         BaseGraph graph = generateGraph();
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
-        assertTrue(conns.size() == 2);
+        assertEquals(2,conns.size());
 
         BaseGraph graph2 = generateGraph2();
         conns = Graphs.connectedComponents(graph2);
-        assertTrue(conns.size() == 3);
+        assertEquals(3,conns.size());
 
         conns = Graphs.connectedComponents(Graphs.empty());
-        assertTrue(conns.size() == 0);
+        assertEquals(0,conns.size());
 
         BaseGraph fcg = generateGraph3();
         conns = Graphs.connectedComponents(fcg);
-        assertTrue(conns.size() == 1);
+        assertEquals(1,conns.size());
 
         for (int i = 0; i < 5; i ++) {
             Random r = new Random(System.currentTimeMillis());
             int num = 1 + r.nextInt(7);
             BaseGraph randomGraph2 = DataUtil.generateRandomGraph(num, false);
             assertEquals(num, Graphs.connectedComponents(randomGraph2).size());
+        }
+    }
+
+
+    @Test
+    public void testSubGraph() {
+        // test an empty graph
+        BaseGraph empty = Graphs.empty();
+        Set<Integer> vertices = new HashSet<>();
+        BaseGraph subGraph1 = Graphs.subGraph(empty, vertices);
+        assertEquals(0, subGraph1.vertices().size());
+
+        // test if edgeWeight() method of sub-graph works well
+        BaseGraph graph1 = generateGraph();
+        vertices.clear();
+        vertices.add(0);
+        vertices.add(1);
+        vertices.add(2);
+        BaseGraph subGraph2 = Graphs.subGraph(graph1, vertices);
+        assertEquals(3, subGraph2.vertices().size());
+        assertEquals(0, subGraph2.edgeWeight(0, 0), COMPARE_DOUBLE_TOLERANCE);
+        assertEquals(0, subGraph2.edgeWeight(2, 2), COMPARE_DOUBLE_TOLERANCE);
+        assertEquals(0.5, subGraph2.edgeWeight(1, 2), COMPARE_DOUBLE_TOLERANCE);
+        try {
+            assertEquals(0, subGraph2.edgeWeight(0, 3), COMPARE_DOUBLE_TOLERANCE);
+            fail();
+        } catch (Exception e) {
+        }
+
+        // test input that contains all vertices
+        vertices.clear();
+        vertices.add(0);
+        vertices.add(1);
+        vertices.add(2);
+        vertices.add(3);
+        vertices.add(4);
+        vertices.add(5);
+        vertices.add(6);
+        BaseGraph subGraph3 = Graphs.subGraph(graph1, vertices);
+        assertEquals(graph1.vertices().size(), subGraph3.vertices().size());
+
+        // test input that contains unexpected vertex
+        vertices.add(7);
+        try {
+            Graphs.subGraph(graph1, vertices);
+            fail();
+        } catch (IllegalArgumentException e) {
         }
     }
 

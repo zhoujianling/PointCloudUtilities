@@ -6,8 +6,18 @@ import cn.jimmiez.pcu.util.PcuCommonUtil;
 import javax.vecmath.Point3d;
 import java.util.*;
 
+/**
+ * This class provides some static methods for constructing a graph from matrix, operating
+ * on graph.
+ */
 public class Graphs {
 
+    /**
+     * obtain connected components of a **UNDIRECTED GRAPH**.
+     * @param graph the undirected graph
+     * @return return a list, each element in it represents a sub-graph, which is a collection of
+     * indices of vertices
+     */
     public static List<List<Integer>> connectedComponents(BaseGraph graph) {
         List<List<Integer>> subGraphs = new Vector<>();
         Set<Integer> visited = new HashSet<>();
@@ -29,6 +39,16 @@ public class Graphs {
             subGraphs.add(subGraph);
         }
         return subGraphs;
+    }
+
+    /**
+     * determine if a graph contains cycles
+     * @param graph a base graph
+     * @return if this graph has a cycle
+     */
+    public static boolean containsCycle(BaseGraph graph) {
+        // // TODO: 2019/1/10 wait to be implemented
+        return true;
     }
 
     /**
@@ -54,7 +74,7 @@ public class Graphs {
             public double edgeWeight(int i, int j) {
                 if (vertices.contains(i) && vertices.contains(j))
                     return graph.edgeWeight(i, j);
-                return Graph.N;
+                throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
             }
 
             @Override
@@ -70,9 +90,11 @@ public class Graphs {
     }
 
     /**
-     * compute the number of edges in a graph
+     * compute the number of edges in a graph.
+     *
+     * e_ij e_ji are seen as two different edges despite the directness.
      * @param graph a graph
-     * @return number of edges( e_ij e_ji are seen as two different edges )
+     * @return number of edges(
      */
     public static int edgesCountOf(BaseGraph graph) {
         int result = 0;
@@ -88,11 +110,15 @@ public class Graphs {
         return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
+                if (i < 0 || i >= vt.size() || j < 0 || j >= vt.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
                 return vertices.get(i).distance(vertices.get(j));
             }
 
             @Override
             public List<Integer> adjacentVertices(int i) {
+                if (i < 0 || i >= vt.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + ".");
                 return vt;
             }
 
@@ -117,6 +143,8 @@ public class Graphs {
         return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
+                if (i < 0 || i >= vertices.size() || j < 0 || j >= vertices.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
                 Pair<Integer, Integer> p = new Pair<>(i, j);
                 if (knnEdges.contains(p)) {
                     return vertices.get(i).distance(vertices.get(j));
@@ -126,6 +154,8 @@ public class Graphs {
 
             @Override
             public List<Integer> adjacentVertices(int i) {
+                if (i < 0 || i >= vertices.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + ".");
                 return knnIndicesList.get(i);
             }
 
@@ -165,11 +195,15 @@ public class Graphs {
         return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
+                if (i < 0 || i >= vertices.size() || j < 0 || j >= vertices.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
                 return edges[i][j];
             }
 
             @Override
             public List<Integer> adjacentVertices(int i) {
+                if (i < 0 || i >= vertices.size())
+                    throw new IllegalArgumentException("Invalid index of vertex: " + i + ".");
                 return adjacencies.get(i);
             }
 
@@ -180,31 +214,31 @@ public class Graphs {
         };
     }
 
-    public static Graph knnGraph2(List<int[]> knnIndices, List<Point3d> data) {
-        DirectedGraph graph = new DirectedGraph();
-        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex(i);
-        for (int i = 0; i < knnIndices.size(); i ++) {
-            int[] indices = knnIndices.get(i);
-            for (int index : indices) {
-                double dis = data.get(i).distance(data.get(index));
-                graph.addEdge(i, index, dis);
-                graph.addEdge(index, i, dis);
-            }
-        }
-        return graph;
-    }
+//    public static Graph knnGraph2(List<int[]> knnIndices, List<Point3d> data) {
+//        DirectedGraph graph = new DirectedGraph();
+//        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex(i);
+//        for (int i = 0; i < knnIndices.size(); i ++) {
+//            int[] indices = knnIndices.get(i);
+//            for (int index : indices) {
+//                double dis = data.get(i).distance(data.get(index));
+//                graph.addEdge(i, index, dis);
+//                graph.addEdge(index, i, dis);
+//            }
+//        }
+//        return graph;
+//    }
 
     public static BaseGraph empty() {
         final List<Integer> vertices = new ArrayList<>();
         return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
-                return BaseGraph.N;
+                throw new IllegalArgumentException("Invalid index of vertex.");
             }
 
             @Override
             public List<Integer> adjacentVertices(int i) {
-                return new Vector<>();
+                throw new IllegalArgumentException("Invalid index of vertex.");
             }
 
             @Override
