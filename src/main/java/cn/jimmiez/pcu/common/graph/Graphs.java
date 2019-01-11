@@ -19,6 +19,7 @@ public class Graphs {
      * indices of vertices
      */
     public static List<List<Integer>> connectedComponents(BaseGraph graph) {
+        if (graph.isDirected()) throw new UnsupportedOperationException("Currently this method cannot operate on directed graph.");
         List<List<Integer>> subGraphs = new Vector<>();
         Set<Integer> visited = new HashSet<>();
 //        System.out.println("num of vertices: " + graph.vertices().size());
@@ -59,6 +60,7 @@ public class Graphs {
      */
     public static BaseGraph subGraph(final BaseGraph graph, final Set<Integer> vertices) {
         final Map<Integer, List<Integer>> adjacencyMap = new HashMap<>();
+        final boolean isDirecetd = graph.isDirected();
         for (int vertexIndex : vertices) {
             Collection<Integer> adjacents = graph.adjacentVertices(vertexIndex);
             List<Integer> adjacentsInSubGraph = new ArrayList<>();
@@ -86,6 +88,11 @@ public class Graphs {
             public Collection<Integer> vertices() {
                 return vertices;
             }
+
+            @Override
+            public boolean isDirected() {
+                return isDirecetd;
+            }
         };
     }
 
@@ -104,7 +111,7 @@ public class Graphs {
         return result;
     }
 
-    public static BaseGraph fullConnectedGraph(final List<Point3d> vertices) {
+    public static BaseGraph fullConnectedGraph(final List<Point3d> vertices, final boolean isDirected) {
         final List<Integer> vt = new Vector<>();
         for (int i = 0; i < vertices.size(); i ++) vt.add(i);
         return new BaseGraph() {
@@ -126,10 +133,21 @@ public class Graphs {
             public Collection<Integer> vertices() {
                 return vt;
             }
+
+            @Override
+            public boolean isDirected() {
+                return isDirected;
+            }
         };
     }
 
 
+    /**
+     * construct k-nearest-neighbor graph
+     * @param vertices the vertices
+     * @param knnIndices the k-nearest neighbors of vertices
+     * @return a undirected graph
+     */
     public static BaseGraph knnGraph(final List<Point3d> vertices, final List<int[]> knnIndices) {
         final Set<Pair<Integer, Integer>> knnEdges = new HashSet<>();
         final List<Integer> verticesIndices = new ArrayList<>();
@@ -163,16 +181,29 @@ public class Graphs {
             public Collection<Integer> vertices() {
                 return verticesIndices;
             }
+
+            @Override
+            public boolean isDirected() {
+                return false;
+            }
         };
     }
 
-    @SuppressWarnings("Duplicates")
-    private static List<List<Integer>> adjacentMatrix2List(final int[][] adjacency) {
+    private static List<List<Integer>> adjacentMatrix2List(final double[][] edgesMatrix, boolean directed) {
         List<List<Integer>> adjacencies = new Vector<>();
-        for (int[] adjacencyArray : adjacency) {
-            List<Integer> vec = new Vector<>();
-            for (int index : adjacencyArray) vec.add(index);
-            adjacencies.add(vec);
+        int vn = edgesMatrix.length;
+        for (int i = 0; i < vn; i ++) adjacencies.add(new ArrayList<Integer>());
+        for (int i = 0; i < vn; i ++) {
+            double[] edges = edgesMatrix[i];
+            if (edges.length != vn) throw new IllegalArgumentException("Invalid adjacent matrix.");
+            for (int j = 0; j < vn; j ++) {
+                if (i == j) continue;
+                if (! directed && i > j) continue;
+                if (edges[j] != Graph.N) {
+                    adjacencies.get(i).add(j);
+                    if (! directed) adjacencies.get(j).add(i);
+                }
+            }
         }
         return adjacencies;
     }
@@ -189,8 +220,14 @@ public class Graphs {
     }
 
 
-    public static BaseGraph graph(final double[][]edges, final int[][]adjacency) {
-        final List<List<Integer>> adjacencies = adjacentMatrix2List(adjacency);
+    /**
+     * construct a directed graph from given matrix
+     * @param edges the edges, a matrix
+     * @param directed if this graph is a directed graph
+     * @return a graph
+     */
+    public static BaseGraph graph(final double[][]edges, final boolean directed) {
+        final List<List<Integer>> adjacencies = adjacentMatrix2List(edges, directed);
         final List<Integer> vertices = PcuCommonUtil.incrementalIntegerList(edges.length);
         return new BaseGraph() {
             @Override
@@ -211,23 +248,18 @@ public class Graphs {
             public Collection<Integer> vertices() {
                 return vertices;
             }
+
+            @Override
+            public boolean isDirected() {
+                return directed;
+            }
         };
     }
 
-//    public static Graph knnGraph2(List<int[]> knnIndices, List<Point3d> data) {
-//        DirectedGraph graph = new DirectedGraph();
-//        for (int i = 0; i < knnIndices.size(); i ++) graph.addVertex(i);
-//        for (int i = 0; i < knnIndices.size(); i ++) {
-//            int[] indices = knnIndices.get(i);
-//            for (int index : indices) {
-//                double dis = data.get(i).distance(data.get(index));
-//                graph.addEdge(i, index, dis);
-//                graph.addEdge(index, i, dis);
-//            }
-//        }
-//        return graph;
-//    }
-
+    /**
+     * construct a graph with no vertex and edge
+     * @return a undirected graph
+     */
     public static BaseGraph empty() {
         final List<Integer> vertices = new ArrayList<>();
         return new BaseGraph() {
@@ -245,6 +277,12 @@ public class Graphs {
             public Collection<Integer> vertices() {
                 return vertices;
             }
+
+            @Override
+            public boolean isDirected() {
+                return false;
+            }
         };
     }
+
 }

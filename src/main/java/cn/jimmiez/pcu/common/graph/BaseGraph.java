@@ -28,4 +28,11 @@ public interface BaseGraph {
      * @return the collection of indices of vertex
      */
     Collection<Integer> vertices();
+
+
+    /**
+     * if this graph is directed or not
+     * @return true if this graph is a directed graph
+     */
+    boolean isDirected();
 }

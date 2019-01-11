@@ -78,4 +78,9 @@ public class EntityGraph<E> implements BaseGraph {
         return delegate.vertices();
     }
 
+    @Override
+    public boolean isDirected() {
+        return delegate.isDirected();
+    }
+
 }

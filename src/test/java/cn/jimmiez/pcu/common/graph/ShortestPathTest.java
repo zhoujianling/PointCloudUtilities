@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 
+import static cn.jimmiez.pcu.common.graph.BaseGraph.N;
 import static org.junit.Assert.*;
 
 public class ShortestPathTest {
@@ -26,7 +27,6 @@ public class ShortestPathTest {
 
 
     private BaseGraph genData() {
-        final double N = Double.POSITIVE_INFINITY;
         final double[][] edges = new double[][] {
                 {0,   3,   2,   N,   4,   N},
                 {3,   0,   0.5, 2,   0.8, N},
@@ -35,14 +35,6 @@ public class ShortestPathTest {
                 {4,   0.8, N,   2,   0,   N},
                 {N,   N,   N,   N,   N,   0},
         };
-        final int[][] adjacency = new int[][] {
-                {1, 2, 4},
-                {0, 2, 3, 4},
-                {0, 1, 3},
-                {1, 2, 4},
-                {0, 1, 3},
-                {}
-        };
-        return Graphs.graph(edges, adjacency);
+        return Graphs.graph(edges, false);
     }
 }

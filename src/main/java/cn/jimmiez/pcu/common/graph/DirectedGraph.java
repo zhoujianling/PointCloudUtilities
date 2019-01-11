@@ -82,6 +82,11 @@ public class DirectedGraph implements Graph {
         return edges.keySet();
     }
 
+    @Override
+    public boolean isDirected() {
+        return true;
+    }
+
     /**
      * {@inheritDoc}
      */

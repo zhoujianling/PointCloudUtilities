@@ -169,6 +169,11 @@ public class LevelSetSkeleton implements Skeletonization{
             public Collection<Integer> vertices() {
                 return vertices;
             }
+
+            @Override
+            public boolean isDirected() {
+                return false;
+            }
         };
     }
 
@@ -405,7 +410,7 @@ public class LevelSetSkeleton implements Skeletonization{
         void partition() {
             Octree octree = new Octree();
             octree.buildIndex(points);
-            Graph graph = new DirectedGraph();
+            Graph graph = new UndirectedGraph();
             double secondaryEdgeSum = 0.0;
             for (int i = 0; i < points.size(); i ++) graph.addVertex(i);
             for (int i = 0; i < points.size(); i ++) {
@@ -415,7 +420,6 @@ public class LevelSetSkeleton implements Skeletonization{
                     double dis = points.get(i).distance(points.get(index));
                     if (j == indices.length - 1) secondaryEdgeSum += dis;
                     graph.addEdge(i, index, dis);
-                    graph.addEdge(index, i, dis);
                 }
             }
 //            removeEdges(graph, secondaryEdgeSum);

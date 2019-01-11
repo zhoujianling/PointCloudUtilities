@@ -82,6 +82,11 @@ public class UndirectedGraph implements Graph {
         return edges.keySet();
     }
 
+    @Override
+    public boolean isDirected() {
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */

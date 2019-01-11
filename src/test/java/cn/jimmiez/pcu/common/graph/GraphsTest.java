@@ -23,6 +23,66 @@ public class GraphsTest {
     }
 
     @Test
+    public void testGraph() {
+        // test create empty graph
+        BaseGraph graph = Graphs.graph(new double[][]{}, false);
+        assertEquals(0, graph.vertices().size());
+        assertFalse(graph.isDirected());
+
+        BaseGraph graph2 = Graphs.graph(new double[][]{}, true);
+        assertEquals(0, graph2.vertices().size());
+        assertTrue(graph2.isDirected());
+
+        // test graph with 1 vertex
+        BaseGraph graph3 = Graphs.graph(new double[][]{{N}}, false);
+        assertEquals(1, graph3.vertices().size());
+        assertEquals(0, graph3.adjacentVertices(0).size());
+        assertFalse(graph3.isDirected());
+
+        BaseGraph graph4 = Graphs.graph(new double[][]{{N}}, true);
+        assertEquals(1, graph4.vertices().size());
+        assertTrue(graph4.isDirected());
+
+        // test create directed graph from matrix
+        BaseGraph graph5 = Graphs.graph(new double[][]{
+                {0,     2,  N,      N,     1},
+                {2,     0,  2.3,    N,     0.2},
+                {0,     3,  0,      0.2,   1},
+                {0.8,   1.2,  N,      0,     1},
+                {0.3,     3,  N,      N,     0}
+        }, true);
+        assertEquals(2, graph5.adjacentVertices(0).size());
+        assertEquals(3, graph5.adjacentVertices(1).size());
+        assertEquals(4, graph5.adjacentVertices(2).size());
+        assertEquals(2.3, graph5.edgeWeight(1, 2), 1E-5);
+        assertEquals(3, graph5.edgeWeight(2, 1), 1E-5);
+
+        // test create undirected graph from matrix
+        BaseGraph graph6 = Graphs.graph(new double[][]{
+                {0,     2,  N,      N,     1},
+                {2,     0,  3,      1.2,   0.2},
+                {N,     3,  0,      N,   1},
+                {N,   1.2,  N,      0,     1},
+                {1,   0.2,  1,      1,     0}
+        }, false);
+        assertEquals(2, graph6.adjacentVertices(0).size());
+        assertEquals(4, graph6.adjacentVertices(1).size());
+        assertEquals(2, graph6.adjacentVertices(2).size());
+        assertEquals(3, graph6.edgeWeight(1, 2), 1E-5);
+        assertEquals(3, graph6.edgeWeight(2, 1), 1E-5);
+
+        // test create graph from invalid input
+        try {
+            Graphs.graph(new double[][]{
+                    {1, 2, 3, 4, 5},
+                    {1, N, N, 5}
+            }, false);
+            fail();
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
     public void testKnnGraph() {
         List<Point3d> vertices = new Vector<>();
         vertices.add(new Point3d(0, 0, 0));
@@ -52,9 +112,7 @@ public class GraphsTest {
         assertEquals(0, Graphs.edgesCountOf(empty));
 
         // test the case that <v0, v0>, <v1, v1>
-        BaseGraph graph1 = Graphs.graph(new double[][] {
-                {0, N}, {N, 0}},
-                new int[][] {{},{}});
+        BaseGraph graph1 = Graphs.graph(new double[][] {{0, N}, {N, 0}}, false);
         assertEquals(0, Graphs.edgesCountOf(graph1));
 
         // test directed graph
@@ -108,11 +166,92 @@ public class GraphsTest {
 
     @Test
     public void testContainsCycle() {
-        // test empty graph
+//        Random r = new Random(System.currentTimeMillis());
+//
+//        // test empty graph
 //        BaseGraph empty = Graphs.empty();
 //        assertFalse(Graphs.containsCycle(empty));
-
-        // test
+//
+//        // test undirected graph
+//        UndirectedGraph undirectedGraph = new UndirectedGraph();
+//        undirectedGraph.addVertex(0);
+//        undirectedGraph.addVertex(1);
+//        undirectedGraph.addVertex(2);
+//        undirectedGraph.addEdge(0, 1, 1);
+//        undirectedGraph.addEdge(1, 2, 3);
+//        undirectedGraph.addEdge(2, 0, 2);
+//        assertTrue(Graphs.containsCycle(undirectedGraph));
+//
+//        // test undirected graph with two vertices
+//        UndirectedGraph undirectedGraph2 = new UndirectedGraph();
+//        undirectedGraph2.addVertex(0);
+//        undirectedGraph2.addVertex(1);
+//        undirectedGraph2.addEdge(0, 1, 1);
+//        assertFalse(Graphs.containsCycle(undirectedGraph2));
+//
+//        // test un-connected undirected graph
+//        UndirectedGraph undirectedGraph3 = new UndirectedGraph();
+//        undirectedGraph3.addVertex(0);
+//        undirectedGraph3.addVertex(1);
+//        undirectedGraph3.addVertex(2);
+//        undirectedGraph3.addVertex(3);
+//        undirectedGraph3.addEdge(0, 1, 1);
+//        undirectedGraph3.addEdge(1, 2, 3);
+//        undirectedGraph3.addEdge(2, 3, 1);
+//        assertFalse(Graphs.containsCycle(undirectedGraph3));
+//
+//        // test directed graph
+//        DirectedGraph directedGraph = new DirectedGraph();
+//        directedGraph.addVertex(0);
+//        directedGraph.addVertex(1);
+//        directedGraph.addVertex(2);
+//        directedGraph.addEdge(0, 1, 1);
+//        directedGraph.addEdge(1, 2, 3);
+//        directedGraph.addEdge(2, 0, 2);
+//        assertTrue(Graphs.containsCycle(directedGraph));
+//
+//        // test directed graph with two vertices
+//        DirectedGraph directedGraph2 = new DirectedGraph();
+//        directedGraph2.addVertex(0);
+//        directedGraph2.addVertex(1);
+//        directedGraph2.addEdge(0, 1, 1);
+//        directedGraph2.addEdge(1, 0, 3);
+//        assertTrue(Graphs.containsCycle(directedGraph2));
+//
+//        // test directed graph with two vertices
+//        DirectedGraph directedGraph3 = new DirectedGraph();
+//        directedGraph3.addVertex(0);
+//        directedGraph3.addVertex(1);
+//        directedGraph3.addEdge(0, 1, 1);
+//        assertFalse(Graphs.containsCycle(directedGraph3));
+//
+//        // test directed graph with four vertices
+//        DirectedGraph directedGraph4 = new DirectedGraph();
+//        directedGraph4.addVertex(0);
+//        directedGraph4.addVertex(1);
+//        directedGraph4.addVertex(2);
+//        directedGraph4.addVertex(3);
+//        directedGraph4.addEdge(0, 1, 1);
+//        directedGraph4.addEdge(1, 2, 1);
+//        directedGraph4.addEdge(2, 3, 1);
+//        directedGraph4.addEdge(0, 3, 1);
+//        assertFalse(Graphs.containsCycle(directedGraph4));
+//
+//        // test big data
+//        UndirectedGraph bigGraph = new UndirectedGraph();
+//        int verticesCnt = 10000;
+//        for (int i = 0; i < verticesCnt; i ++) {
+//            bigGraph.addVertex(i);
+//        }
+//        for (int i = 0; i < verticesCnt; i ++) {
+//            int adjacent = r.nextInt(verticesCnt);
+//            if (adjacent != i
+//                    && bigGraph.adjacentVertices(i).size() == 0
+//                    && bigGraph.adjacentVertices(adjacent).size() == 0) {
+//                bigGraph.addEdge(i, adjacent, 1);
+//            }
+//        }
+//        assertFalse(Graphs.containsCycle(bigGraph));
     }
 
     @Test
@@ -197,16 +336,7 @@ public class GraphsTest {
                 {N,   N,   N,   N,   N,   0,   0.3},
                 {N,   N,   N,   N,   N,   0.3, 0},
         };
-        final int[][] adjacency = new int[][] {
-                {1, 2, 4},
-                {0, 2, 3, 4},
-                {0, 1, 3},
-                {1, 2, 4},
-                {0, 1, 3},
-                {6},
-                {5},
-        };
-        return Graphs.graph(edges, adjacency);
+        return Graphs.graph(edges, false);
     }
 
     private BaseGraph generateGraph2() {
@@ -215,12 +345,7 @@ public class GraphsTest {
                 {N,   0,  N},
                 {N,   N,  0},
         };
-        final int[][] adjacency = new int[][] {
-                {},
-                {},
-                {},
-        };
-        return Graphs.graph(edges, adjacency);
+        return Graphs.graph(edges, false);
     }
 
     private BaseGraph generateGraph3() {
@@ -229,7 +354,7 @@ public class GraphsTest {
         for (int i = 0; i < 1000; i ++) {
             vertices.add(new Point3d(random.nextDouble(), random.nextDouble(), random.nextDouble()));
         }
-        return Graphs.fullConnectedGraph(vertices);
+        return Graphs.fullConnectedGraph(vertices, false);
     }
 
 }
