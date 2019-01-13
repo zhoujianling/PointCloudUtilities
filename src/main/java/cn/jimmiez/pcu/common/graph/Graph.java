@@ -15,7 +15,7 @@ public interface Graph extends BaseGraph {
     void addEdge(int vi, int vj, double weight);
 
     /**
-     * add the edge that is specified by ordered index pair {@literal <i, j>}
+     * remove the edge that is specified by ordered index pair {@literal <i, j>}
      * @param vi the index of vertex i, if vi equals vj, do nothing
      * @param vj the index of vertex j, if vj equals vi, no nothing
      */
@@ -42,7 +42,7 @@ public interface Graph extends BaseGraph {
     void removeVertex(int vi);
 
     /**
-     * clear all edges.
+     * clear all vertices and edges in the graph.
      */
     void clear();
 }
