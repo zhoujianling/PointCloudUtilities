@@ -187,7 +187,19 @@ public class DirectedGraphTest {
         assertEquals(2, directedGraph.vertices().size());
         assertEquals(1, directedGraph.adjacentVertices(1).size());
         assertEquals(0, directedGraph.adjacentVertices(3).size());
+    }
 
+    @Test
+    public void testClear() {
+        Graph graph = new DirectedGraph();
+        assertEquals(0, graph.vertices().size());
+        // test clear a graph with no vertex
+        graph.clear();
+        assertEquals(0, graph.vertices().size());
+
+        graph.addVertex(1);
+        graph.clear();
+        assertEquals(0, graph.vertices().size());
     }
 
 }
