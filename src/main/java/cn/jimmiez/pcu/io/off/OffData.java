@@ -39,6 +39,10 @@ public class OffData {
         return vertexColors;
     }
 
+    public List<float[]> getVertexNormals() {
+        return vertexNormals;
+    }
+
     public OffHeader getHeader() {
         return header;
     }

@@ -4,6 +4,7 @@ import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -33,10 +34,11 @@ public class OffReader {
         return null;
     }
 
-    private void readImpl(Scanner scanner, OffData data) {
+    private void readImpl(Scanner scanner, OffData data) throws IOException {
         int state = STATE_READY;
         boolean loop = true;
         OffHeader header = new OffHeader();
+        String message = null;
         while (loop) {
             switch (state) {
                 case STATE_READY: {
@@ -46,8 +48,8 @@ public class OffReader {
                 case STATE_PARSE_HEADER_KEYWORD: {
                     String line = fetchNextLine(scanner);
                     if (line == null) {
-                        System.err.println("Cannot read first line.");
                         state = STATE_ERROR;
+                        message = "Cannot read first line";
                         break;
                     }
                     String keyword = line.trim();
@@ -70,8 +72,8 @@ public class OffReader {
                 case STATE_PARSE_HEADER_N_DIM: {
                     String line = fetchNextLine(scanner);
                     if (line == null) {
-                        System.err.println("Cannot read number of dimensions.");
                         state = STATE_ERROR;
+                        message = "Cannot read the number of dimensions";
                         break;
                     }
                     int dimen = Integer.valueOf(line);
@@ -79,22 +81,22 @@ public class OffReader {
                         header.setDimension(dimen);
                         state = STATE_PARSE_ELEMENT_NUM;
                     } else {
-                        System.err.println("Incorrect vertex dimension.");
                         state = STATE_ERROR;
+                        message = "Incorrect vertex dimension.";
                     }
                     break;
                 }
                 case STATE_PARSE_ELEMENT_NUM: {
                     String line = fetchNextLine(scanner);
                     if (line == null) {
-                        System.err.println("Cannot read number of vertices and faces.");
                         state = STATE_ERROR;
+                        message = "Cannot read number of vertices and faces.";
                         break;
                     }
                     String[] nums = line.split(" ");
                     int verticesNum = -1, facesNum = -1, edgesNum = -1;
                     if (nums.length < 2) {
-                        System.err.println("Too few numbers for parsing element size.");
+                        message = "Too few numbers for parsing element size.";
                         state = STATE_ERROR;
                         break;
                     }
@@ -112,7 +114,7 @@ public class OffReader {
                 }
                 case STATE_READING_VERTICES: {
                     if (header.getVerticesNum() == OffHeader.UNSET) {
-                        System.err.println("Invalid number of vertices.");
+                        message = "Invalid number of vertices.";
                         state = STATE_ERROR;
                         break;
                     }
@@ -120,7 +122,7 @@ public class OffReader {
                     for (int i = 0; i < header.getVerticesNum(); i ++) {
                         String line = fetchNextLine(scanner);
                         if (line == null) {
-                            System.err.println("Fewer vertices than expected.");
+                            message = "Fewer vertices than expected.";
                             success = false;
                             break;
                         }
@@ -159,13 +161,14 @@ public class OffReader {
                     if (success) {
                         state = STATE_READING_FACES;
                     } else {
+                        if (message == null) message = "Fail to read vertice information.";
                         state = STATE_ERROR;
                     }
                     break;
                 }
                 case STATE_READING_FACES: {
                     if (header.getFacesNum() == OffHeader.UNSET) {
-                        System.err.println("Invalid number of faces.");
+                        message = "Invalid number of faces.";
                         state = STATE_ERROR;
                         break;
                     }
@@ -173,7 +176,7 @@ public class OffReader {
                     for (int i = 0; i < header.getFacesNum(); i ++) {
                         String line = fetchNextLine(scanner);
                         if (line == null) {
-                            System.err.println("Fewer faces than expected.");
+                            message = "Fewer faces than expected.";
                             success = false;
                             break;
                         }
@@ -203,43 +206,37 @@ public class OffReader {
                     break;
                 }
                 case STATE_ERROR: {
-                    loop = false;
-                    break;
+                    throw new IOException(message);
                 }
             }
 
         }
     }
 
-    public OffData read(File file) throws FileNotFoundException {
+    public OffData read(File file) throws IOException {
         Scanner scanner = new Scanner(file);
         OffData data = new OffData();
         readImpl(scanner, data);
         return data;
     }
 
-    private void injectData(OffData data, Object object) {
+    private void injectData(OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
         List<Method> methods = PcuReflectUtil.fetchAllMethods(object);
-        try {
-            for (Method method : methods) {
-                ReadFromOff annotation = method.getAnnotation(ReadFromOff.class);
-                if (annotation != null) {
-                    if (annotation.dataType() == ReadFromOff.VERTICES) {
-                        injectVerticesData(method, data, object);
-                    } else if (annotation.dataType() == ReadFromOff.FACES) {
-                        injectFacesData(method, data, object);
-                    } else if (annotation.dataType() == ReadFromOff.VERTEX_COLORS) {
-                        injectVertexColorsData(method, data, object);
-                    } else if (annotation.dataType() == ReadFromOff.FACE_COLORS) {
-                        injectFaceColorsData(method, data, object);
-                    }
+        for (Method method : methods) {
+            ReadFromOff annotation = method.getAnnotation(ReadFromOff.class);
+            if (annotation != null) {
+                if (annotation.dataType() == ReadFromOff.VERTICES) {
+                    injectVerticesData(method, data, object);
+                } else if (annotation.dataType() == ReadFromOff.FACES) {
+                    injectFacesData(method, data, object);
+                } else if (annotation.dataType() == ReadFromOff.VERTEX_COLORS) {
+                    injectVertexColorsData(method, data, object);
+                } else if (annotation.dataType() == ReadFromOff.VERTEX_NORMALS) {
+                    injectVertexNormalsData(method, data, object);
+                } else if (annotation.dataType() == ReadFromOff.FACE_COLORS) {
+                    injectFaceColorsData(method, data, object);
                 }
             }
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            System.err.println("Privater getter with ReadFromOff annotation.");
-            e.printStackTrace();
         }
     }
 
@@ -262,12 +259,18 @@ public class OffReader {
     }
 
     @SuppressWarnings("unchecked")
+    private void injectVertexNormalsData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
+        List<float[]> list = (List<float[]>) method.invoke(object);
+        list.addAll(data.vertexNormals);
+    }
+
+    @SuppressWarnings("unchecked")
     private void injectFaceColorsData(Method method, OffData data, Object object) throws InvocationTargetException, IllegalAccessException {
         List<float[]> list = (List<float[]>) method.invoke(object);
         list.addAll(data.faceColors);
     }
 
-    public <T> T read(File file, Class<T> clazz) throws FileNotFoundException {
+    public <T> T read(File file, Class<T> clazz) throws IOException {
         OffData data = read(file);
         // inject into object ....
         T object = null;
@@ -277,6 +280,8 @@ public class OffReader {
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
         return object;
