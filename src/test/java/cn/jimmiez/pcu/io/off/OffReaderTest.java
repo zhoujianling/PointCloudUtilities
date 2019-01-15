@@ -13,6 +13,13 @@ import static org.junit.Assert.*;
 
 public class OffReaderTest {
 
+//    @Test(expected = IOException.class)
+//    public void testReadBadData() throws IOException {
+//        File file = new File(OffReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
+//        OffReader reader = new OffReader();
+//        reader.read(file);
+//    }
+
     // test OFF
     @Test
     public void testReadOff() throws IOException {
