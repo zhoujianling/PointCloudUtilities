@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu;
 
+import javax.vecmath.Point3d;
+
 import static org.junit.Assert.*;
 
 public class CommonAssertions {
@@ -38,6 +40,12 @@ public class CommonAssertions {
     public static void assertGreaterEqualThan(int v1, int v2) {
         String message = "The value " + v1 + " should be not less than " + v1 + ".";
         assertTrue(message, v1 >= v2);
+    }
+
+    public static void assertSamePoint(Point3d p1, Point3d p2) {
+        assertEquals(p1.x, p2.x, COMPARE_DOUBLE_TOLERANCE);
+        assertEquals(p1.y, p2.y, COMPARE_DOUBLE_TOLERANCE);
+        assertEquals(p1.z, p2.z, COMPARE_DOUBLE_TOLERANCE);
     }
 
 }
