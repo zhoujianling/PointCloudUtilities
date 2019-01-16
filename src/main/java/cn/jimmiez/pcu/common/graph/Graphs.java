@@ -43,13 +43,59 @@ public class Graphs {
     }
 
     /**
-     * determine if a graph contains cycles
+     * determine if a graph contains cycles.
+     * self-loop is not regarded as a cycle here.
+     * for:
+     * <ul>
+     *     <li>Directed Graph: a cycle must contains at least two vertices.</li>
+     *     <li>Undirected Graph: a cycle must contains at least three vertices.</li>
+     * </ul>
      * @param graph a base graph
      * @return if this graph has a cycle
      */
     public static boolean containsCycle(BaseGraph graph) {
-        // // TODO: 2019/1/10 wait to be implemented
-        return true;
+        if (graph.vertices().size() < 1) return false;
+        if (graph.isDirected()) {
+            Set<Integer> visited = new HashSet<>(graph.vertices().size());
+            List<Integer> queue = new ArrayList<>(graph.vertices().size());
+            int i = 0;
+            for (int vi : graph.vertices()) {
+                if (visited.contains(vi)) continue;
+                // new sub graph, vi is the root vertex
+                Set<Integer> subVisited = new HashSet<>(graph.vertices().size());
+                queue.add(vi);
+                for (; i < queue.size(); i ++) {
+                    int v = queue.get(i);
+                    subVisited.add(vi);
+                    for (int ai : graph.adjacentVertices(v)) {
+                        if (subVisited.contains(ai)) return true;
+                        queue.add(ai);
+                    }
+                }
+                visited.addAll(subVisited);
+            }
+        } else {
+            Set<Integer> visited = new HashSet<>(graph.vertices().size());
+            List<Pair<Integer, Integer>> queue = new ArrayList<>();
+            int i = 0;
+            for (int vi : graph.vertices()) {
+                if (visited.contains(vi)) continue;
+                // new sub graph, vi is the root vertex
+                for (int ai : graph.adjacentVertices(vi)) queue.add(new Pair<>(vi, ai));
+                visited.add(vi);
+                for (; i < queue.size(); i ++) {
+                    int pi = queue.get(i).getKey();
+                    int pj = queue.get(i).getValue();
+                    for (int ai : graph.adjacentVertices(pj)) {
+                        if (ai == pi) continue;
+                        if (visited.contains(ai)) return true;
+                        queue.add(new Pair<>(pj, ai));
+                    }
+                    visited.add(pj);
+                }
+            }
+        }
+        return false;
     }
 
     /**

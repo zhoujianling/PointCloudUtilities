@@ -23,6 +23,16 @@ public class CollisionsTest {
         sphere = new Sphere(new Point3d(11, 0, 0), 7);
         assertFalse(Collisions.intersect(box, sphere));
 
+        // test sphere with invalid radius
+        box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
+        sphere = new Sphere(new Point3d(11, 0, 0), Double.NaN);
+        assertFalse(Collisions.intersect(box, sphere));
+
+        // test sphere with positive infinite radius
+        box = new Box(new Point3d(0, 0, 0), 1, 4, 5);
+        sphere = new Sphere(new Point3d(11, 0, 0), Double.POSITIVE_INFINITY);
+        assertTrue(Collisions.intersect(box, sphere));
+
     }
 
     @Test
@@ -59,6 +69,10 @@ public class CollisionsTest {
         sphere = new Sphere(new Point3d(0, 3.5, 4.5), 12.48);
         assertTrue(Collisions.contains(sphere, box));
 
+        // test sphere with positive infinite radius
+        box = new Box(new Point3d(0, 0, 0), 3, 4, 5);
+        sphere = new Sphere(new Point3d(0, 3.5, 4.5), Double.POSITIVE_INFINITY);
+        assertTrue(Collisions.contains(sphere, box));
 
     }
 

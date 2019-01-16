@@ -38,6 +38,12 @@ public class OctreeTest {
 
     private void assertKNearestNeighbors(List<Point3d> data, Point3d point, int[] nearestIndices) {
         if (nearestIndices.length < 1) return;
+        double prevDistance = Double.NEGATIVE_INFINITY;
+        for (int index : nearestIndices) {
+            double distance = point.distance(data.get(index));
+            assertLessEqualThan(prevDistance, distance);
+            prevDistance = distance;
+        }
         double radius = data.get(nearestIndices[nearestIndices.length - 1]).distance(point);
         Set<Integer> set = new HashSet<>();
         for (int i : nearestIndices) {

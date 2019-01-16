@@ -166,76 +166,76 @@ public class GraphsTest {
 
     @Test
     public void testContainsCycle() {
-//        Random r = new Random(System.currentTimeMillis());
-//
-//        // test empty graph
-//        BaseGraph empty = Graphs.empty();
-//        assertFalse(Graphs.containsCycle(empty));
-//
-//        // test undirected graph
-//        UndirectedGraph undirectedGraph = new UndirectedGraph();
-//        undirectedGraph.addVertex(0);
-//        undirectedGraph.addVertex(1);
-//        undirectedGraph.addVertex(2);
-//        undirectedGraph.addEdge(0, 1, 1);
-//        undirectedGraph.addEdge(1, 2, 3);
-//        undirectedGraph.addEdge(2, 0, 2);
-//        assertTrue(Graphs.containsCycle(undirectedGraph));
-//
-//        // test undirected graph with two vertices
-//        UndirectedGraph undirectedGraph2 = new UndirectedGraph();
-//        undirectedGraph2.addVertex(0);
-//        undirectedGraph2.addVertex(1);
-//        undirectedGraph2.addEdge(0, 1, 1);
-//        assertFalse(Graphs.containsCycle(undirectedGraph2));
-//
-//        // test un-connected undirected graph
-//        UndirectedGraph undirectedGraph3 = new UndirectedGraph();
-//        undirectedGraph3.addVertex(0);
-//        undirectedGraph3.addVertex(1);
-//        undirectedGraph3.addVertex(2);
-//        undirectedGraph3.addVertex(3);
-//        undirectedGraph3.addEdge(0, 1, 1);
-//        undirectedGraph3.addEdge(1, 2, 3);
-//        undirectedGraph3.addEdge(2, 3, 1);
-//        assertFalse(Graphs.containsCycle(undirectedGraph3));
-//
-//        // test directed graph
-//        DirectedGraph directedGraph = new DirectedGraph();
-//        directedGraph.addVertex(0);
-//        directedGraph.addVertex(1);
-//        directedGraph.addVertex(2);
-//        directedGraph.addEdge(0, 1, 1);
-//        directedGraph.addEdge(1, 2, 3);
-//        directedGraph.addEdge(2, 0, 2);
-//        assertTrue(Graphs.containsCycle(directedGraph));
-//
-//        // test directed graph with two vertices
-//        DirectedGraph directedGraph2 = new DirectedGraph();
-//        directedGraph2.addVertex(0);
-//        directedGraph2.addVertex(1);
-//        directedGraph2.addEdge(0, 1, 1);
-//        directedGraph2.addEdge(1, 0, 3);
-//        assertTrue(Graphs.containsCycle(directedGraph2));
-//
-//        // test directed graph with two vertices
-//        DirectedGraph directedGraph3 = new DirectedGraph();
-//        directedGraph3.addVertex(0);
-//        directedGraph3.addVertex(1);
-//        directedGraph3.addEdge(0, 1, 1);
-//        assertFalse(Graphs.containsCycle(directedGraph3));
-//
-//        // test directed graph with four vertices
-//        DirectedGraph directedGraph4 = new DirectedGraph();
-//        directedGraph4.addVertex(0);
-//        directedGraph4.addVertex(1);
-//        directedGraph4.addVertex(2);
-//        directedGraph4.addVertex(3);
-//        directedGraph4.addEdge(0, 1, 1);
-//        directedGraph4.addEdge(1, 2, 1);
-//        directedGraph4.addEdge(2, 3, 1);
-//        directedGraph4.addEdge(0, 3, 1);
-//        assertFalse(Graphs.containsCycle(directedGraph4));
+        Random r = new Random(System.currentTimeMillis());
+
+        // test empty graph
+        BaseGraph empty = Graphs.empty();
+        assertFalse(Graphs.containsCycle(empty));
+
+        // test undirected graph
+        UndirectedGraph undirectedGraph = new UndirectedGraph();
+        undirectedGraph.addVertex(0);
+        undirectedGraph.addVertex(1);
+        undirectedGraph.addVertex(2);
+        undirectedGraph.addEdge(0, 1, 1);
+        undirectedGraph.addEdge(1, 2, 3);
+        undirectedGraph.addEdge(2, 0, 2);
+        assertTrue(Graphs.containsCycle(undirectedGraph));
+
+        // test undirected graph with two vertices
+        UndirectedGraph undirectedGraph2 = new UndirectedGraph();
+        undirectedGraph2.addVertex(0);
+        undirectedGraph2.addVertex(1);
+        undirectedGraph2.addEdge(0, 1, 1);
+        assertFalse(Graphs.containsCycle(undirectedGraph2));
+
+        // test un-connected undirected graph
+        UndirectedGraph undirectedGraph3 = new UndirectedGraph();
+        undirectedGraph3.addVertex(0);
+        undirectedGraph3.addVertex(1);
+        undirectedGraph3.addVertex(2);
+        undirectedGraph3.addVertex(3);
+        undirectedGraph3.addEdge(0, 1, 1);
+        undirectedGraph3.addEdge(1, 2, 3);
+        undirectedGraph3.addEdge(2, 3, 1);
+        assertFalse(Graphs.containsCycle(undirectedGraph3));
+
+        // test directed graph
+        DirectedGraph directedGraph = new DirectedGraph();
+        directedGraph.addVertex(0);
+        directedGraph.addVertex(1);
+        directedGraph.addVertex(2);
+        directedGraph.addEdge(0, 1, 1);
+        directedGraph.addEdge(1, 2, 3);
+        directedGraph.addEdge(2, 0, 2);
+        assertTrue(Graphs.containsCycle(directedGraph));
+
+        // test directed graph with two vertices
+        DirectedGraph directedGraph2 = new DirectedGraph();
+        directedGraph2.addVertex(0);
+        directedGraph2.addVertex(1);
+        directedGraph2.addEdge(0, 1, 1);
+        directedGraph2.addEdge(1, 0, 3);
+        assertTrue(Graphs.containsCycle(directedGraph2));
+
+        // test directed graph with two vertices
+        DirectedGraph directedGraph3 = new DirectedGraph();
+        directedGraph3.addVertex(0);
+        directedGraph3.addVertex(1);
+        directedGraph3.addEdge(0, 1, 1);
+        assertFalse(Graphs.containsCycle(directedGraph3));
+
+        // test directed graph with four vertices
+        DirectedGraph directedGraph4 = new DirectedGraph();
+        directedGraph4.addVertex(0);
+        directedGraph4.addVertex(1);
+        directedGraph4.addVertex(2);
+        directedGraph4.addVertex(3);
+        directedGraph4.addEdge(0, 1, 1);
+        directedGraph4.addEdge(1, 2, 1);
+        directedGraph4.addEdge(2, 3, 1);
+        directedGraph4.addEdge(0, 3, 1);
+        assertFalse(Graphs.containsCycle(directedGraph4));
 //
 //        // test big data
 //        UndirectedGraph bigGraph = new UndirectedGraph();
