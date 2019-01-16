@@ -26,9 +26,11 @@ public class BoundingBox extends Box {
             throw new IllegalArgumentException("minZ larger than maxZ");
         }
         center = new Point3d((minx + maxx) / 2, (miny + maxy) / 2, (minz + maxz) / 2);
-        xExtent = maxx - center.x;
-        yExtent = maxy - center.y;
-        zExtent = maxz - center.z;
+        // use max y - min y, in case that maxY is +Inf, minY is constant
+        // do not use maxx - center.x, maxy - center.y ...
+        xExtent = (maxx - minx) / 2;
+        yExtent = (maxy - miny) / 2;
+        zExtent = (maxz - minz) / 2;
     }
 
     private static BoundingBox empty() {

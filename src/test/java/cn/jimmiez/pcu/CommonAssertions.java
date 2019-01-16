@@ -42,6 +42,15 @@ public class CommonAssertions {
         assertTrue(message, v1 >= v2);
     }
 
+    public static void assertGreaterEqualThan(double v1, double v2) {
+        assertGreaterEqualThan(v1, v2, COMPARE_DOUBLE_TOLERANCE);
+    }
+
+    public static void assertGreaterEqualThan(double v1, double v2, double tolerance) {
+        String message = "The value " + v1 + " should be less than " + v1 + ".";
+        assertTrue(message, v1 > v2 || Math.abs(v1 - v2) >= tolerance);
+    }
+
     public static void assertSamePoint(Point3d p1, Point3d p2) {
         assertEquals(p1.x, p2.x, COMPARE_DOUBLE_TOLERANCE);
         assertEquals(p1.y, p2.y, COMPARE_DOUBLE_TOLERANCE);
