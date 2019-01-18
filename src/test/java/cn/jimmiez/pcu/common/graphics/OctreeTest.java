@@ -111,7 +111,38 @@ public class OctreeTest {
             assertKNearestNeighbors(data, data.get(pointIndex), indices);
         }
 
+        // test negative K
+        try {
+            octree.searchNearestNeighbors(-1, 0);
+            fail("should throw exception");
+        } catch (IllegalArgumentException e) {}
+
+        // test set K to zero
+        int[] ks = octree.searchNearestNeighbors(0, 0);
+        assertEquals(0, ks.length);
+
+        // test invalid point index
+        try {
+            octree.searchNearestNeighbors(3, -1);
+            fail("should throw exception");
+        } catch (Exception e) {}
+
+        // #################################################
         // test searchNearestNeighbors(int, Point3d)
+        // #################################################
+
+        // test null
+        try {
+            octree.searchNearestNeighbors(1, null);
+            fail("should throw exception");
+        } catch (NullPointerException e) {}
+
+        // test NaN
+        try {
+            octree.searchNearestNeighbors(1, new Point3d(Double.NaN, Double.NaN, Double.NaN));
+            fail("should throw exception");
+        } catch (IllegalArgumentException e) {}
+
         BoundingBox box = BoundingBox.of(data);
         for (int i = 0; i < 3; i ++) {
             double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
@@ -134,6 +165,7 @@ public class OctreeTest {
                 }
             }
         }
+
     }
 
     @Test
@@ -146,11 +178,11 @@ public class OctreeTest {
         double radius = 3.9;
         for (int index = 0; index < dataSize; index ++) {
             List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(index, radius);
-            assertTrue(neighbors.size() > 0);
+            assertGreaterThan(neighbors.size(), 0);
             for (Integer pointIndex : neighbors) {
                 Point3d point = data.get(pointIndex);
                 double distance = point.distance(data.get(index));
-                assertTrue(distance <= radius);
+                assertLessEqualThan(distance, radius);
             }
             if (index % 10 == 0) assertNeighborsWithinRadius(data, data.get(index), neighbors);
         }

@@ -13,9 +13,10 @@ import static java.lang.Math.*;
 
 
 /**
- * An octree can be used to build spatial index for point cloud.
+ * An octree recursively divide a box 3d space into eight octants and can accelerate
+ * the process of searching nearest neighbors of points.
  */
-@SuppressWarnings("Duplicates")
+//@SuppressWarnings("Duplicates")
 public class Octree {
 
     /**
@@ -69,8 +70,6 @@ public class Octree {
      * @return the indices of nearest neighbors
      */
     public int[] searchNearestNeighbors(int k, int index) {
-        if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
-        if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
         return searchNearestNeighbors(k, points.get(index));
     }
 
@@ -94,13 +93,25 @@ public class Octree {
         };
     }
 
+    /**
+     * search k nearest neighbors for the point
+     * @throws IllegalStateException if previously forget to call buildIndex()
+     * @throws IllegalArgumentException if size of points is less than k + 1
+     * @param k the number of nearest neighbors, {@literal 0 <= k < points.size()}
+     * @param point the point, non-null
+     * @return an array of indices of neighboring point, the length is k,
+     */
     public int[] searchNearestNeighbors(int k, final Point3d point) {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
-        if (k >= this.points.size()) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        if (k >= this.points.size() || k < 0) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
+        if (k == 0) return new int[] {};
         Comparator<Integer> comparator = distanceComparator(point, false);
 
-        long leafNodeIndex = locateOctreeNode(this.root, point);
-//        List<Integer> queue = new ArrayList<>();
+        long leafNodeIndex = -1L;
+        if (this.root.contains(point)) leafNodeIndex = locateOctreeNode(this.root, point);
+        if (leafNodeIndex == -1L) throw new IllegalArgumentException("cannot find point");
+        // TODO: 2019/1/18 handle the case that point is outside the bbox
+
         PriorityQueue<Integer> queue = new PriorityQueue<>(k, comparator);
         Set<Point3d> set = new HashSet<>(k * 2);
         Set<Long> visitedBoxes = new HashSet<>();
@@ -237,6 +248,12 @@ public class Octree {
         return queue;
     }
 
+    /**
+     * search all neighboring points of specified point within distance
+     * @param point the point
+     * @param radius the distance
+     * @return a List of indices of neighboring points
+     */
     public List<Integer> searchAllNeighborsWithinDistance(Point3d point, double radius) {
         List<Integer> neighborIndices = new ArrayList<>();
         List<Long> candidateLeaves = new ArrayList<>();
@@ -258,6 +275,7 @@ public class Octree {
     }
 
     /**
+     * search all neighboring points of the point with specified index within distance
      * @param index the index of a point
      * @param radius radius of neighborhood
      * @return indices of neighboring points of this point
@@ -293,6 +311,11 @@ public class Octree {
         this.maxPointsPerNode = m;
     }
 
+    /**
+     * The octree node in the 3d space.
+     * Each node can have eight children nodes.
+     * The leaf node has the indices of points that is located in this cell.
+     */
     public class OctreeNode extends Box {
 
         /**
@@ -318,21 +341,6 @@ public class Octree {
             this.yExtent = length;
             this.zExtent = length;
             this.depth = depth;
-        }
-
-        boolean contains(Point3d point) {
-            for (int index : indices) {
-                if (points.get(index) == point) return true;
-            }
-            return abs(point.x - center.x) <= xExtent + 1e-4  &&
-                    abs(point.y - center.y) <= yExtent + 1e-4 &&
-                    abs(point.z - center.z) <= zExtent + 1e-4;
-        }
-
-        boolean contains(Point3d point, double tolerance) {
-            return abs(abs(point.x - center.x) - xExtent) <= tolerance &&
-                    abs(abs(point.y - center.y) - yExtent) <= tolerance &&
-                    abs(abs(point.z - center.z) - zExtent) <= tolerance;
         }
 
         public List<Integer> getIndices() {
