@@ -185,7 +185,7 @@ public class Octree {
      * @param currentDepth  the depth of current octree node
      * @param currentNode current octree node
      */
-    private void createOctree(int currentDepth, OctreeNode currentNode) {
+    protected void createOctree(int currentDepth, OctreeNode currentNode) {
         if (currentNode.indices.size() < 1) return;
         if (currentNode.indices.size() <= maxPointsPerNode || currentDepth >= MAX_DEPTH) {
             this.octreeIndices.put(currentNode.index, currentNode);
@@ -354,7 +354,7 @@ public class Octree {
 
         int depth = 0;
 
-        OctreeNode(Point3d center, double length, int depth) {
+        public OctreeNode(Point3d center, double length, int depth) {
             this.center = new Point3d(center);
             this.xExtent = length;
             this.yExtent = length;
@@ -362,12 +362,28 @@ public class Octree {
             this.depth = depth;
         }
 
+        public Long getIndex() {
+            return index;
+        }
+
+        public void setIndex(long i) {
+            this.index = i;
+        }
+
         public List<Integer> getIndices() {
             return indices;
         }
 
+        public void setIndices(List<Integer> indices) {
+            this.indices = indices;
+        }
+
         public OctreeNode[] getChildren() {
             return children;
+        }
+
+        public void setChildren(OctreeNode[] nodes) {
+            this.children = nodes;
         }
 
         public int getDepth() {
