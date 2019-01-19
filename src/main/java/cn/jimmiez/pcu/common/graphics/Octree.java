@@ -5,6 +5,7 @@ import cn.jimmiez.pcu.common.graphics.shape.Box;
 import cn.jimmiez.pcu.common.graphics.shape.Sphere;
 import cn.jimmiez.pcu.util.PcuArrayUtil;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
+import cn.jimmiez.pcu.util.VectorUtil;
 
 import javax.vecmath.Point3d;
 import java.util.*;
@@ -93,6 +94,25 @@ public class Octree {
         };
     }
 
+    private Long indexOfNearestCell(final Point3d point) {
+        long result = locateOctreeNode(root, point);
+        if (result == -1) {
+            PriorityQueue<Long> queue = new PriorityQueue<>(octreeIndices.size(), new Comparator<Long>() {
+                @Override
+                public int compare(Long o1, Long o2) {
+                    OctreeNode node1 = octreeIndices.get(o1);
+                    OctreeNode node2 = octreeIndices.get(o2);
+                    Double distance1 = point.distance(node1.getCenter());
+                    Double distance2 = point.distance(node2.getCenter());
+                    return distance1.compareTo(distance2);
+                }
+            });
+            queue.addAll(octreeIndices.keySet());
+            result = queue.poll();
+        }
+        return result;
+    }
+
     /**
      * search k nearest neighbors for the point
      * @throws IllegalStateException if previously forget to call buildIndex()
@@ -104,19 +124,17 @@ public class Octree {
     public int[] searchNearestNeighbors(int k, final Point3d point) {
         if (points == null) throw new IllegalStateException("Octree.buildIndex() must be called before searchNearestNeighbors.");
         if (k >= this.points.size() || k < 0) throw new IllegalArgumentException("number of nearest neighbors is larger than data size");
-        if (k == 0) return new int[] {};
+        if (!VectorUtil.validPoint(point)) throw new IllegalArgumentException("The coordinates of given point is invalid");
+        if (k == 0 ) return new int[] {};
         Comparator<Integer> comparator = distanceComparator(point, false);
 
-        long leafNodeIndex = -1L;
-        if (this.root.contains(point)) leafNodeIndex = locateOctreeNode(this.root, point);
-        if (leafNodeIndex == -1L) throw new IllegalArgumentException("cannot find point");
-        // TODO: 2019/1/18 handle the case that point is outside the bbox
+        long leafNodeIndex = indexOfNearestCell(point);
 
         PriorityQueue<Integer> queue = new PriorityQueue<>(k, comparator);
         Set<Point3d> set = new HashSet<>(k * 2);
         Set<Long> visitedBoxes = new HashSet<>();
-        OctreeNode leafNode = octreeIndices.get(leafNodeIndex);
-        double leafSize = leafNode.getxExtent();
+        double leafSize = octreeIndices.get(leafNodeIndex).getxExtent();
+
         Sphere searchRange = new Sphere(point, leafSize);
         set.add(point);
 
@@ -143,7 +161,6 @@ public class Octree {
         }
 
         int[] indices = new int[k];
-//        System.out.println("" + points.size() + " " + k + " " + queue.size());
         for (int i = 0; i < k; i ++) {
 //            indices[i] = queue.get(i);
             indices[i] = queue.poll();
@@ -194,6 +211,7 @@ public class Octree {
         }
         for (int index : currentNode.indices) {
             Point3d point = points.get(index);
+            if (! VectorUtil.validPoint(point)) continue;
             Point3d center = currentNode.getCenter();
             int xi = point.x < center.x ? 0 : 1;
             int yj = point.y < center.y ? 0 : 1;
@@ -216,10 +234,11 @@ public class Octree {
      */
     protected Long locateOctreeNode(OctreeNode node, Point3d point) {
         if (node.children == null) {
-            if (node.contains(point)) {
+            if (node.indices.size() > 0) {
                 return node.index;
             } else {
-                throw new IllegalStateException("Search a point exceeding octree bounds.");
+                return -1L;
+//                throw new IllegalStateException("Search a point exceeding octree bounds.");
             }
         } else {
             int xi = point.x < node.getCenter().x ? 0 : 1;

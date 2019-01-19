@@ -1,6 +1,7 @@
 package cn.jimmiez.pcu.common.graphics;
 
 import cn.jimmiez.pcu.DataUtil;
+import cn.jimmiez.pcu.util.VectorUtil;
 import org.junit.Test;
 
 import javax.vecmath.Point3d;
@@ -31,8 +32,9 @@ public class OctreeTest {
         for (int index = 0; index < data.size(); index ++) {
             if (set.contains(index)) continue;
             if (point == data.get(index)) continue;
+            if (! VectorUtil.validPoint(data.get(index))) continue;
             double distance = data.get(index).distance(point);
-            assertTrue("the distance " + distance + " should be larger than " + radius, distance >= radius);
+            assertLessEqualThan(radius, distance);
         }
     }
 
@@ -91,7 +93,7 @@ public class OctreeTest {
             }
         }
 
-        List<Point3d> data = randomData(42349, 1, 11.5);
+        List<Point3d> data = randomData(22349, 1, 11.5);
         Octree octree = new Octree();
         octree.buildIndex(data);
 
@@ -143,29 +145,49 @@ public class OctreeTest {
             fail("should throw exception");
         } catch (IllegalArgumentException e) {}
 
+        // test regular data
         BoundingBox box = BoundingBox.of(data);
         for (int i = 0; i < 3; i ++) {
             double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
             double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
             double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
-            int randomK = random.nextInt(40);
-            if (randomK == 0) randomK += 1;
+            int randomK = 1 + random.nextInt(40);
             int[] neighbors = octree.searchNearestNeighbors(randomK, p);
-            Set<Integer> set = new HashSet<>();
-            for (int index : neighbors) set.add(index);
-            assertEquals(randomK, neighbors.length);
-            for (int j = 0; j < 30; j ++) {
-                int randomIndex = random.nextInt(data.size());
-                while (set.contains(randomIndex))  randomIndex = random.nextInt(data.size());
-                double distance1 = p.distance(data.get(randomIndex));
-                for (int kNeighborIndex : neighbors) {
-                    double neighborDistance = data.get(kNeighborIndex).distance(p);
-                    assertLessEqualThan(neighborDistance, distance1);
-                }
-            }
+            assertKNearestNeighbors(data, p, neighbors);
         }
 
+        // test the point outside the bounding box of data
+        for (int i = 0; i < 30; i ++) {
+            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() + 1.0);
+            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() + 1.0);
+            double z = box.getCenter().z + box.getzExtent() * (random.nextDouble() + 1.0);
+            Point3d p = new Point3d(x, y, z);
+            int randomK = 1 + random.nextInt(170);
+            int[] neighbors = octree.searchNearestNeighbors(randomK, p);
+            assertEquals(randomK, neighbors.length);
+            assertKNearestNeighbors(data, p, neighbors);
+        }
+
+        // test NaN in raw points
+        data = randomData(7328, 1.5, 9.5);
+        box = BoundingBox.of(data);
+        for (int i = 0; i < 1000; i ++) {
+            int index = random.nextInt(7328);
+            data.set(index, new Point3d(Double.NaN, Double.NaN, Double.NaN));
+        }
+        octree = new Octree();
+        octree.buildIndex(data);
+
+        for (int i = 0; i < 3; i ++) {
+            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
+            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
+            double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
+            Point3d p = new Point3d(x, y, z);
+            int randomK = 3 + random.nextInt(30);
+            int[] neighbors = octree.searchNearestNeighbors(randomK, p);
+            assertKNearestNeighbors(data, p, neighbors);
+        }
     }
 
     @Test
@@ -208,6 +230,26 @@ public class OctreeTest {
                     assertTrue(distance1 >= neighborDistance);
                 }
             }
+        }
+
+        // test NaN in raw points
+        data = randomData(7328, 1.5, 9.5);
+        box = BoundingBox.of(data);
+        for (int i = 0; i < 1000; i ++) {
+            int index = random.nextInt(7328);
+            data.set(index, new Point3d(Double.NaN, Double.NaN, Double.NaN));
+        }
+        octree = new Octree();
+        octree.buildIndex(data);
+
+        for (int i = 0; i < 3; i ++) {
+            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
+            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
+            double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
+            Point3d p = new Point3d(x, y, z);
+            int randomK = 7 + random.nextInt(35);
+            int[] neighbors = octree.searchNearestNeighbors(randomK, p);
+            assertKNearestNeighbors(data, p, neighbors);
         }
 
     }

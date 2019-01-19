@@ -1,6 +1,7 @@
 package cn.jimmiez.pcu.common.graphics;
 
 import cn.jimmiez.pcu.common.graphics.shape.Box;
+import cn.jimmiez.pcu.util.VectorUtil;
 
 import javax.vecmath.Point3d;
 import java.util.List;
@@ -34,18 +35,19 @@ public class BoundingBox extends Box {
     }
 
     private static BoundingBox empty() {
-        return new BoundingBox(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+        return new BoundingBox(0, 0, 0, 0, 0, 0);
     }
 
     public static BoundingBox of(List<Point3d> data) {
         if (data.size() < 1) return empty();
-        double minX =  data.get(0).x;
-        double maxX =  data.get(0).x;
-        double minY =  data.get(0).y;
-        double maxY =  data.get(0).y;
-        double minZ =  data.get(0).z;
-        double maxZ =  data.get(0).z;
+        double minX =  Double.POSITIVE_INFINITY;
+        double maxX =  Double.NEGATIVE_INFINITY;
+        double minY =  Double.POSITIVE_INFINITY;
+        double maxY =  Double.NEGATIVE_INFINITY;
+        double minZ =  Double.POSITIVE_INFINITY;
+        double maxZ =  Double.NEGATIVE_INFINITY;
         for (Point3d p : data) {
+            if (!VectorUtil.validPoint(p)) continue;
             minX = Math.min(minX, p.x);
             maxX = Math.max(maxX, p.x);
             minY = Math.min(minY, p.y);
@@ -53,6 +55,7 @@ public class BoundingBox extends Box {
             minZ = Math.min(minZ, p.z);
             maxZ = Math.max(maxZ, p.z);
         }
+        if (Double.isInfinite(minX)) return empty();
         return new BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
