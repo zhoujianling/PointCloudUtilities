@@ -7,10 +7,8 @@ import org.junit.Test;
 import javax.vecmath.Point3d;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static cn.jimmiez.pcu.CommonAssertions.*;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class OctreeTest {
 
@@ -251,6 +249,65 @@ public class OctreeTest {
             int[] neighbors = octree.searchNearestNeighbors(randomK, p);
             assertKNearestNeighbors(data, p, neighbors);
         }
-
     }
+
+
+//    @Test
+//    public void testAdjacentNodes() {
+//        Random random = new Random(System.currentTimeMillis());
+//
+//
+//        // test on octree without spatial index
+//        Octree octree = new Octree();
+//        try {
+//            octree.adjacentNodes(0L, Adjacency.FACE);
+//            fail("Should throw exception");
+//        } catch (IllegalStateException e) {}
+//
+//        // test medium data
+//        for (int i = 0; i < 3; i ++) {
+//            int testDataSize = 1900;
+//            List<Point3d> testData1 = DataUtil.generateRandomData(testDataSize, -1.2, 3.1, 2.4, 5.8, -3, -1);
+//            List<Point3d> testData2 = DataUtil.generateRandomData(testDataSize, 3.2, 9.1, -3.4, 8.8, -1.2, 0);
+//            testData1.addAll(testData2);
+//            octree = new Octree();
+//            octree.buildIndex(testData1);
+//            octree.setMaxPointsPerNode(90);
+//            Map<Long, Octree.OctreeNode> nodesMap = octree.octreeIndices;
+//
+//            // test with invalid index
+//            for (int j = 0; j < 5; j ++) {
+//                long randomIndex = random.nextLong();
+//                if (nodesMap.containsKey(randomIndex)) continue;
+//                try {
+//                    octree.adjacentNodes(randomIndex, Adjacency.FACE);
+//                    fail("Should throw exception");
+//                } catch (IllegalArgumentException e) {}
+//                try {
+//                    octree.adjacentNodes(randomIndex, Adjacency.EDGE);
+//                    fail("Should throw exception");
+//                } catch (IllegalArgumentException e) {}
+//                try {
+//                    octree.adjacentNodes(randomIndex, Adjacency.VERTEX);
+//                    fail("Should throw exception");
+//                } catch (IllegalArgumentException e) {}
+//
+//            }
+//
+//            // test with correct index
+//            for (Long index : nodesMap.keySet()) {
+//                Octree.OctreeNode centeredNode = nodesMap.get(index);
+//                List<Octree.OctreeNode> nodes = octree.adjacentNodes(index, Adjacency.FACE);
+//                assertNotNull(nodes);
+//                for (Octree.OctreeNode node : nodes) {
+//                    assertNotNull(nodes);
+//                    double distance = node.getCenter().distance(centeredNode.getCenter());
+//                    assertLessEqualThan(distance, centeredNode.);
+//                }
+//
+//            }
+//        }
+//
+//    }
+
 }

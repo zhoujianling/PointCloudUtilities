@@ -72,8 +72,7 @@ public class GraphReductionOctree extends Octree {
     protected void createOctree(int currentDepth, OctreeNode currentNode) {
         if (currentNode.getIndices().size() < 1) return;
         if (currentNode.getxExtent() * 2 <= minimalSize  // condition 3
-//                || currentDepth >= MAX_DEPTH
-//                || currentDepth >= MAX_DEPTH
+                || currentDepth >= MAX_DEPTH
                 ) {
             this.octreeIndices.put(currentNode.getIndex(), currentNode);
             return;
@@ -84,7 +83,6 @@ public class GraphReductionOctree extends Octree {
             for (int j : new int[]{-1, 1}) {
                 for (int k : new int[]{-1, 1}) {
                     long index = (long) (((i + 1) * 2 + (j + 1) * 1 + (k + 1) / 2));
-//                    index <<= (currentDepth - 1) * 3;
                     index = currentNode.getIndex() | (index << (3 * currentDepth + 3));
                     double length = currentNode.getxExtent(); // xExtent == yExtent == zExtent
                     Point3d center = new Point3d(currentNode.getCenter().x + i * length / 2, currentNode.getCenter().y + j * length / 2, currentNode.getCenter().z + k * length / 2);

@@ -39,7 +39,7 @@ public class Octree {
      * theoretically it shall be less than 21, because every three bits in a Long-type
      * octree-node index is used to locate its position of siblings.
      **/
-    private static final int MAX_DEPTH = 10;
+    protected static final int MAX_DEPTH = 10;
 
     private int maxPointsPerNode = 100;
 
@@ -323,8 +323,22 @@ public class Octree {
                 }
             }
         }
-
     }
+
+    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
+        List<OctreeNode> result = new ArrayList<>();
+        // TODO: 2019/1/22 implementation
+        return result;
+    }
+
+//    public static long[] nodeIndex2XYZ(long index) {
+//        long x = 0, y = 0, z = 0;
+//        BitSet
+//    }
+
+//    public static long xyz2NodeIndex(long[] xyz) {
+//        if (xyz.length != 3) throw new IllegalArgumentException("The length of the array should be 3.");
+//    }
 
     public void setMaxPointsPerNode(int m) {
         this.maxPointsPerNode = m;

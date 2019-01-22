@@ -48,8 +48,28 @@ public class GraphReductionSkeleton implements Skeletonization {
         octree.buildIndex(points);
     }
 
+    /**
+     * extract graph from octree
+     */
     private void extractGraph() {
+        // map the index of cell of the index of GRVertex
+        Map<Long, Integer> i2i = new HashMap<>();
 
+        // add M-Vertex
+        for (Octree.OctreeNode cell : cells) {
+            if (cell.getIndices().size() < 1) continue;
+            Point3d point = meanPoint(cell.getIndices(), points);
+            GRVertex vertex = new GRVertex(VertexType.M, point, cell.getIndex());
+            int vi = graph.addVertex(vertex);
+            i2i.put(vertex.cellIndex, vi);
+        }
+
+        // add T-Vertex
+        for (Octree.OctreeNode cell : cells) {
+            if (cell.getIndices().size() < 1) continue;
+            int vi = i2i.get(cell.getIndex());
+
+        }
     }
 
     /**
@@ -88,6 +108,9 @@ public class GraphReductionSkeleton implements Skeletonization {
         this.points.addAll(pointCloud);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Skeleton skeletonize(List<Point3d> pointCloud) {
         init(pointCloud);
