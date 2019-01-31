@@ -22,21 +22,8 @@ public class Skeleton extends EntityGraph<Point3d> {
         super(false);
     }
 
-//    @SuppressWarnings("unchecked")
 //    @WriteScalarToPly(element = "nodes", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
-//    @ReadFromPly(element = "nodes", properties = {"x", "y", "z"})
-//    public List<double[]> nodes4Ply() {
-//        List<Pair<Integer, Point3d>> nodes = new ArrayList<>();
-//        for (int key : values.keySet()) {
-//            nodes.add(new Pair<>(key, values.get(key)));
-//        }
-//        Collections.sort(nodes, new Comparator<Pair<Integer, Point3d>>() {
-//            @Override
-//            public int compare(Pair<Integer, Point3d> o1, Pair<Integer, Point3d> o2) {
-//                return o1.getKey().compareTo(o2.getKey());
-//            }
-//        });
-//
+//    public List<double[]> nodes() {
 //        List<double[]> result = new ArrayList<>();
 //        for (Point3d p : values.values()) {
 //            result.add(new double[] {p.x, p.y, p.z});
@@ -45,21 +32,10 @@ public class Skeleton extends EntityGraph<Point3d> {
 //    }
 //
 //    @WriteListToPly(element = "edges", property = "node_index")
-//    @ReadFromPly(element = "edges", properties = "node_index")
-//    public List<int[]> edges4Ply() {
-//        List<Pair<Integer, Point3d>> nodes = new ArrayList<>();
-//        for (int key : values.keySet()) {
-//            nodes.add(new Pair<>(key, values.get(key)));
-//        }
-//        Collections.sort(nodes, new Comparator<Pair<Integer, Point3d>>() {
-//            @Override
-//            public int compare(Pair<Integer, Point3d> o1, Pair<Integer, Point3d> o2) {
-//                return o1.getKey().compareTo(o2.getKey());
-//            }
-//        });
-//
+//    public List<int[]> edges() {
 //        List<int[]> result = new ArrayList<>();
-//        for (int vi = 0; vi < values.size(); vi ++) {
+//        for (Integer id : values.keySet()) {
+//            Collection<Integer> edges = adjacentVertices(id);
 //            Map<Integer, Double> edge = edges.get(vi);
 //            int[] edgesVi = new int[edge.size()];
 //            int cnt = 0;

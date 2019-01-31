@@ -325,20 +325,15 @@ public class Octree {
         }
     }
 
-    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
-        List<OctreeNode> result = new ArrayList<>();
-        // TODO: 2019/1/22 implementation
-        return result;
-    }
-
-//    public static long[] nodeIndex2XYZ(long index) {
-//        long x = 0, y = 0, z = 0;
-//        BitSet
+//    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
+//        List<OctreeNode> result = new ArrayList<>();
+//        OctreeNode node = octreeIndices.get(nodeIndex);
+//        if (node == null)
+//        double threshold =
+//        // TODO: 2019/1/22 implementation
+//        return result;
 //    }
 
-//    public static long xyz2NodeIndex(long[] xyz) {
-//        if (xyz.length != 3) throw new IllegalArgumentException("The length of the array should be 3.");
-//    }
 
     public void setMaxPointsPerNode(int m) {
         this.maxPointsPerNode = m;

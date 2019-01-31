@@ -11,6 +11,34 @@ import static org.junit.Assert.*;
 public class EntityGraphTest {
 
     @Test
+    public void testAddVertex2() throws Exception {
+        // test directed graph
+        EntityGraph<Point3d> eg = new EntityGraph<>(true);
+
+        eg.addVertex(1, new Point3d());
+        assertEquals(1, eg.vertices().size());
+        eg.addVertex(1, new Point3d());
+        assertEquals(1, eg.vertices().size());
+        eg.addVertex(2, new Point3d());
+        assertEquals(2, eg.vertices().size());
+
+        // test undirected graph
+        eg = new EntityGraph<>(false);
+        assertEquals(0, eg.vertices().size());
+
+        int vn = 3930;
+        for (int i = 0; i < vn; i ++)
+            eg.addVertex(i, new Point3d());
+        assertEquals(vn, eg.vertices().size());
+
+        // test null ptr
+        try {
+            eg.addVertex(null);
+            fail();
+        } catch (NullPointerException e) {}
+    }
+
+    @Test
     public void testAddVertex() throws Exception {
         // test directed graph
         EntityGraph<Point3d> eg = new EntityGraph<>(true);

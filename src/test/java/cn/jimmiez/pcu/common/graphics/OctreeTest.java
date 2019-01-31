@@ -302,7 +302,7 @@ public class OctreeTest {
 //                for (Octree.OctreeNode node : nodes) {
 //                    assertNotNull(nodes);
 //                    double distance = node.getCenter().distance(centeredNode.getCenter());
-//                    assertLessEqualThan(distance, centeredNode.);
+//                    assertLessEqualThan(distance, centeredNode.getxExtent() + node.getxExtent());
 //                }
 //
 //            }

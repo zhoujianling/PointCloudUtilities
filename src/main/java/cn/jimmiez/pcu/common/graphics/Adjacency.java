@@ -5,9 +5,13 @@ package cn.jimmiez.pcu.common.graphics;
  */
 public enum Adjacency {
 
+    /** the two boxes has one common face **/
     FACE,
 
+    /** the two boxes has at least one common edge **/
     EDGE,
 
+    /** the two boxes has at least one common vertex **/
     VERTEX
+
 }

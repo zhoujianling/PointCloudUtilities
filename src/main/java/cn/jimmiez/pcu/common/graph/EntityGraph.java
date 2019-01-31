@@ -42,6 +42,17 @@ public class EntityGraph<E> implements BaseGraph {
     }
 
     /**
+     * add a vertex with an ID
+     * @param id the id of the vertex
+     * @param e the value of vertex
+     */
+    public void addVertex(int id, E e) {
+        if (e == null) throw new NullPointerException("The value of vertex cannot be null.");
+        values.put(id, e);
+        delegate.addVertex(id);
+    }
+
+    /**
      * remove the vertex if this graph contains this vertex.
      * If not contain, the graph remain unchanged.
      * @param id the index of the vertex which is to be removed
