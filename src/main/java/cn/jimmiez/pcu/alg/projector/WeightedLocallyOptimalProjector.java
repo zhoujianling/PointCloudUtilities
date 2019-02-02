@@ -80,7 +80,7 @@ public class WeightedLocallyOptimalProjector {
 
     private void run(int iterNum) {
         for (int i = 0; i < iterNum; i ++) {
-            System.out.print("\rh:" + h);
+//            System.out.print("\rh:" + h);
             iterate(i);
         }
     }
@@ -225,6 +225,9 @@ public class WeightedLocallyOptimalProjector {
      * @param iterNum the number of iterations
      */
     public void project(List<Point3d> samples, int iterNum) {
+        if (iterNum < 1) throw new IllegalArgumentException("iterNum should be larger than 0");
+        if (samples == null) throw new NullPointerException("samples is null");
+        if (originals.size() < 1) return;
         this.samples = samples;
         this.sampleDensity.clear();
         for (int i = 0; i < samples.size(); i ++) this.sampleDensity.add(1.0);

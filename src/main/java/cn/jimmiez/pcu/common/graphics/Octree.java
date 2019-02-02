@@ -328,8 +328,16 @@ public class Octree {
 //    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
 //        List<OctreeNode> result = new ArrayList<>();
 //        OctreeNode node = octreeIndices.get(nodeIndex);
-//        if (node == null)
-//        double threshold =
+//        if (node == null) throw new IllegalArgumentException("Cannot find the octree node.");
+//        // compute half of diagonal length of the box
+//        double threshold = pow(node.getxExtent(), 2) + pow(node.getyExtent(), 2) + pow(node.getzExtent(), 2);
+//        threshold = sqrt(threshold);
+//        List<Long> candidates = new ArrayList<>();
+//        determineCandidatesWithinRadius(threshold + 1E-5, node.getCenter(), candidates);
+//        for (Long leafIndex : candidates) {
+//            OctreeNode leafNode = octreeIndices.get(leafIndex);
+//
+//        }
 //        // TODO: 2019/1/22 implementation
 //        return result;
 //    }

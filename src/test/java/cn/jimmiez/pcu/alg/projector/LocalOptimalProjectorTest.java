@@ -32,14 +32,14 @@ public class LocalOptimalProjectorTest {
         // test null ptr 1
         try {
             new LocallyOptimalProjector(null, 1);
-            fail("Should fail with an illegal argument exception.");
+            fail("Should fail with a null pointer exception.");
         } catch (NullPointerException e){}
 
         // test null ptr 2
         try {
             LocallyOptimalProjector lop = new LocallyOptimalProjector(new ArrayList<Point3d>(), 1);
             lop.project(null);
-            fail("Should fail with an illegal argument exception.");
+            fail("Should fail with a null pointer exception.");
         } catch (NullPointerException e){}
 
         points.clear();
