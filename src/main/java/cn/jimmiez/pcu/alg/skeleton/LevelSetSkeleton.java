@@ -388,20 +388,20 @@ public class LevelSetSkeleton implements Skeletonization{
          * @param sum the sum of distance between each point and its second nearest neighbor
          */
         void removeEdges(Graph graph, double sum) {
-            double wi = sum / graph.vertices().size();
-            List<int[]> edges = new Vector<>();
-            for (Integer vi : graph.vertices()) {
-                for (Integer vj : graph.adjacentVertices(vi)) {
-                    double weight = graph.edgeWeight(vi, vj);
-                    if (weight >= wi) {
-                        edges.add(new int[] {vi, vj});
-                        edges.add(new int[] {vj, vi});
-                    }
-                }
-            }
-            for (int[] edge : edges) {
-                graph.removeEdge(edge[0], edge[1]);
-            }
+//            double wi = sum / graph.vertices().size();
+//            List<int[]> edges = new Vector<>();
+//            for (Integer vi : graph.vertices()) {
+//                for (Integer vj : graph.adjacentVertices(vi)) {
+//                    double weight = graph.edgeWeight(vi, vj);
+//                    if (weight >= wi) {
+//                        edges.add(new int[] {vi, vj});
+//                        edges.add(new int[] {vj, vi});
+//                    }
+//                }
+//            }
+//            for (int[] edge : edges) {
+//                graph.removeEdge(edge[0], edge[1]);
+//            }
         }
 
         /**

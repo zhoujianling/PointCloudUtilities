@@ -325,22 +325,48 @@ public class Octree {
         }
     }
 
-//    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
-//        List<OctreeNode> result = new ArrayList<>();
-//        OctreeNode node = octreeIndices.get(nodeIndex);
-//        if (node == null) throw new IllegalArgumentException("Cannot find the octree node.");
-//        // compute half of diagonal length of the box
-//        double threshold = pow(node.getxExtent(), 2) + pow(node.getyExtent(), 2) + pow(node.getzExtent(), 2);
-//        threshold = sqrt(threshold);
-//        List<Long> candidates = new ArrayList<>();
-//        determineCandidatesWithinRadius(threshold + 1E-5, node.getCenter(), candidates);
-//        for (Long leafIndex : candidates) {
-//            OctreeNode leafNode = octreeIndices.get(leafIndex);
-//
-//        }
-//        // TODO: 2019/1/22 implementation
-//        return result;
-//    }
+    /**
+     * search adjacent nodes of an octree node
+     * @param nodeIndex the index of octree node
+     * @param adjacency see {@link Adjacency}
+     * @return the list of adjacent octree nodes
+     */
+    public List<OctreeNode> adjacentNodes(Long nodeIndex, Adjacency adjacency) {
+        List<OctreeNode> result = new ArrayList<>();
+        OctreeNode node = octreeIndices.get(nodeIndex);
+        if (points == null) throw new IllegalStateException("Must call buildIndex() before searching adjacent nodes.");
+        if (node == null) throw new IllegalArgumentException("Cannot find the octree node.");
+        // compute half of diagonal length of the box
+        double threshold = pow(node.getxExtent(), 2) + pow(node.getyExtent(), 2) + pow(node.getzExtent(), 2);
+        threshold = sqrt(threshold);
+        List<Long> candidates = new ArrayList<>();
+        determineCandidatesWithinRadius(threshold + 1E-5, node.getCenter(), candidates);
+        for (Long leafIndex : candidates) {
+            OctreeNode leafNode = octreeIndices.get(leafIndex);
+            double distance = leafNode.getCenter().distance(node.getCenter());
+            double faceThreshold = leafNode.getxExtent() + node.getxExtent();
+            double edgeThreshold = (leafNode.getxExtent() + node.getxExtent()) * sqrt(2.0);
+            double vertexThreshold = (leafNode.getxExtent() + node.getxExtent()) * sqrt(3.0);
+            switch (adjacency) {
+                case FACE:
+                    if (distance >= faceThreshold && distance < edgeThreshold - 1E-6) {
+                        result.add(leafNode);
+                    }
+                    break;
+                case EDGE:
+                    if (distance >= faceThreshold && distance < vertexThreshold - 1E-6) {
+                        result.add(leafNode);
+                    }
+                    break;
+                case VERTEX:
+                    if (distance >= vertexThreshold - 1E-6 && distance <= vertexThreshold + 1E-6) {
+                        result.add(leafNode);
+                    }
+                    break;
+            }
+        }
+        return result;
+    }
 
 
     public void setMaxPointsPerNode(int m) {
