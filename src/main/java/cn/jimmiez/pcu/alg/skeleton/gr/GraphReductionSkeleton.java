@@ -4,6 +4,7 @@ package cn.jimmiez.pcu.alg.skeleton.gr;
 import cn.jimmiez.pcu.alg.sampler.OctreeVoxelizer;
 import cn.jimmiez.pcu.alg.skeleton.Skeletonization;
 import cn.jimmiez.pcu.common.graph.EntityGraph;
+import cn.jimmiez.pcu.common.graphics.Adjacency;
 import cn.jimmiez.pcu.common.graphics.Octree;
 import cn.jimmiez.pcu.model.Skeleton;
 
@@ -46,6 +47,7 @@ public class GraphReductionSkeleton implements Skeletonization {
     private void generateOctree() {
         octree = new GraphReductionOctree();
         octree.buildIndex(points);
+        cells = octree.voxelize(points);
     }
 
     /**
@@ -54,6 +56,7 @@ public class GraphReductionSkeleton implements Skeletonization {
     private void extractGraph() {
         // map the index of cell of the index of GRVertex
         Map<Long, Integer> i2i = new HashMap<>();
+        graph = new DualStarGraph();
 
         // add M-Vertex
         for (Octree.OctreeNode cell : cells) {
@@ -68,7 +71,17 @@ public class GraphReductionSkeleton implements Skeletonization {
         for (Octree.OctreeNode cell : cells) {
             if (cell.getIndices().size() < 1) continue;
             int vi = i2i.get(cell.getIndex());
-
+            List<Octree.OctreeNode> adjacentCells = octree.adjacentNodes(cell.getIndex(), Adjacency.FACE);
+            for (Octree.OctreeNode adjacentCell : adjacentCells) {
+                int vj = i2i.get(adjacentCell.getIndex());
+                Point3d position = new Point3d(cell.getCenter());
+                position.add(adjacentCell.getCenter());
+                position.scale(0.50);
+                GRVertex vertex = new GRVertex(VertexType.T, position, -1L);
+                int vv = graph.addVertex(vertex);
+                graph.addEdge(vi, vv, position.distance(cell.getCenter()));
+                graph.addEdge(vj, vv, position.distance(adjacentCell.getCenter()));
+            }
         }
     }
 
@@ -90,14 +103,14 @@ public class GraphReductionSkeleton implements Skeletonization {
         for (int vi : graph.vertices()) {
             GRVertex vertex = graph.getVertex(vi);
             int skeletonVi = skeleton.addVertex(vertex);
-            i2i.put(skeletonVi, vi);
+            i2i.put(vi, skeletonVi);
         }
-        for (int skeletonVi : skeleton.vertices()) {
-            int vi = i2i.get(skeletonVi);
-            for (int skeletonAi : skeleton.adjacentVertices(skeletonVi)) {
-                int ai = i2i.get(skeletonAi);
-                double edgeWeight = graph.edgeWeight(vi, ai);
-                skeleton.addEdge(skeletonVi, skeletonAi, edgeWeight);
+        for (int vi : graph.vertices()) {
+            int skeletonVi = i2i.get(vi);
+            for (int vj : graph.adjacentVertices(vi)) {
+                int skeletonVj = i2i.get(vj);
+                double edgeWeight = graph.edgeWeight(vi, vj);
+                skeleton.addEdge(skeletonVi, skeletonVj, edgeWeight);
             }
         }
         return skeleton;
@@ -118,6 +131,10 @@ public class GraphReductionSkeleton implements Skeletonization {
         extractGraph();
         graphReduction();
         return obtainSkeleton(graph);
+    }
+
+    public DualStarGraph getGraph() {
+        return graph;
     }
 
     private enum VertexType {

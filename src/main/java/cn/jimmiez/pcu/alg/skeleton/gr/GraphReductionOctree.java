@@ -72,6 +72,7 @@ public class GraphReductionOctree extends Octree {
     protected void createOctree(int currentDepth, OctreeNode currentNode) {
         if (currentNode.getIndices().size() < 1) return;
         if (currentNode.getxExtent() * 2 <= minimalSize  // condition 3
+                || currentNode.getIndices().size() <= getMaxPointsPerNode()
                 || currentDepth >= MAX_DEPTH
                 ) {
             this.octreeIndices.put(currentNode.getIndex(), currentNode);

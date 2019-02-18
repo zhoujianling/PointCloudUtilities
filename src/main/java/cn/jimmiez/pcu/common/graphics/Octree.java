@@ -368,6 +368,7 @@ public class Octree {
         return result;
     }
 
+    public int getMaxPointsPerNode() {return this.maxPointsPerNode;}
 
     public void setMaxPointsPerNode(int m) {
         this.maxPointsPerNode = m;
