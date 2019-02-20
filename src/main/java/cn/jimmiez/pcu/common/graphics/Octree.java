@@ -41,6 +41,7 @@ public class Octree {
      **/
     protected static final int MAX_DEPTH = 10;
 
+    /** an octree cell contains at most 100 points **/
     private int maxPointsPerNode = 100;
 
     /**

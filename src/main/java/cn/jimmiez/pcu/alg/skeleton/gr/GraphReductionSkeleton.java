@@ -5,6 +5,7 @@ import cn.jimmiez.pcu.alg.sampler.OctreeVoxelizer;
 import cn.jimmiez.pcu.alg.skeleton.Skeletonization;
 import cn.jimmiez.pcu.common.graph.EntityGraph;
 import cn.jimmiez.pcu.common.graphics.Adjacency;
+import cn.jimmiez.pcu.common.graphics.BoundingBox;
 import cn.jimmiez.pcu.common.graphics.Octree;
 import cn.jimmiez.pcu.model.Skeleton;
 
@@ -45,7 +46,12 @@ public class GraphReductionSkeleton implements Skeletonization {
     }
 
     private void generateOctree() {
+//        BoundingBox bbox = BoundingBox.of(points);
+//        double edgeLength = bbox.diagonalLength() / 8.0 / 8.0 / 8.0 / 8.0;
+
         octree = new GraphReductionOctree();
+        octree.setMaxPointsPerNode(1);
+//        octree.setMinimalSize(edgeLength);
         octree.buildIndex(points);
         cells = octree.voxelize(points);
     }
