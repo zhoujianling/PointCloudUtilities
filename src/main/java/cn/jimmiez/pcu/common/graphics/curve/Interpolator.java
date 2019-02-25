@@ -7,5 +7,10 @@ import java.util.List;
 
 public interface Interpolator {
 
+    /**
+     * Give a skeleton, represented as an acyclic graph, this method will interpolate
+     * several points between every two points.
+     * @param points the skeleton
+     */
     void interpolate(EntityGraph<Point3d> points);
 }

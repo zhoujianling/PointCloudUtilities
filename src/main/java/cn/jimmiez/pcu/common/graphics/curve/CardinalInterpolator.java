@@ -9,7 +9,10 @@ import cn.jimmiez.pcu.util.VectorUtil;
 import javax.vecmath.Point3d;
 import java.util.*;
 
-public class CardinalInterpolator implements Interpolator{
+/**
+ * This class interpolate several points between every two points in a skeleton.
+ */
+public class CardinalInterpolator implements Interpolator {
 
     /**
      * the factor that controls how tight the resulting spline is.
@@ -150,6 +153,9 @@ public class CardinalInterpolator implements Interpolator{
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void interpolate(EntityGraph<Point3d> graph) {
         if (graph.isDirected()) {
