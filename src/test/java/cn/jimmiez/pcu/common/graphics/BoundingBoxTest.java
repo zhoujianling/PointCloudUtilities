@@ -56,16 +56,21 @@ public class BoundingBoxTest {
         assertTrue(box.getCenter().y + box.getyExtent() <= 7 && box.getCenter().y - box.getyExtent() >= 5);
         assertTrue(box.getCenter().z + box.getzExtent() <= 11 && box.getCenter().z - box.getzExtent() >= 9);
 
-//        box = BoundingBox.of(DataUtil.generateRandomData(0,1, 3, 6, 7, 4, 11));
-//        assertTrue(Double.isNaN(box.getCenter().x));
-//        assertTrue(Double.isNaN(box.getCenter().y));
-//        assertTrue(Double.isNaN(box.getCenter().z));
-//        assertTrue(Double.isNaN(box.getxExtent()));
-//        assertTrue(Double.isNaN(box.getyExtent()));
-//        assertTrue(Double.isNaN(box.getzExtent()));
+        box = BoundingBox.of(DataUtil.generateRandomData(0,1, 3, 6, 7, 4, 11));
+        assertFalse(Double.isNaN(box.getCenter().x));
+        assertFalse(Double.isNaN(box.getyExtent()));
 
+        randData.add(new Point3d(Double.NaN, 1, 2.0));
+        box = BoundingBox.of(randData);
+        assertFalse(Double.isNaN(box.getCenter().y));
+        assertFalse(Double.isNaN(box.getzExtent()));
 
-        // // TODO: 2019/1/16 test NaN
+        randData.add(new Point3d(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 2.0));
+        box = BoundingBox.of(randData);
+        assertFalse(Double.isInfinite(box.getCenter().y));
+        assertFalse(Double.isNaN(box.getCenter().y));
+        assertFalse(Double.isInfinite(box.getCenter().x));
+        assertFalse(Double.isNaN(box.getCenter().x));
     }
 
     @Test

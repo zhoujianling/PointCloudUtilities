@@ -4,8 +4,11 @@ import cn.jimmiez.pcu.common.graphics.shape.Box;
 import cn.jimmiez.pcu.util.VectorUtil;
 
 import javax.vecmath.Point3d;
-import java.util.List;
+import java.util.Collection;
 
+/**
+ * The AABoundingBox of 3d model.
+ */
 public class BoundingBox extends Box {
 
     public BoundingBox(Box box) {
@@ -34,11 +37,23 @@ public class BoundingBox extends Box {
         zExtent = (maxz - minz) / 2;
     }
 
+    /**
+     * construct an empty bounding box
+     * @return return an bounding box whose size is zero
+     */
     private static BoundingBox empty() {
         return new BoundingBox(0, 0, 0, 0, 0, 0);
     }
 
-    public static BoundingBox of(List<Point3d> data) {
+    /**
+     * Obtain the bounding box of a collection of 3d points.
+     * @param data the collection of 3d points, Not null.
+     *             - if this collection has no points, return a box whose size is zero.
+     *             - if this collection has NaN points, the NaN points are ignored.
+     *             - if this collection has Infinite points, the Infinite points are ignored.
+     * @return the bounding box
+     */
+    public static BoundingBox of(Collection<Point3d> data) {
         if (data.size() < 1) return empty();
         double minX =  Double.POSITIVE_INFINITY;
         double maxX =  Double.NEGATIVE_INFINITY;
@@ -59,6 +74,10 @@ public class BoundingBox extends Box {
         return new BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
+    /**
+     * get the length of the diagonal line of the bounding box
+     * @return the length of diagonal
+     */
     public double diagonalLength() {
         return 2 * Math.sqrt(xExtent * xExtent + yExtent * yExtent + zExtent * zExtent);
     }
