@@ -3,168 +3,252 @@ package cn.jimmiez.pcu.io.ply2;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import cn.jimmiez.pcu.util.Pair;
-import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class PlyReader2 {
 
-    public PlyData readPlyData(File file) throws IOException {
-        FileInputStream stream = new FileInputStream(file);
-        Scanner scanner = new Scanner(stream);
-        PlyHeader2 header = readHeader(scanner);
-        PlyData data = new PlyData(file, header);
+    private void readPly(File file, Object object) {
+        PlyData plyData = null;
+        try {
+            plyData = readPlyImpl(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            if (plyData != null) injectData(plyData, object);
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public PlyData readPly(File file) {
+        PlyData data = null;
+        try {
+            data = readPlyImpl(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return data;
     }
 
-    private List<Method> findAllElementGetter(List<Method> methods) {
-        List<Method> getters = new ArrayList<>();
-        for (Method m : methods) {
-            ReadFromPly pcuEle = m.getAnnotation(ReadFromPly.class);
-            if (pcuEle == null) continue;
-            getters.add(m);
-        }
-        return getters;
+    private PlyData readPlyImpl(File file) throws IOException {
+        FileInputStream stream = new FileInputStream(file);
+        Scanner scanner = new Scanner(stream);
+        PlyHeader2 header = readHeader(scanner);
+        final byte[] bytes = Files.readAllBytes(file.toPath());
+        PlyData data = new PlyData(header);
+        data.parse(bytes);
+        return data;
     }
 
+    private Pair<Integer, List<Integer>> checkAnnotation(ReadFromPly readFromPly, PlyHeader2 header) {
+        for (int i = 0; i < header.getElementHeaders().size(); i ++) {
+            PlyHeader2.PlyElementHeader elementHeader = header.getElementHeaders().get(i);
+            if (! elementHeader.elementName.equals(readFromPly.element())) continue;
+            List<Integer> indices = new ArrayList<>();
+            for (String propertyName : readFromPly.properties()) {
+                int index = elementHeader.findProperty(propertyName);
+                if (index == -1) {
+                    System.err.println("Cannot recognize the property name in the annotation: " + propertyName);
+                    return null;
+                }
+                indices.add(index);
+            }
+            return new Pair<>(i, indices);
+        }
+        System.err.println("Cannot recognize the element name in the annotation: " + readFromPly.element());
+        return null;
+    }
 
-//    private <T> void injectData(List<List> dataContainer, List<Integer> arraySizes, List<List<int[]>> pointerList, PlyData data) throws InvocationTargetException, IllegalAccessException {
-//        byte[] byteBuffer = null;
-//        short[] shortBuffer = null;
-//        int[] intBuffer = null;
-//        float[] floatBuffer = null;
-//        double[] doubleBuffer = null;
-//        int elementPointer = 0;
-//        for (PlyElement2 element2 : data) {
-//            int linePointer = 0;
-//            PlyHeader2.PlyElementHeader elementHeader = data.getHeader().getElementHeaders().get(elementPointer);
-//            int[] sizes = initBufferSize(elementHeader);
-//            byteBuffer = new byte[sizes[0]];        int byteValuePointer = 0;
-//            shortBuffer = new short[sizes[1]];      int shortValuePointer = 0;
-//            intBuffer = new int[sizes[2]];          int intValuePointer = 0;
-//            floatBuffer = new float[sizes[3]];      int floatValuePointer = 0;
-//            doubleBuffer = new double[sizes[4]];    int doubleValuePointer = 0;
-//            int propertyNumber = elementHeader.getProperties().size();
-//            for (PlyProperties properties : element2) {
-//                int propertyPointer = 0;
-//                for (; propertyPointer < propertyNumber; propertyPointer ++) {
-//                    int[] positions = pointerList.get(elementPointer).get(propertyPointer);
-//                    PlyPropertyType2 type = elementHeader.getProperties().get(propertyPointer).getValue();
-//                    if (type instanceof PlyPropertyType2.PlyListType) {
-//                        PlyPropertyType2.PlyListType listType = (PlyPropertyType2.PlyListType) type;
-//                        putList(dataContainer, properties, listType, positions[0]);
-//                    } else if (type instanceof PlyPropertyType2.PlyScalarType) {
-//                        PlyPropertyType2.PlyScalarType scalarType = (PlyPropertyType2.PlyScalarType) type;
-//                    }
-//                }
-//                PlyPropertyType2 type = elementHeader.getProperties().get(linePointer).getValue();
-//                linePointer += 1;
-//            }
-//            elementPointer += 1;
-//        }
-//    }
-//
+    private void injectDataImpl(PlyData plyData, List list, ReadFromPly annotation) {
+        if (plyData == null || list == null || annotation == null) return;
+        if (annotation.properties().length < 1) return;
+        list.clear();
+
+        Pair<Integer, List<Integer>> indexPair = checkAnnotation(annotation, plyData.getHeader());
+        if (indexPair == null) return;
+        List<Integer> propertiesIndices = indexPair.getValue();
+
+        PlyElement2 element = plyData.getElement(annotation.element());
+        PlyPropertyType2 propertyType = element.getHeader().getProperties().get(propertiesIndices.get(0)).getValue();
+        if (propertyType instanceof PlyPropertyType2.PlyListType) {
+            PcuDataType dataType = ((PlyPropertyType2.PlyListType) propertyType).dataType();
+//            injectList(element, list, dataType, propertiesIndices);
+
+        } else {
+            PcuDataType dataType = ((PlyPropertyType2.PlyScalarType) propertyType).dataType();
+            injectScalar(element, list, dataType, propertiesIndices);
+        }
+    }
+
 //    @SuppressWarnings("unchecked")
-//    private void putList(List<List> dataContainer, PlyProperties properties, PlyPropertyType2.PlyListType type, int i) {
-//        switch (type.dataType()) {
+//    private void injectList(PlyElement2 element, List list, PcuDataType dataType, List<Integer> propertiesIndices) {
+//        int position = 0;
+//        int len = propertiesIndices.size();
+//        switch (dataType) {
 //            case CHAR:
-//            case UCHAR: {
-//                byte[] array = properties.nextPropertyAsListB(type.sizeType());
-//                dataContainer.get(i).add(array);
-//                break;
-//            }
-//            case SHORT:
-//            case USHORT: {
-//                short[] array = properties.nextPropertyAsListS(type.sizeType());
-//                dataContainer.get(i).add(array);
-//                break;
-//            }
-//            case INT:
-//            case UINT: {
-//                int[] array = properties.nextPropertyAsListI(type.sizeType());
-//                dataContainer.get(i).add(array);
-//                break;
-//            }
-//            case FLOAT: {
-//                float[] array = properties.nextPropertyAsListF(type.sizeType());
-//                dataContainer.get(i).add(array);
-//                break;
-//            }
-//            case DOUBLE:
-//                double[] array = properties.nextPropertyAsListD(type.sizeType());
-//                dataContainer.get(i).add(array);
-//                break;
-//        }
-//    }
-//
-//    private void putScalar(List<List> dataContainer, PlyProperties properties, PlyPropertyType2.PlyScalarType type, int i, int j) {
-//
-//    }
-//
-//    private int[] initBufferSize(PlyHeader2.PlyElementHeader header) {
-//        int[] sizes = new int[5];
-//        sizes[0] = 0; sizes[1] = 0; sizes[2] = 0; sizes[3] = 0; sizes[4] = 0;
-//        for (int i = 0; i < header.getProperties().size(); i ++) {
-//            PlyPropertyType2 type = header.getProperties().get(i).getValue();
-//            if (type instanceof PlyPropertyType2.PlyScalarType) {
-//                PlyPropertyType2.PlyScalarType scalarType = (PlyPropertyType2.PlyScalarType) type;
-//                switch (scalarType.dataType()) {
-//                    case CHAR:      sizes[0] += 1;  break;
-//                    case SHORT:     sizes[1] += 1;  break;
-//                    case INT:       sizes[2] += 1;  break;
-//                    case FLOAT:     sizes[3] += 1;  break;
-//                    case DOUBLE:    sizes[4] += 1;  break;
+//            case UCHAR:
+//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+//                    byte[] bytes = new byte[len];
+//                    for (int j = 0; j < len; j ++) {
+//                        double val = element.elementData[position + propertiesIndices.get(j)];
+//                        bytes[j] = (byte) val;
+//                    }
+//                    list.add(bytes);
+//                    position += element.getHeader().properties.size();
 //                }
-//            }
+//                break;
+//            case SHORT:
+//            case USHORT:
+//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+//                    short[] shorts = new short[len];
+//                    for (int j = 0; j < len; j ++) {
+//                        double val = element.elementData[position + propertiesIndices.get(j)];
+//                        shorts[j] = (short) val;
+//                    }
+//                    list.add(shorts);
+//                    position += element.getHeader().properties.size();
+//                }
+//                break;
+//            case INT:
+//            case UINT:
+//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+//                    int[] vals = new int[len];
+//                    for (int j = 0; j < len; j ++) {
+//                        double val = element.elementData[position + propertiesIndices.get(j)];
+//                        vals[j] = (int) val;
+//                    }
+//                    list.add(vals);
+//                    position += element.getHeader().properties.size();
+//                }
+//                break;
+//            case FLOAT:
+//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+//                    float[] vals = new float[len];
+//                    for (int j = 0; j < len; j ++) {
+//                        double val = element.elementData[position + propertiesIndices.get(j)];
+//                        vals[j] = (float) val;
+//                    }
+//                    list.add(vals);
+//                    position += element.getHeader().properties.size();
+//                }
+//                break;
+//            case DOUBLE:
+//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+//                    double[] vals = new double[len];
+//                    for (int j = 0; j < len; j ++) {
+//                        double val = element.elementData[position + propertiesIndices.get(j)];
+//                        vals[j] = val;
+//                    }
+//                    list.add(vals);
+//                    position += element.getHeader().properties.size();
+//                }
+//                break;
 //        }
-//        return sizes;
+//
 //    }
 
-//    private void putValue(List<List> dataContainer,)
-
-    private <T> T reflect(PlyHeader2 header, PlyData data, Class<T> clazz) throws IllegalAccessException, InstantiationException, InvocationTargetException {
-        T object = clazz.newInstance();
-        List<Method> allMethods = PcuReflectUtil.fetchAllMethods(object);
-        List<Method> methods = findAllElementGetter(allMethods);
-
-        for (Method method : methods) {
-            ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
-            PlyHeader2.PlyElementHeader elementHeader = header.findElement(annotation.element());
-            if (elementHeader == null) continue;
-            List list = (List) method.invoke(object);
-            if (list == null) continue;
-//            String[] elementNames = annotation.element();
+    @SuppressWarnings("unchecked")
+    private void injectScalar(PlyElement2 element, List list, PcuDataType dataType, List<Integer> propertiesIndices) {
+        int position = 0;
+        int len = propertiesIndices.size();
+        switch (dataType) {
+            case CHAR:
+            case UCHAR:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    byte[] bytes = new byte[len];
+                    for (int j = 0; j < len; j ++) {
+                        double val = element.elementData[position + propertiesIndices.get(j)];
+                        bytes[j] = (byte) val;
+                    }
+                    list.add(bytes);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case SHORT:
+            case USHORT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    short[] shorts = new short[len];
+                    for (int j = 0; j < len; j ++) {
+                        double val = element.elementData[position + propertiesIndices.get(j)];
+                        shorts[j] = (short) val;
+                    }
+                    list.add(shorts);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case INT:
+            case UINT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int[] vals = new int[len];
+                    for (int j = 0; j < len; j ++) {
+                        double val = element.elementData[position + propertiesIndices.get(j)];
+                        vals[j] = (int) val;
+                    }
+                    list.add(vals);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case FLOAT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    float[] vals = new float[len];
+                    for (int j = 0; j < len; j ++) {
+                        double val = element.elementData[position + propertiesIndices.get(j)];
+                        vals[j] = (float) val;
+                    }
+                    list.add(vals);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case DOUBLE:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    double[] vals = new double[len];
+                    for (int j = 0; j < len; j ++) {
+                        double val = element.elementData[position + propertiesIndices.get(j)];
+                        vals[j] = val;
+                    }
+                    list.add(vals);
+                    position += element.getHeader().properties.size();
+                }
+                break;
         }
-        return object;
+
     }
+
+    private <T> void injectData(PlyData data, Object userDefinedEntity) throws InvocationTargetException, IllegalAccessException {
+        if (userDefinedEntity == null) return;
+        Method[] allMethods = userDefinedEntity.getClass().getDeclaredMethods();
+        for (Method method : allMethods) {
+            ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
+            if (method.getReturnType() != List.class) {
+                System.err.println("Not a valid getter."); continue;
+            }
+            List list = (List) method.invoke(userDefinedEntity);
+            injectDataImpl(data, list, annotation);
+        }
+    }
+
 
     public <T> T read(File file, Class<T> clazz) {
         T object = null;
         try {
-            FileInputStream stream = new FileInputStream(file);
-            Scanner scanner = new Scanner(stream);
-            PlyHeader2 header = readHeader(scanner);
-            PlyData data = new PlyData(file, header);
-            stream.close();
-            object = reflect(header, data, clazz);
+            object = clazz.newInstance();
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
         }
+        readPly(file, object);
         return object;
     }
 
@@ -254,7 +338,7 @@ public class PlyReader2 {
         }
         throw new IOException("Cannot parse type: " + type);
     }
-
+//
     @SuppressWarnings("SpellCheckingInspection")
     public Pair<String, PlyPropertyType2> parseProperty(String line) throws IOException {
         String[] propertySlices = line.split("(\\s)+");
@@ -311,5 +395,4 @@ public class PlyReader2 {
             throw new IOException("Invalid ply file: Wrong format ply in line");
         }
     }
-
 }

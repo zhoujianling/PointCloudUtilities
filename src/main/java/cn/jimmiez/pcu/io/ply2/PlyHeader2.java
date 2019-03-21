@@ -32,13 +32,14 @@ public class PlyHeader2 {
         this.version = f;
     }
 
-    public PlyElementHeader findElement(String elementName) {
-        for (PlyElementHeader header : elementHeaders) {
+    public int findElement(String elementName) {
+        for (int i = 0; i < elementHeaders.size(); i ++) {
+            PlyElementHeader header = elementHeaders.get(i);
             if (header.elementName.equals(elementName)) {
-                return header;
+                return i;
             }
         }
-        throw new IllegalStateException("Cannot find the element " + elementName);
+        return -1;
     }
 
     public PlyFormat getFormat() {
@@ -64,6 +65,16 @@ public class PlyHeader2 {
         String elementName;
 
         List<Pair<String, PlyPropertyType2>> properties = new ArrayList<>();
+
+        public int findProperty(String key) {
+            for (int i = 0; i < properties.size(); i ++) {
+                Pair<String, PlyPropertyType2> pair = properties.get(i);
+                if (pair.getKey().equals(key)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
 
         public List<Pair<String, PlyPropertyType2>> getProperties() {
             return properties;
