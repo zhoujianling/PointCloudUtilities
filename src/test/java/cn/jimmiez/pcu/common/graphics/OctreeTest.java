@@ -1,6 +1,7 @@
 package cn.jimmiez.pcu.common.graphics;
 
 import cn.jimmiez.pcu.DataUtil;
+import cn.jimmiez.pcu.util.PcuCommonUtil;
 import cn.jimmiez.pcu.util.VectorUtil;
 import org.junit.Test;
 
@@ -226,19 +227,20 @@ public class OctreeTest {
             double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
             double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
-            double randomRadius = Math.min(box.getxExtent(), Math.min(box.getyExtent(), box.getzExtent())) * 0.3;
+            double randomRadius = PcuCommonUtil.min(box.getxExtent(), box.getyExtent(), box.getzExtent()) * 0.3;
             List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(p, randomRadius);
-            Set<Integer> set = new HashSet<>();
-            set.addAll(neighbors);
-            for (int j = 0; j < 25; j ++) {
-                int randomIndex = random.nextInt(data.size());
-                while (set.contains(randomIndex))  randomIndex = random.nextInt(data.size());
-                double distance1 = p.distance(data.get(randomIndex));
-                for (int kNeighborIndex : neighbors) {
-                    double neighborDistance = data.get(kNeighborIndex).distance(p);
-                    assertTrue(distance1 >= neighborDistance);
-                }
-            }
+            assertNeighborsWithinRadius(data, p, neighbors);
+//            Set<Integer> set = new HashSet<>();
+//            set.addAll(neighbors);
+//            for (int j = 0; j < 25; j ++) {
+//                int randomIndex = random.nextInt(data.size());
+//                while (set.contains(randomIndex))  randomIndex = random.nextInt(data.size());
+//                double distance1 = p.distance(data.get(randomIndex));
+//                for (int kNeighborIndex : neighbors) {
+//                    double neighborDistance = data.get(kNeighborIndex).distance(p);
+//                    assertTrue(distance1 >= neighborDistance);
+//                }
+//            }
         }
 
         // test NaN in raw points
@@ -256,10 +258,21 @@ public class OctreeTest {
             double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
             double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
             Point3d p = new Point3d(x, y, z);
-            int randomK = 7 + random.nextInt(35);
-            int[] neighbors = octree.searchNearestNeighbors(randomK, p);
-            assertKNearestNeighbors(data, p, neighbors);
+            double randomRadius = PcuCommonUtil.min(box.getxExtent(), box.getyExtent(), box.getzExtent()) * random.nextDouble() * 0.3;
+            List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(p, randomRadius);
+            assertNeighborsWithinRadius(data, p, neighbors);
         }
+
+        // test very small distance
+//        for (int i = 0; i < 3; i ++) {
+//            double x = box.getCenter().x + box.getxExtent() * (random.nextDouble() - 0.5);
+//            double y = box.getCenter().y + box.getyExtent() * (random.nextDouble() - 0.5);
+//            double z = box.getCenter().z + box.getzExtent()* (random.nextDouble() - 0.5);
+//            Point3d p = new Point3d(x, y, z);
+//            double randomRadius = PcuCommonUtil.min(box.getxExtent(), box.getyExtent(), box.getzExtent()) * random.nextDouble() * 0.00000003;
+//            List<Integer> neighbors = octree.searchAllNeighborsWithinDistance(p, randomRadius);
+//            assertNeighborsWithinRadius(data, p, neighbors);
+//        }
     }
 
 
