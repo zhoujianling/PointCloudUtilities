@@ -15,6 +15,8 @@ public class ShortestPathTest {
 
     @Test
     public void testDijkstra() {
+        Random random = new Random(System.currentTimeMillis());
+
         // test null
         try {
             ShortestPath.dijkstra(null, 0);
@@ -58,7 +60,7 @@ public class ShortestPathTest {
         assertEquals(result.get(5).getValue(), Double.POSITIVE_INFINITY, 0.0);
 
         // test with generated graph
-        int verticeNum = 10;
+        int verticeNum = 20 + random.nextInt(20);
         List<Double> shortestDistances = new ArrayList<>();
         List<List<Integer>> shortestPaths = new ArrayList<>();
         UndirectedGraph generatedTestCase = generateTestGraphs(verticeNum, 5.0, shortestDistances, shortestPaths);
@@ -109,24 +111,26 @@ public class ShortestPathTest {
             int edgeNum = vi < 3 ? vi : random.nextInt(vi / 2) + 1;
             for (int j = 0; j < edgeNum; j ++) {
                 int vj = random.nextInt(vi);
-                if (graph.edgeWeight(vi, vj) != Graph.N) continue;
+                if (new Double(N).equals(graph.edgeWeight(vi, vj))) continue;
                 double edgeWeight = random.nextDouble() * maxWeight;
                 graph.addEdge(vi, vj, edgeWeight);
                 double minViDistance = shortestDistances.get(vi);
                 double minVjDistance = shortestDistances.get(vj);
-                if (minVjDistance + edgeWeight < minViDistance) {
+                if (minVjDistance + edgeWeight < minViDistance || new Double(N).equals(minViDistance)) {
                     shortestDistances.set(vi, minVjDistance + edgeWeight);
                 }
             }
-            for (int vk = 0; vk < vi; vk ++) {
+            for (int vk : graph.adjacentVertices(vi)) {
                 double minViDistance = shortestDistances.get(vi);
                 double minVkDistance = shortestDistances.get(vk);
                 double edgeWeight = graph.edgeWeight(vi, vk);
-                if (minViDistance + edgeWeight < minVkDistance) {
+                if (minViDistance == Graph.N) continue;
+                if (minViDistance + edgeWeight < minVkDistance || minVkDistance == Graph.N) {
                     shortestDistances.set(vk, minViDistance + edgeWeight);
                 }
             }
         }
         return graph;
     }
+
 }
