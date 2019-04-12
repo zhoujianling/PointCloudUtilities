@@ -33,14 +33,13 @@ mvn package -X
 ### PlyReader
 Firstly, on *NIX system, use following command to see the header of your ply file:
 ```shell
-head -n 20 foo.ply
+head foo.ply
 
 ```
 you will see a structure like this:
 ```
 ply
 format binary_little_endian 1.0
-comment VCGLIB generated
 element vertex 27788
 property float x
 property float y
@@ -90,7 +89,7 @@ Firstly, declare an entity class for your point cloud or mesh and provide getter
         List<Point3d> vertices = new ArrayList<>();
         List<int[]> vertexIndices = new ArrayList<>();
 
-        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PcuDataType.DOUBLE)
         public List<double[]> vertices() {
             List<double[]> result = new ArrayList<>();
             for (Point3d p : vertices) {
@@ -133,12 +132,12 @@ Secondly, use one line code to write the ply.
 ```java
 int result = new PlyWriter()
         .prepare()
-        .format(PlyReader.FORMAT_ASCII)
+        .format(PlyFormat.ASCII)
         .comment("this is test")
         .defineElement("vertex")
-        .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
+        .defineScalarProperties(new String[] {"x", "y", "z"}, PcuDataType.FLOAT, vertexData)
         .defineElement("face")
-        .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
+        .defineListProperty("vertex_indices", PcuDataType.UCHAR, PcuDataType.INT, faceData)
         .writeTo(new File("yourModel.ply"))
         .okay();
 
