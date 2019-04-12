@@ -1,6 +1,5 @@
 package cn.jimmiez.pcu.io.ply;
 
-import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.model.PointCloud3f;
 import cn.jimmiez.pcu.model.PolygonMesh3f;
 import org.junit.Test;
@@ -16,31 +15,13 @@ import static org.junit.Assert.*;
 public class PlyReaderTest {
 
     @Test
-    public void testReadAsciiPlyHeader() throws IOException {
-        PlyReader reader = new PlyReader();
-        File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
-        PlyHeader header = reader.readHeaderThenCloseFile(file);
-        assertTrue(header.getPlyFormat() == PlyReader.FORMAT_ASCII);
-        assertEquals(header.getPlyVersion(), 1.0f, 1e-5);
-        assertTrue(header.getElementTypes().get("vertex").getPropertiesName().size() == 3);
-        assertTrue(header.getElementTypes().get("vertex").getPropertiesType().size() == 3);
-        for (Pair<String, Integer> pair : header.getElementsNumber()) {
-            if (pair.getKey().equals("vertex")) {
-                assertTrue(pair.getValue() == 4770);
-            } else if (pair.getKey().equals("face")) {
-                assertTrue(pair.getValue() == 0);
-            }
-        }
-    }
-
-    @Test
     public void testReadAsciiPlyData() throws IOException {
         PlyReader reader = new PlyReader();
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/simple.ply").getFile());
         PointCloud3f pointCloud = reader.read(file, PointCloud3f.class);
         assertNotNull(pointCloud);
-        assertTrue(pointCloud.getPoints().size() == 4770);
-        assertTrue(pointCloud.getPoints().get(1000).length == 3);
+        assertEquals(4770, pointCloud.getPoints().size());
+        assertEquals( 3, pointCloud.getPoints().get(1000).length);
     }
 
 
@@ -50,9 +31,9 @@ public class PlyReaderTest {
         File file = new File(PlyReaderTest.class.getClassLoader().getResource("model/ply/drill_shaft_zip.ply").getFile());
         PolygonMesh3f pointCloud = reader.read(file, PolygonMesh3f.class);
         assertNotNull(pointCloud);
-        assertTrue(pointCloud.getPoints().size() == 881);
-        assertTrue(pointCloud.getPoints().get(200).length == 3);
-        assertTrue(pointCloud.getFaces().size() == 1288);
+        assertEquals(881, pointCloud.getPoints().size());
+        assertEquals(3, pointCloud.getPoints().get(200).length);
+        assertEquals(1288, pointCloud.getFaces().size());
     }
 
 
@@ -63,14 +44,14 @@ public class PlyReaderTest {
         MeshWithColor4b mesh = reader.read(file, MeshWithColor4b.class);
         int expectedVerticesSize = 27788;
         int expectedFaceSize = 52113;
-        assertTrue(mesh.getPoints().size() == expectedVerticesSize);
-        assertTrue(mesh.getFaces().size() == expectedFaceSize);
-        assertTrue(mesh.getVertexColors().size() == expectedVerticesSize);
+        assertEquals(expectedVerticesSize, mesh.getPoints().size());
+        assertEquals(expectedFaceSize, mesh.getFaces().size());
+        assertEquals(expectedVerticesSize, mesh.getVertexColors().size());
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 300; i ++) {
             int randomPtr = random.nextInt(expectedVerticesSize);
             byte[] rgba = mesh.getVertexColors().get(randomPtr);
-            assertTrue(rgba.length == 4);
+            assertEquals(4, rgba.length);
         }
     }
 

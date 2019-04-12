@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.io.BinaryWriter;
+import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.*;
@@ -29,7 +30,7 @@ public class PlyWriter {
     private void writeWithObject(Object object, File file) throws InvocationTargetException, IllegalAccessException {
         List<Method> allMethods = PcuReflectUtil.fetchAllMethods(object);
         PlyWriterRequest request = new PlyWriterRequest();
-        request.format(PlyReader.FORMAT_ASCII);
+        request.format(PlyFormat.ASCII);
         request.comment("written by PointCloudUtil.");
         final Map<String, List<Method>> getters = findPropertiesGetters(allMethods);
         for (String key : getters.keySet()) {
@@ -40,14 +41,14 @@ public class PlyWriter {
                     if (scalarToPly.properties().length < 1) continue;
                     List data = (List) m.invoke(object);
                     String[] propertyNames = scalarToPly.properties();
-                    PlyPropertyType type = scalarToPly.type();
+                    PcuDataType type = scalarToPly.type();
                     request.defineScalarProperties(propertyNames, type, data);
                 }
                 if (hasWriteListToPly(m)) {
                     WriteListToPly listToPly = m.getAnnotation(WriteListToPly.class);
                     List data = (List) m.invoke(object);
-                    PlyPropertyType sizeType = listToPly.sizeType();
-                    PlyPropertyType valType = listToPly.valType();
+                    PcuDataType sizeType = listToPly.sizeType();
+                    PcuDataType valType = listToPly.valType();
                     request.defineListProperty(listToPly.property(), sizeType, valType, data);
                 }
 
@@ -102,28 +103,32 @@ public class PlyWriter {
 //    }
 
 
-    private String typeString(PlyElement element, int position) {
-        PlyPropertyType type = element.getPropertiesType().get(position);
-        String typeStr = type.typeName();
-        if (type == PlyPropertyType.LIST) {
-            PlyPropertyType[] typePair = element.listTypes.get(element.getPropertiesName().get(position));
-            typeStr += String.format(" %s %s", typePair[0].typeName(), typePair[1].typeName());
+    private String typeString(PlyPropertyType type) {
+        if (type instanceof PlyPropertyType.PlyScalarType) {
+            PlyPropertyType.PlyScalarType scalarType = (PlyPropertyType.PlyScalarType) type;
+            return scalarType.dataType().typeName();
+        } else if (type instanceof PlyPropertyType.PlyListType) {
+            PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) type;
+            return "list " + listType.sizeType() + " " + listType.dataType();
+        } else {
+            throw new IllegalStateException("Unsupported ply property type");
         }
-        return typeStr;
     }
 
     private void writeImpl(PlyWriterRequest request) throws IOException {
         StringBuffer buffer = generatePlyHeaderString(request);
-        if (request.format == PlyReader.FORMAT_ASCII) {
-           // write string
-            writeAsciiPlyImpl(buffer, request);
-        } else if (request.format == PlyReader.FORMAT_BINARY_BIG_ENDIAN) {
-           // write bytes
-            writeBinaryPlyImpl(buffer, request, ByteOrder.BIG_ENDIAN);
-        } else if (request.format == PlyReader.FORMAT_BINARY_LITTLE_ENDIAN) {
-            writeBinaryPlyImpl(buffer, request, ByteOrder.LITTLE_ENDIAN);
-        } else {
-            System.err.println("Warning: unsupported ply format.");
+        switch (request.format) {
+            case ASCII:
+                // write string
+                writeAsciiPlyImpl(buffer, request);
+                break;
+            case BINARY_BIG_ENDIAN:
+                // write bytes
+                writeBinaryPlyImpl(buffer, request, ByteOrder.BIG_ENDIAN);
+                break;
+            case BINARY_LITTLE_ENDIAN:
+                writeBinaryPlyImpl(buffer, request, ByteOrder.LITTLE_ENDIAN);
+                break;
         }
     }
 
@@ -131,13 +136,13 @@ public class PlyWriter {
         StringBuffer buffer = new StringBuffer("ply\n");
         buffer.append("format ");
         switch (request.format) {
-            case PlyReader.FORMAT_ASCII:
+            case ASCII:
                 buffer.append("ascii");
                 break;
-            case PlyReader.FORMAT_BINARY_BIG_ENDIAN:
+            case BINARY_BIG_ENDIAN:
                 buffer.append("binary_big_endian");
                 break;
-            case PlyReader.FORMAT_BINARY_LITTLE_ENDIAN:
+            case BINARY_LITTLE_ENDIAN:
                 buffer.append("binary_little_endian");
                 break;
         }
@@ -150,15 +155,21 @@ public class PlyWriter {
             }
             buffer.append("comment ").append(comment).append("\n");
         }
-        for (PlyElement element : request.elements) {
-            buffer.append("element ").append(element.elementName);
-            int dataSize = 0;
-            if (element.propertiesName.size() > 0){
-                dataSize = request.elementData.get(element.elementName).get(element.propertiesName.get(0)).size();
-            }
-            buffer.append(" ").append(dataSize).append("\n");
-            for (int i = 0; i < element.propertiesName.size(); i ++) {
-                buffer.append("property ").append(typeString(element, i)).append(" ").append(element.propertiesName.get(i)).append("\n");
+        for (PlyHeader.PlyElementHeader element : request.elements) {
+            buffer
+                    .append("element ")
+                    .append(element.elementName)
+                    .append(" ")
+                    .append(element.number)
+                    .append("\n")
+            ;
+            for (Pair<String, PlyPropertyType> pair : element.properties) {
+                buffer
+                        .append("property ")
+                        .append(typeString(pair.getValue()))
+                        .append(" ")
+                        .append(pair.getKey())
+                        .append("\n");
             }
         }
         buffer.append("end_header\n");
@@ -169,19 +180,29 @@ public class PlyWriter {
         File file = pq.file;
         PrintStream ps = new PrintStream(new FileOutputStream(file));
         ps.print(header.toString());
-        for (PlyElement element : pq.elements) {
+        for (PlyHeader.PlyElementHeader element : pq.elements) {
             Map<String, List> dataMap = pq.elementData.get(element.elementName);
-            if (element.propertiesName.size() < 1) continue;
-            int dataSize = dataMap.get(element.propertiesName.get(0)).size();
+            if (element.properties.size() < 1) continue;
+            int dataSize = element.number;
             for (int i = 0; i < dataSize; i ++) {
                 int cnt = 0;
                 List partOfData = null;
-                for (int j = 0; j < element.propertiesType.size(); j ++) {
-                    PlyPropertyType type = element.propertiesType.get(j);
-                    String propertyName = element.propertiesName.get(j);
+                for (Pair<String, PlyPropertyType> pair : element.properties) {
+                    String propertyName = pair.getKey();
+
                     if (partOfData == null || dataMap.get(propertyName) != partOfData) {
                         partOfData = dataMap.get(propertyName); cnt = 0;
                     }
+
+                    if (pair instanceof PlyPropertyType.PlyListType) {
+                        PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) pair.getValue();
+                        PcuDataType type = listType.dataType();
+                        printAsciiList(partOfData.get(i), ps, type);
+                        continue;
+                    }
+                    PlyPropertyType.PlyScalarType scalarType = (PlyPropertyType.PlyScalarType) pair.getValue();
+                    PcuDataType type = scalarType.dataType();
+
                     switch (type) {
                         case CHAR:
                         case UCHAR: {
@@ -211,10 +232,6 @@ public class PlyWriter {
                             ps.print(partOfRow[cnt ++]);
                             break;
                         }
-                        case LIST: {
-                            printAsciiList(partOfData.get(i), ps, element.listTypes.get(propertyName)[1]);
-                            break;
-                        }
                     }
                     ps.print(' ');
                 }
@@ -224,7 +241,7 @@ public class PlyWriter {
         ps.close();
     }
 
-    private void printAsciiList(Object o, PrintStream ps, PlyPropertyType valType) {
+    private void printAsciiList(Object o, PrintStream ps, PcuDataType valType) {
         switch (valType) {
             case CHAR:
             case UCHAR:
@@ -281,19 +298,28 @@ public class PlyWriter {
         BinaryWriter writer = new BinaryWriter(pq.file, order);
 
         writer.writeString(buffer.toString());
-        for (PlyElement element : pq.elements) {
+        for (PlyHeader.PlyElementHeader element : pq.elements) {
             Map<String, List> dataMap = pq.elementData.get(element.elementName);
-            if (element.propertiesName.size() < 1) continue;
-            int dataSize = dataMap.get(element.propertiesName.get(0)).size();
+            if (element.properties.size() < 1) continue;
+            int dataSize = element.number;
             for (int i = 0; i < dataSize; i ++) {
                 int cnt = 0;
                 List partOfData = null;
-                for (int j = 0; j < element.propertiesType.size(); j ++) {
-                    PlyPropertyType type = element.propertiesType.get(j);
-                    String propertyName = element.propertiesName.get(j);
+                for (Pair<String, PlyPropertyType> pair : element.properties) {
+                    String propertyName = pair.getKey();
                     if (partOfData == null || dataMap.get(propertyName) != partOfData) {
                         partOfData = dataMap.get(propertyName); cnt = 0;
                     }
+                    if (pair instanceof PlyPropertyType.PlyListType) {
+                        PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) pair.getValue();
+                        PcuDataType sizeType = listType.sizeType();
+                        PcuDataType valType = listType.dataType();
+                        writeBinaryList(partOfData.get(i), writer, valType, sizeType);
+                        continue;
+                    }
+                    PlyPropertyType.PlyScalarType scalarType = (PlyPropertyType.PlyScalarType) pair.getValue();
+                    PcuDataType type = scalarType.dataType();
+
                     switch (type) {
                         case CHAR:
                         case UCHAR: {
@@ -323,12 +349,6 @@ public class PlyWriter {
                             writer.writeDouble(partOfRow[cnt ++]);
                             break;
                         }
-                        case LIST: {
-                            PlyPropertyType sizeType = element.listTypes.get(propertyName)[0];
-                            PlyPropertyType valType = element.listTypes.get(propertyName)[1];
-                            writeBinaryList(partOfData.get(i), writer, valType, sizeType);
-                            break;
-                        }
                     }
                 }
             }
@@ -336,7 +356,7 @@ public class PlyWriter {
         writer.close();
     }
 
-    private void writeListSize(int len, BinaryWriter writer, PlyPropertyType sizeType) throws IOException {
+    private void writeListSize(int len, BinaryWriter writer, PcuDataType sizeType) throws IOException {
         switch (sizeType) {
             case CHAR:
             case UCHAR:
@@ -360,7 +380,7 @@ public class PlyWriter {
 
     }
 
-    private void writeBinaryList(Object o, BinaryWriter writer, PlyPropertyType valType, PlyPropertyType sizeType) throws IOException {
+    private void writeBinaryList(Object o, BinaryWriter writer, PcuDataType valType, PcuDataType sizeType) throws IOException {
         switch (valType) {
             case CHAR:
             case UCHAR:
@@ -413,7 +433,7 @@ public class PlyWriter {
      **/
     public class PlyWriterRequest {
 
-        List<PlyElement> elements = new ArrayList<>();
+        List<PlyHeader.PlyElementHeader> elements = new ArrayList<>();
 
         /**
          * {
@@ -430,7 +450,7 @@ public class PlyWriter {
         Map<String, Map<String, List>> elementData = new HashMap<>();
 
         /** FORMAT_ASCII, FORMAT_BINARY_BIG_ENDIAN, FORMAT_BINARY_LITTLE_ENDIAN **/
-        int format = PlyReader.FORMAT_ASCII;
+        PlyFormat format = PlyFormat.ASCII;
 
         List<String> comments = new ArrayList<>();
 
@@ -444,40 +464,52 @@ public class PlyWriter {
         }
 
         public PlyWriterRequest defineElement(String elementName) {
-            PlyElement element = new PlyElement();
+            PlyHeader.PlyElementHeader element = new PlyHeader.PlyElementHeader();
             element.elementName = elementName;
             elements.add(element);
             elementData.put(elementName, new HashMap<String, List>());
             return this;
         }
 
-        public PlyWriterRequest defineScalarProperties(String[] propertyNames, PlyPropertyType valType, List data) {
+        public PlyWriterRequest defineScalarProperties(String[] propertyNames, final PcuDataType valType, List data) {
             if (elements.size() < 1) {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperties()");
             }
-            PlyElement element = elements.get(elements.size() - 1);
+            PlyHeader.PlyElementHeader element = elements.get(elements.size() - 1);
             for (String propertyName : propertyNames) {
-                element.propertiesName.add(propertyName);
-                element.propertiesType.add(valType);
+                element.properties.add(new Pair<String, PlyPropertyType>(propertyName, new PlyPropertyType.PlyScalarType() {
+                    @Override
+                    public PcuDataType dataType() {
+                        return valType;
+                    }
+                }));
                 elementData.get(element.elementName).put(propertyName, data);
             }
             return this;
         }
 
-        public PlyWriterRequest defineListProperty(String propertyName, PlyPropertyType sizeType, PlyPropertyType valType, List data) {
+        public PlyWriterRequest defineListProperty(String propertyName, final PcuDataType sizeType, final PcuDataType valType, final List data) {
             if (elements.size() < 1) {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperties()");
             }
-            PlyElement element = elements.get(elements.size() - 1);
-            element.propertiesName.add(propertyName);
-            element.propertiesType.add(PlyPropertyType.LIST);
-            element.listTypes.put(propertyName, new PlyPropertyType[]{sizeType, valType});
+            PlyHeader.PlyElementHeader element = elements.get(elements.size() - 1);
+            element.properties.add(new Pair<String, PlyPropertyType>(propertyName, new PlyPropertyType.PlyListType() {
+                @Override
+                public PcuDataType sizeType() {
+                    return sizeType;
+                }
 
+                @Override
+                public PcuDataType dataType() {
+                    return valType;
+                }
+            }));
+//            element.listTypes.put(propertyName, new PlyPropertyType[]{sizeType, valType});
             elementData.get(element.elementName).put(propertyName, data);
             return this;
         }
 
-        public PlyWriterRequest format(int format) {
+        public PlyWriterRequest format(PlyFormat format) {
             this.format = format;
             return this;
         }
@@ -528,3 +560,4 @@ public class PlyWriter {
         }
     }
 }
+

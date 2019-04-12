@@ -1,56 +1,98 @@
 package cn.jimmiez.pcu.io.ply;
 
-
 import cn.jimmiez.pcu.util.Pair;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PlyHeader {
-    /** FORMAT_ASCII or FORMAT_BINARY **/
-    private int plyFormat = PlyReader.FORMAT_NON_FORMAT;
 
-    private float plyVersion = 0;
+    private int bytesCount = 0;
 
-    /** [("vertex", 12), ("face", 8)] **/
-    private List<Pair<String, Integer>> elementsNumber = new ArrayList<>();
+    private float version = 0f;
 
-    private Map<String, PlyElement> elementTypes = new HashMap<>();
+    private List<PlyElementHeader> elementHeaders;
 
-    private int headerBytes = 0;
+    private PlyFormat format = null;
 
-    public int getPlyFormat() {
-        return plyFormat;
+    private List<String> comments;
+
+    public PlyHeader() {
+        elementHeaders = new ArrayList<>();
+        comments = new ArrayList<>();
     }
 
-    public void setPlyFormat(int format) {
-        this.plyFormat = format;
+    public void setBytesCount(int bytesCount) {
+        this.bytesCount = bytesCount;
     }
 
-    public float getPlyVersion() {
-        return plyVersion;
+    public int getBytesCount() {return this.bytesCount;}
+
+    public void setVersion(float f) {
+        this.version = f;
     }
 
-
-    public void setPlyVersion(float v) {
-        this.plyVersion = v;
+    public int findElement(String elementName) {
+        for (int i = 0; i < elementHeaders.size(); i ++) {
+            PlyElementHeader header = elementHeaders.get(i);
+            if (header.elementName.equals(elementName)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
-    public List<Pair<String, Integer>> getElementsNumber() {
-        return elementsNumber;
+    public PlyFormat getFormat() {
+        return format;
     }
 
-    public Map<String, PlyElement> getElementTypes() {
-        return elementTypes;
+    public void setFormat(PlyFormat format) {
+        this.format = format;
     }
 
-    public int getHeaderBytes() {
-        return headerBytes;
+    public List<PlyElementHeader> getElementHeaders() {
+        return elementHeaders;
     }
 
-    public void setHeaderBytes(int b) {
-        this.headerBytes = b;
+    public List<String> getComments() {
+        return comments;
     }
+
+    public static class PlyElementHeader {
+
+        int number = 0;
+
+        String elementName;
+
+        List<Pair<String, PlyPropertyType>> properties = new ArrayList<>();
+
+        public int findProperty(String key) {
+            for (int i = 0; i < properties.size(); i ++) {
+                Pair<String, PlyPropertyType> pair = properties.get(i);
+                if (pair.getKey().equals(key)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public List<Pair<String, PlyPropertyType>> getProperties() {
+            return properties;
+        }
+
+        public String getElementName() {
+            return elementName;
+        }
+
+        public void setElementName(String name) {
+            this.elementName = name;
+        }
+
+        public int getNumber() {return number;}
+
+        public void setNumber(int number) {
+            this.number = number;
+        }
+    }
+
 }

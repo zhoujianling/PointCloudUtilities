@@ -1,29 +1,19 @@
 package cn.jimmiez.pcu.io.ply;
 
-public enum PlyPropertyType {
+public interface PlyPropertyType {
 
-    NON_TYPE(0, "NotType"),
-    CHAR(1, "char"),
-    UCHAR(1, "uchar"),
-    SHORT(2, "short"),
-    USHORT(2, "ushort"),
-    INT(4, "int"),
-    UINT(4, "uint"),
-    FLOAT(4, "float"),
-    DOUBLE(8, "double"),
+    interface PlyScalarType extends PlyPropertyType {
 
-    // list type
-    LIST(0, "list");
+        PcuDataType dataType();
 
-    private int size = 0;
-    private String typeName = "NotType";
-
-    PlyPropertyType(int size, String tn) {
-        this.size = size;
-        this.typeName = tn;
     }
 
-    public int size() {return size;}
+    interface PlyListType extends PlyPropertyType {
 
-    public String typeName() {return typeName;}
+        PcuDataType sizeType();
+
+        PcuDataType dataType();
+
+    }
+
 }

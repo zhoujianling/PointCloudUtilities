@@ -1,14 +1,11 @@
 package cn.jimmiez.pcu.alg.skeleton;
 
 import cn.jimmiez.pcu.alg.skeleton.gr.GraphReductionSkeleton;
-import cn.jimmiez.pcu.common.graph.Graphs;
 import cn.jimmiez.pcu.io.ply.PlyReader;
 import cn.jimmiez.pcu.model.PointCloud3f;
 import cn.jimmiez.pcu.model.Skeleton;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
 import org.junit.Test;
-import static cn.jimmiez.pcu.CommonAssertions.*;
-import static org.junit.Assert.*;
 
 import javax.vecmath.Point3d;
 import java.io.File;

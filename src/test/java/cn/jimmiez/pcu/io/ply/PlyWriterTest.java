@@ -75,31 +75,31 @@ public class PlyWriterTest {
         PlyWriter writer = new PlyWriter();
         int code = writer
                 .prepare()
-                .format(PlyReader.FORMAT_BINARY_LITTLE_ENDIAN)
+                .format(PlyFormat.BINARY_LITTLE_ENDIAN)
                 .comment("this is test")
                 .comment("for Point Cloud Util v.0.0.3")
                 .defineElement("vertex")
-                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PcuDataType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
+                .defineListProperty("vertex_indices", PcuDataType.UCHAR, PcuDataType.INT, faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
-        assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+        assertEquals(code, (int) Constants.ERR_CODE_NO_ERROR);
 
         int code2 = writer
                 .prepare()
-                .format(PlyReader.FORMAT_BINARY_BIG_ENDIAN)
+                .format(PlyFormat.BINARY_BIG_ENDIAN)
                 .comment("this is test")
                 .comment("for Point Cloud Util v.0.0.3")
                 .defineElement("vertex")
-                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PcuDataType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
+                .defineListProperty("vertex_indices", PcuDataType.UCHAR, PcuDataType.INT, faceData)
                 .writeTo(tempPlyFile2)
                 .okay();
 
-        assertTrue(code2 == Constants.ERR_CODE_NO_ERROR);
+        assertEquals(code2, (int) Constants.ERR_CODE_NO_ERROR);
 
     }
 
@@ -137,17 +137,17 @@ public class PlyWriterTest {
 //        int code = writer.write(pointCloud, tempPlyFile);
         int code = writer
                 .prepare()
-                .format(PlyReader.FORMAT_ASCII)
+                .format(PlyFormat.ASCII)
                 .comment("this is test")
-                .comment("for Point Cloud Util v.0.0.3")
+                .comment("for Point Cloud Util.")
                 .defineElement("vertex")
-                .defineScalarProperties(new String[] {"x", "y", "z"}, PlyPropertyType.FLOAT, vertexData)
+                .defineScalarProperties(new String[] {"x", "y", "z"}, PcuDataType.FLOAT, vertexData)
                 .defineElement("face")
-                .defineListProperty("vertex_indices", PlyPropertyType.UCHAR, PlyPropertyType.INT, faceData)
+                .defineListProperty("vertex_indices", PcuDataType.UCHAR, PcuDataType.INT, faceData)
                 .writeTo(tempPlyFile)
                 .okay();
 
-        assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+        assertEquals(code, (int) Constants.ERR_CODE_NO_ERROR);
     }
 
     private static class PlyEntity {
@@ -170,7 +170,7 @@ public class PlyWriterTest {
             }
         }
 
-        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PlyPropertyType.DOUBLE)
+        @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PcuDataType.DOUBLE)
         public List<double[]> vertices() {
             List<double[]> result = new ArrayList<>();
             for (Point3d p : vertices) {

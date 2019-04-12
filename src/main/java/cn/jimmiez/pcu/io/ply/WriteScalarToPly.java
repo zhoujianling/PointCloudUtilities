@@ -15,9 +15,9 @@ public @interface WriteScalarToPly {
     String[] properties() default {};
 
     /**
-     * @return the type of property, see {@link PlyPropertyType}.
+     * @return the type of property, see {@link PcuDataType}.
      */
-    PlyPropertyType type() default PlyPropertyType.UINT;
+    PcuDataType type() default PcuDataType.UINT;
 
     /**
      * @return name of current ply-element

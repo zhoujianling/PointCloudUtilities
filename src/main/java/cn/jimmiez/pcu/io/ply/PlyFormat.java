@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.io.ply2;
+package cn.jimmiez.pcu.io.ply;
 
 public enum PlyFormat {
     ASCII("ascii"),

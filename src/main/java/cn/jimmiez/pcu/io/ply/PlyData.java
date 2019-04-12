@@ -1,4 +1,4 @@
-package cn.jimmiez.pcu.io.ply2;
+package cn.jimmiez.pcu.io.ply;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,13 +9,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
-public class PlyData implements Iterable<PlyElement2>{
+public class PlyData implements Iterable<PlyElement>{
 
-    private List<PlyElement2> plyElements = null;
+    private List<PlyElement> plyElements = null;
 
-    private PlyHeader2 header = null;
+    private PlyHeader header = null;
 
-    PlyData(PlyHeader2 header) {
+    PlyData(PlyHeader header) {
         if (header == null) throw new NullPointerException("PlyHeader is null.");
         this.header = header;
         this.plyElements = new ArrayList<>();
@@ -36,29 +36,29 @@ public class PlyData implements Iterable<PlyElement2>{
             default:
                 throw new IOException("Unsupported Ply format: " + header.getFormat());
         }
-        PlyElement2 element = null;
+        PlyElement element = null;
         while ((element = parser.next()) != null) {
             this.plyElements.add(element);
         }
     }
 
-    public PlyElement2 getElement(String elementName) {
+    public PlyElement getElement(String elementName) {
         int index = header.findElement(elementName);
         if (index < 0 || index >= plyElements.size()) return null;
         return plyElements.get(index);
     }
 
-    public PlyHeader2 getHeader() {
+    public PlyHeader getHeader() {
         return header;
     }
 
     @Override
-    public Iterator<PlyElement2> iterator() {
+    public Iterator<PlyElement> iterator() {
         return plyElements.iterator();
     }
 
     private interface PlyElementParser {
-        PlyElement2 next() throws IOException;
+        PlyElement next() throws IOException;
     }
 
     private class AsciiParser implements PlyElementParser {
@@ -72,9 +72,9 @@ public class PlyData implements Iterable<PlyElement2>{
         }
 
         @Override
-        public PlyElement2 next() throws IOException {
+        public PlyElement next() throws IOException {
             if (elementPointer >= header.getElementHeaders().size()) return null;
-            PlyElement2 element = new PlyElement2(header.getElementHeaders().get(elementPointer));
+            PlyElement element = new PlyElement(header.getElementHeaders().get(elementPointer));
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.getBytesCount(), bytes.length - header.getBytesCount());
             int propertiesCount = element.getHeader().properties.size();
             // TODO: 2019/3/20 optimize scanner read()
@@ -82,7 +82,7 @@ public class PlyData implements Iterable<PlyElement2>{
             boolean[] isList = new boolean[element.getHeader().properties.size()];
             for (int i = 0; i < isList.length; i ++) {
                 isList[i] = false;
-                if (element.getHeader().properties.get(i).getValue() instanceof PlyPropertyType2.PlyListType) {
+                if (element.getHeader().properties.get(i).getValue() instanceof PlyPropertyType.PlyListType) {
                     isList[i] = true;
                 }
             }
@@ -122,9 +122,9 @@ public class PlyData implements Iterable<PlyElement2>{
         }
 
         @Override
-        public PlyElement2 next() throws IOException {
+        public PlyElement next() throws IOException {
             if (elementPointer >= header.getElementHeaders().size()) return null;
-            PlyElement2 element = new PlyElement2(header.getElementHeaders().get(elementPointer));
+            PlyElement element = new PlyElement(header.getElementHeaders().get(elementPointer));
             int propertiesCount = element.getHeader().properties.size();
             int minByteCount = 0; // for one
             boolean[] isList = new boolean[element.getHeader().properties.size()];
@@ -132,15 +132,15 @@ public class PlyData implements Iterable<PlyElement2>{
             PcuDataType[] listDataType = new PcuDataType[element.getHeader().properties.size()];
             for (int i = 0; i < isList.length; i ++) {
                 isList[i] = false;
-                PlyPropertyType2 propertyType = element.getHeader().properties.get(i).getValue();
-                if (propertyType instanceof PlyPropertyType2.PlyListType) {
-                    PlyPropertyType2.PlyListType listType = (PlyPropertyType2.PlyListType) propertyType;
+                PlyPropertyType propertyType = element.getHeader().properties.get(i).getValue();
+                if (propertyType instanceof PlyPropertyType.PlyListType) {
+                    PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) propertyType;
                     isList[i] = true;
                     minByteCount += listType.sizeType().size();
                     types[i] = listType.sizeType();
                     listDataType[i] = listType.dataType();
-                } else if (propertyType instanceof PlyPropertyType2.PlyScalarType) {
-                    PlyPropertyType2.PlyScalarType scalarType = (PlyPropertyType2.PlyScalarType) propertyType;
+                } else if (propertyType instanceof PlyPropertyType.PlyScalarType) {
+                    PlyPropertyType.PlyScalarType scalarType = (PlyPropertyType.PlyScalarType) propertyType;
                     minByteCount += scalarType.dataType().size();
                     types[i] = scalarType.dataType();
                 }

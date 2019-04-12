@@ -15,14 +15,14 @@ public @interface WriteListToPly {
     String property() default "vertex_index";
 
     /**
-     * @return the type of list size, see {@link PlyPropertyType}.
+     * @return the type of list size, see {@link PcuDataType}.
      */
-    PlyPropertyType sizeType() default PlyPropertyType.UCHAR;
+    PcuDataType sizeType() default PcuDataType.UCHAR;
 
     /**
-     * @return the type of values in the list, see {@link PlyPropertyType}.
+     * @return the type of values in the list, see {@link PcuDataType}.
      */
-    PlyPropertyType valType() default PlyPropertyType.INT;
+    PcuDataType valType() default PcuDataType.INT;
 
     /**
      * @return the name of current ply-element
