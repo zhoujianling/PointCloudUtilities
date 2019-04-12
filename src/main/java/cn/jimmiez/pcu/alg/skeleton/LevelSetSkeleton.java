@@ -116,8 +116,42 @@ public class LevelSetSkeleton implements Skeletonization{
         List<List<Integer>> subGraphs = Graphs.connectedComponents(neighborhoodGraph);
         if (subGraphs.size() != 1) {
             System.out.println("Current n is " + this.n);
-            throw new IllegalStateException("The neighborhood graph is not a connected graph." +
-                    " You can specify a larger n by calling setN().");
+            Collections.sort(subGraphs, new Comparator<List<Integer>>() {
+                @Override
+                public int compare(List<Integer> o1, List<Integer> o2) {
+                    Integer size1 = o1.size();
+                    Integer size2 = o2.size();
+                    return size2.compareTo(size1);
+                }
+            });
+            int sizeSum = 0;
+            for (List<Integer> list : subGraphs) sizeSum += list.size();
+            if (subGraphs.get(0).size() * 1.0 / sizeSum > 0.95) {
+                List<Point3d> subset = new ArrayList<>();
+                for (int index : subGraphs.get(0)) {
+                    subset.add(data.get(index));
+                }
+                data.clear();
+                data.addAll(subset);
+
+                UndirectedGraph neighborhoodGraph2 = new UndirectedGraph();
+                octree.buildIndex(data);
+                for (int i = 0; i < data.size(); i ++) {
+                    neighborhoodGraph2.addVertex(i);
+                }
+                for (int i = 0; i < data.size(); i ++) {
+                    Point3d pi = data.get(i);
+                    int[] neighborIndices = octree.searchNearestNeighbors(k, i);
+                    for (int neighbor : neighborIndices) {
+                        Point3d pj = data.get(neighbor);
+                        neighborhoodGraph2.addEdge(i, neighbor, pi.distance(pj));
+                    }
+                }
+                neighborhoodGraph = neighborhoodGraph2;
+            } else {
+                throw new IllegalStateException("The neighborhood graph is not a connected graph." +
+                        " You can specify a larger n by calling setN().");
+            }
         }
     }
 

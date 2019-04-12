@@ -3,6 +3,7 @@ package cn.jimmiez.pcu.io.ply2;
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.io.ply.ReadFromPly;
 import cn.jimmiez.pcu.util.Pair;
+import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +52,14 @@ public class PlyReader2 {
         return data;
     }
 
+    /**
+     * check if the user-specified annotation {@link ReadFromPly} is valid
+     * @param readFromPly the user-specified annotation
+     * @param header the header of the ply file
+     * @return a k-v pair, key is a integer, indexing the element in the header
+     *  value is a list, describing the positions of the user-specified properties in the element
+     *  the pair can be null, when this annotation is invalid
+     */
     private Pair<Integer, List<Integer>> checkAnnotation(ReadFromPly readFromPly, PlyHeader2 header) {
         for (int i = 0; i < header.getElementHeaders().size(); i ++) {
             PlyHeader2.PlyElementHeader elementHeader = header.getElementHeaders().get(i);
@@ -80,83 +89,87 @@ public class PlyReader2 {
         List<Integer> propertiesIndices = indexPair.getValue();
 
         PlyElement2 element = plyData.getElement(annotation.element());
+        // we only see the data-type of the first property in the user-specified properties
         PlyPropertyType2 propertyType = element.getHeader().getProperties().get(propertiesIndices.get(0)).getValue();
         if (propertyType instanceof PlyPropertyType2.PlyListType) {
             PcuDataType dataType = ((PlyPropertyType2.PlyListType) propertyType).dataType();
-//            injectList(element, list, dataType, propertiesIndices);
-
+            injectList(element, list, dataType, propertiesIndices);
         } else {
             PcuDataType dataType = ((PlyPropertyType2.PlyScalarType) propertyType).dataType();
             injectScalar(element, list, dataType, propertiesIndices);
         }
     }
 
-//    @SuppressWarnings("unchecked")
-//    private void injectList(PlyElement2 element, List list, PcuDataType dataType, List<Integer> propertiesIndices) {
-//        int position = 0;
-//        int len = propertiesIndices.size();
-//        switch (dataType) {
-//            case CHAR:
-//            case UCHAR:
-//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
-//                    byte[] bytes = new byte[len];
-//                    for (int j = 0; j < len; j ++) {
-//                        double val = element.elementData[position + propertiesIndices.get(j)];
-//                        bytes[j] = (byte) val;
-//                    }
-//                    list.add(bytes);
-//                    position += element.getHeader().properties.size();
-//                }
-//                break;
-//            case SHORT:
-//            case USHORT:
-//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
-//                    short[] shorts = new short[len];
-//                    for (int j = 0; j < len; j ++) {
-//                        double val = element.elementData[position + propertiesIndices.get(j)];
-//                        shorts[j] = (short) val;
-//                    }
-//                    list.add(shorts);
-//                    position += element.getHeader().properties.size();
-//                }
-//                break;
-//            case INT:
-//            case UINT:
-//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
-//                    int[] vals = new int[len];
-//                    for (int j = 0; j < len; j ++) {
-//                        double val = element.elementData[position + propertiesIndices.get(j)];
-//                        vals[j] = (int) val;
-//                    }
-//                    list.add(vals);
-//                    position += element.getHeader().properties.size();
-//                }
-//                break;
-//            case FLOAT:
-//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
-//                    float[] vals = new float[len];
-//                    for (int j = 0; j < len; j ++) {
-//                        double val = element.elementData[position + propertiesIndices.get(j)];
-//                        vals[j] = (float) val;
-//                    }
-//                    list.add(vals);
-//                    position += element.getHeader().properties.size();
-//                }
-//                break;
-//            case DOUBLE:
-//                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
-//                    double[] vals = new double[len];
-//                    for (int j = 0; j < len; j ++) {
-//                        double val = element.elementData[position + propertiesIndices.get(j)];
-//                        vals[j] = val;
-//                    }
-//                    list.add(vals);
-//                    position += element.getHeader().properties.size();
-//                }
-//                break;
-//        }
-//
-//    }
+    @SuppressWarnings("unchecked")
+    private void injectList(PlyElement2 element, List list, PcuDataType dataType, List<Integer> propertiesIndices) {
+        int position = 0;
+        switch (dataType) {
+            case CHAR:
+            case UCHAR:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int index = (int) element.elementData[position + propertiesIndices.get(0)];
+                    double[] listData = element.elementListData.get(index);
+                    int len = listData.length;
+                    byte[] bytes = new byte[len];
+                    for (int j = 0; j < len; j ++) {
+                        bytes[j] = (byte) listData[j];
+                    }
+                    list.add(bytes);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case SHORT:
+            case USHORT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int index = (int) element.elementData[position + propertiesIndices.get(0)];
+                    double[] listData = element.elementListData.get(index);
+                    int len = listData.length;
+                    short[] shorts = new short[len];
+                    for (int j = 0; j < len; j ++) {
+                        shorts[j] = (short) listData[j];
+                    }
+                    list.add(shorts);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case INT:
+            case UINT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int index = (int) element.elementData[position + propertiesIndices.get(0)];
+                    double[] listData = element.elementListData.get(index);
+                    int len = listData.length;
+                    int[] integers = new int[len];
+                    for (int j = 0; j < len; j ++) {
+                        integers[j] = (int) listData[j];
+                    }
+                    list.add(integers);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case FLOAT:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int index = (int) element.elementData[position + propertiesIndices.get(0)];
+                    double[] listData = element.elementListData.get(index);
+                    int len = listData.length;
+                    float[] floats = new float[len];
+                    for (int j = 0; j < len; j ++) {
+                        floats[j] = (float) listData[j];
+                    }
+                    list.add(floats);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+            case DOUBLE:
+                for (int lineCount = 0; lineCount < element.getHeader().number; lineCount += 1) {
+                    int index = (int) element.elementData[position + propertiesIndices.get(0)];
+                    double[] listData = element.elementListData.get(index);
+                    list.add(listData);
+                    position += element.getHeader().properties.size();
+                }
+                break;
+        }
+
+    }
 
     @SuppressWarnings("unchecked")
     private void injectScalar(PlyElement2 element, List list, PcuDataType dataType, List<Integer> propertiesIndices) {
@@ -227,7 +240,7 @@ public class PlyReader2 {
 
     private <T> void injectData(PlyData data, Object userDefinedEntity) throws InvocationTargetException, IllegalAccessException {
         if (userDefinedEntity == null) return;
-        Method[] allMethods = userDefinedEntity.getClass().getDeclaredMethods();
+        List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedEntity);
         for (Method method : allMethods) {
             ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
             if (method.getReturnType() != List.class) {

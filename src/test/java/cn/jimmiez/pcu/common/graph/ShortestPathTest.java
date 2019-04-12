@@ -124,7 +124,7 @@ public class ShortestPathTest {
                 double minViDistance = shortestDistances.get(vi);
                 double minVkDistance = shortestDistances.get(vk);
                 double edgeWeight = graph.edgeWeight(vi, vk);
-                if (minViDistance == Graph.N) continue;
+                //if (minViDistance == Graph.N) continue;
                 if (minViDistance + edgeWeight < minVkDistance || minVkDistance == Graph.N) {
                     shortestDistances.set(vk, minViDistance + edgeWeight);
                 }
