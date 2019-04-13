@@ -13,7 +13,7 @@ public class ObjReaderTest {
     public void testReadObjData() {
         ObjReader reader = new ObjReader();
         File file = new File(ObjReaderTest.class.getClassLoader().getResource("model/obj/bunny.obj").getFile());
-        Map<ObjReader.ObjDataType, List<float[]>> dataMap = reader.read(file);
+        Map<ObjDataType, List<float[]>> dataMap = reader.read(file);
         assertNotNull(dataMap);
         assertTrue(dataMap.size() > 0);
 

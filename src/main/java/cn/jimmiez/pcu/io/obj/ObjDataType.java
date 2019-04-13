@@ -1,0 +1,56 @@
+package cn.jimmiez.pcu.io.obj;
+
+public enum ObjDataType {
+    // vertex data
+    V_GEOMETRIC_VERTICES,
+    VT_TEXTURE_VERTICES,
+    VN_VERTEX_NORMALS,
+    VP_PARAMETER_SPACE_VERTICES,
+
+    // free form curve/surface attributes
+    CSTYPE_RATIONAL_FORMS_OF_CURVE_ETC,
+    DEG_DEGREE,
+    BMAT_BASIS_MATRIX,
+    STEP_STEP_SIZE,
+
+    // elements
+    P_POINT,
+    L_LINE,
+    F_FACE,
+    CURV_CURVE,
+    CURV2_2D_CURVE,
+    SURF_SURFACE,
+
+    // free-form curve/surface body statements
+    PARM_PARAMETER_VALUES,
+    TRIM_OUTER_TRIMMING_LOOP,
+    HOLE_INNER_TRIMMING_LOOP,
+    SCRV_SEPECIAL_CURVE,
+    SP_SPECIAL_POINT,
+    END_END_STATEMENT,
+
+    // connectivity between free-form surfaces
+    CON_CONNECT,
+
+    // grouping
+    G_GROUP_NAME,
+    S_SMOOTHING_GROOP,
+    MG_MERGING_GROUP,
+    O_OBJECT_NAME,
+
+    // display/render attributes
+    BEVEL_BEVEL_INTERPOLATION,
+    C_INTERP_COLOR_INTERPOLATION,
+    D_INTERP_DISSOLVE_INTERPOLATION,
+    LOD_LEVEL_OF_DETAIL,
+    USEMTL_MATERIAL_NAME,
+    MTLLIB_MATERIAL_LIBRARY,
+    SHADOW_OBJ_SHADOW_CASTING,
+    TRACE_OBJ_RAY_TRACING,
+    CTECH_CURVE_APPROXIMATION_TECHNIQUE,
+    STECH_SURFACE_APPROXIMATION_TECHNIQUE,
+
+    //
+    COMMENT_COMMENT
+}
+
