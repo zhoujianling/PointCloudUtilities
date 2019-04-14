@@ -242,7 +242,6 @@ public class PlyReader {
         for (Method method : allMethods) {
             ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
             if (method.getReturnType() != List.class) {
-//                System.err.println("Not a valid getter.");
                 continue;
             }
             List list = (List) method.invoke(userDefinedEntity);

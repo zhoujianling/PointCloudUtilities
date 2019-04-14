@@ -302,15 +302,11 @@ public class LevelSetSkeleton implements Skeletonization{
     }
 
     private Point3d baryCenter(List<Point3d> points, List<Integer> indices) {
-        double x = 0;
-        double y = 0;
-        double z = 0;
-        for (Integer index : indices) {
-            x += points.get(index).x;
-            y += points.get(index).y;
-            z += points.get(index).z;
-        }
-        return new Point3d(x / indices.size(), y / indices.size(), z / indices.size());
+        Point3d center = new Point3d(0, 0, 0);
+        if (indices.size() < 1) return center;
+        for (Integer index : indices) center.add(points.get(index));
+        center.scale(1.0 / indices.size());
+        return center;
     }
 
     /**
@@ -447,8 +443,9 @@ public class LevelSetSkeleton implements Skeletonization{
             Graph graph = new UndirectedGraph();
             double secondaryEdgeSum = 0.0;
             for (int i = 0; i < points.size(); i ++) graph.addVertex(i);
+            int k = Math.min(points.size() - 1, 10);
             for (int i = 0; i < points.size(); i ++) {
-                int[] indices = octree.searchNearestNeighbors(10, i);
+                int[] indices = octree.searchNearestNeighbors(k, i);
                 for (int j = 0; j < indices.length; j ++) {
                     int index = indices[j];
                     double dis = points.get(i).distance(points.get(index));
@@ -483,7 +480,4 @@ public class LevelSetSkeleton implements Skeletonization{
 
     public int getK() {return this.k;}
 
-    public BaseGraph getNeighborhoodGraph() {
-        return neighborhoodGraph;
-    }
 }

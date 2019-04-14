@@ -1,49 +1,18 @@
 package cn.jimmiez.pcu.io.obj;
 
 import cn.jimmiez.pcu.util.Pair;
+import cn.jimmiez.pcu.util.PcuReflectUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.*;
 
 public class ObjReader {
 
-
-    public static class ObjData {
-
-        Map<ObjDataType, List<double[]>> vectorData;
-
-        /**
-         * a hash-map that stores all element data
-         * Type -> (2 , [v1,vt1,v2,vt2])
-         * Type -> (3 , [v1,vt1,vn1,v2,vt2,vn2])
-         **/
-        Map<ObjDataType, Pair<Integer, List<double[]>>> elementData;
-
-        Map<ObjDataType, String> textData;
-
-        ObjData() {
-            textData = new HashMap<>();
-            vectorData = new HashMap<>();
-            elementData = new HashMap<>();
-
-            vectorData.put(ObjDataType.V_GEOMETRIC_VERTICES, new ArrayList<double[]>());
-            vectorData.put(ObjDataType.VT_TEXTURE_VERTICES, new ArrayList<double[]>());
-            vectorData.put(ObjDataType.VN_VERTEX_NORMALS, new ArrayList<double[]>());
-            vectorData.put(ObjDataType.VP_PARAMETER_SPACE_VERTICES, new ArrayList<double[]>());
-
-            elementData.put(ObjDataType.P_POINT, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
-            elementData.put(ObjDataType.F_FACE, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
-            elementData.put(ObjDataType.L_LINE, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
-        }
-
-        public void clear() {
-            for (List list : vectorData.values()) list.clear();
-            textData.clear();
-        }
-    }
 
     private static class ObjParser {
 
@@ -241,10 +210,6 @@ public class ObjReader {
 
     }
 
-//    private<T> void extractData(ObjParser parser, T object) {
-//
-//    }
-
     public ObjData read(File file) {
         if (!file.exists()) {
             System.err.println("File: " + file.getName() + " does NOT exist.");
@@ -261,24 +226,5 @@ public class ObjReader {
         return parser.objData;
     }
 
-//    public <T> T read(File file, Class<T> clazz) {
-//        T object = null;
-//        try {
-//            object = clazz.newInstance();
-//        } catch (InstantiationException e) {
-//            e.printStackTrace();
-//        } catch (IllegalAccessException e) {
-//            e.printStackTrace();
-//        }
-//        readObj(file, object);
-//        return object;
-//    }
-//
-//    private void readObj(File file, Object object) {
-//        ObjData objData = read(file);
-//        if (objData == null) {
-//
-//        }
-//    }
 
 }

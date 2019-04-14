@@ -4,8 +4,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -28,9 +26,17 @@ public class ObjReaderTest {
     public void testReadObjData() {
         ObjReader reader = new ObjReader();
         File file = new File(ObjReaderTest.class.getClassLoader().getResource("model/obj/bunny.obj").getFile());
-        ObjReader.ObjData dataMap = reader.read(file);
-        assertNotNull(dataMap);
-//        assertTrue(dataMap.size() > 0);
+        ObjData data = reader.read(file);
+        assertNotNull(data);
+        assertNotNull(data.vertices());
+        assertNotNull(data.originalFaces());
+
+        assertEquals(2503, data.vertices().size());
+        assertEquals(4968, data.originalFaces().getValue().size());
+        assertEquals(1, (int)data.originalFaces().getKey());
+        assertNull(data.vertexTextures());
+        assertNull(data.normals());
+        assertNull(data.mtllib());
 
     }
 }
