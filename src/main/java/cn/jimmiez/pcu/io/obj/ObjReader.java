@@ -1,5 +1,7 @@
 package cn.jimmiez.pcu.io.obj;
 
+import cn.jimmiez.pcu.util.Pair;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -8,69 +10,60 @@ import java.util.*;
 
 public class ObjReader {
 
-//    public static class ObjData {
-//
-//        private Map<ObjDataType, List<String>> textData;
-//
-//        private Map<ObjDataType, List<float[]>> vectorData;
-//
-//
-//    }
+
+    public static class ObjData {
+
+        Map<ObjDataType, List<double[]>> vectorData;
+
+        /**
+         * a hash-map that stores all element data
+         * Type -> (2 , [v1,vt1,v2,vt2])
+         * Type -> (3 , [v1,vt1,vn1,v2,vt2,vn2])
+         **/
+        Map<ObjDataType, Pair<Integer, List<double[]>>> elementData;
+
+        Map<ObjDataType, String> textData;
+
+        ObjData() {
+            textData = new HashMap<>();
+            vectorData = new HashMap<>();
+            elementData = new HashMap<>();
+
+            vectorData.put(ObjDataType.V_GEOMETRIC_VERTICES, new ArrayList<double[]>());
+            vectorData.put(ObjDataType.VT_TEXTURE_VERTICES, new ArrayList<double[]>());
+            vectorData.put(ObjDataType.VN_VERTEX_NORMALS, new ArrayList<double[]>());
+            vectorData.put(ObjDataType.VP_PARAMETER_SPACE_VERTICES, new ArrayList<double[]>());
+
+            elementData.put(ObjDataType.P_POINT, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
+        }
+
+        public void clear() {
+            for (List list : vectorData.values()) list.clear();
+            textData.clear();
+        }
+    }
 
     private static class ObjParser {
 
-        private Map<ObjDataType, List<float[]>> objData = new HashMap<>();
+        //private Map<ObjDataType, List<float[]>> objData = new HashMap<>();
+        private ObjData objData = new ObjData();
 
         private static final int STATE_READY = 0;
         private static final int STATE_READING_LINE = 1;
         private static final int STATE_PARSING_TYPE = 2;
         private static final int STATE_PARSING_DATA = 3;
-        private static final int STATE_PARSING_MTL = 4;
         private static final int STATE_COMPLETE = 9;
         private static final int STATE_ERROR = 10;
-        private static final Map<String, ObjDataType> KEYWORD_MAP = new HashMap<>();
+        private Map<String, ObjDataType> keywordMap = new HashMap<>();
 
-        static {
-            KEYWORD_MAP.put("v", ObjDataType.V_GEOMETRIC_VERTICES);
-            KEYWORD_MAP.put("vt", ObjDataType.VT_TEXTURE_VERTICES);
-            KEYWORD_MAP.put("vn", ObjDataType.VN_VERTEX_NORMALS);
-            KEYWORD_MAP.put("vp", ObjDataType.VP_PARAMETER_SPACE_VERTICES);
-            KEYWORD_MAP.put("cstype", ObjDataType.CSTYPE_RATIONAL_FORMS_OF_CURVE_ETC);
-            KEYWORD_MAP.put("deg", ObjDataType.DEG_DEGREE);
-            KEYWORD_MAP.put("bmat", ObjDataType.BMAT_BASIS_MATRIX);
-            KEYWORD_MAP.put("step", ObjDataType.STEP_STEP_SIZE);
-            KEYWORD_MAP.put("p", ObjDataType.P_POINT);
-            KEYWORD_MAP.put("l", ObjDataType.L_LINE);
-            KEYWORD_MAP.put("f", ObjDataType.F_FACE);
-            KEYWORD_MAP.put("curv", ObjDataType.CURV_CURVE);
-            KEYWORD_MAP.put("curv2", ObjDataType.CURV2_2D_CURVE);
-            KEYWORD_MAP.put("surf", ObjDataType.SURF_SURFACE);
-            KEYWORD_MAP.put("parm", ObjDataType.PARM_PARAMETER_VALUES);
-            KEYWORD_MAP.put("trim", ObjDataType.TRIM_OUTER_TRIMMING_LOOP);
-            KEYWORD_MAP.put("hole", ObjDataType.HOLE_INNER_TRIMMING_LOOP);
-            KEYWORD_MAP.put("scrv", ObjDataType.SCRV_SEPECIAL_CURVE);
-            KEYWORD_MAP.put("sp", ObjDataType.SP_SPECIAL_POINT);
-            KEYWORD_MAP.put("end", ObjDataType.END_END_STATEMENT);
-            KEYWORD_MAP.put("con", ObjDataType.CON_CONNECT);
-            KEYWORD_MAP.put("g", ObjDataType.G_GROUP_NAME);
-            KEYWORD_MAP.put("s", ObjDataType.S_SMOOTHING_GROOP);
-            KEYWORD_MAP.put("mg", ObjDataType.MG_MERGING_GROUP);
-            KEYWORD_MAP.put("o", ObjDataType.O_OBJECT_NAME);
-            KEYWORD_MAP.put("bevel", ObjDataType.BEVEL_BEVEL_INTERPOLATION);
-            KEYWORD_MAP.put("c_interp", ObjDataType.C_INTERP_COLOR_INTERPOLATION);
-            KEYWORD_MAP.put("d_interp", ObjDataType.D_INTERP_DISSOLVE_INTERPOLATION);
-            KEYWORD_MAP.put("lod", ObjDataType.LOD_LEVEL_OF_DETAIL);
-            KEYWORD_MAP.put("usemtl", ObjDataType.USEMTL_MATERIAL_NAME);
-            KEYWORD_MAP.put("mtllib", ObjDataType.MTLLIB_MATERIAL_LIBRARY);
-            KEYWORD_MAP.put("shadow_obj", ObjDataType.SHADOW_OBJ_SHADOW_CASTING);
-            KEYWORD_MAP.put("trace_obj", ObjDataType.TRACE_OBJ_RAY_TRACING);
-            KEYWORD_MAP.put("ctech", ObjDataType.CTECH_CURVE_APPROXIMATION_TECHNIQUE);
-            KEYWORD_MAP.put("stech", ObjDataType.STECH_SURFACE_APPROXIMATION_TECHNIQUE);
-            KEYWORD_MAP.put("#", ObjDataType.COMMENT_COMMENT);
-
+        ObjParser() {
+            ObjDataType[] enumValues = ObjDataType.class.getEnumConstants();
+            for (ObjDataType type : enumValues) {
+                keywordMap.put(type.getKeyword(), type);
+            }
         }
 
-        public void parseObjFile(File file) throws IOException {
+        void parseObjFile(File file) throws IOException {
             objData.clear();
             byte[] bytes = Files.readAllBytes(file.toPath());
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
@@ -79,6 +72,8 @@ public class ObjReader {
             int currentState = STATE_READY;
             ObjDataType currentType = null;
             String currentLine = null;
+            String errorMessage = null;
+            String[] slices = null;
 
             while (loop) {
                 switch (currentState) {
@@ -90,6 +85,10 @@ public class ObjReader {
                     case STATE_READING_LINE:
                         if (scanner.hasNextLine()) {
                             currentLine = scanner.nextLine();
+                            // '\' may occur in the matrix definition
+                            while (currentLine.endsWith("\\") && scanner.hasNextLine()) {
+                                currentLine = currentLine + scanner.nextLine();
+                            }
                             currentState = STATE_PARSING_TYPE;
                         } else {
                             currentState = STATE_COMPLETE;
@@ -100,33 +99,29 @@ public class ObjReader {
                             currentState = STATE_ERROR;
                             break;
                         }
-                        String[] slices = currentLine.split("(\\s)+");
+                        slices = currentLine.split("(\\s)+");
                         if (slices.length < 1) {
                             currentState = STATE_ERROR;
                             break;
                         }
                         String typeKeyword = slices[0];
-                        currentType = KEYWORD_MAP.get(typeKeyword);
+                        currentType = keywordMap.get(typeKeyword);
                         if (currentType == null) {
                             System.err.println("Warning: unrecognized data type: " + typeKeyword);
                             currentState = STATE_READING_LINE;
-                        } else if (currentType.equals(ObjDataType.COMMENT_COMMENT)) {
-                            currentState = STATE_READING_LINE;
                         } else {
-                            if (objData.get(currentType) == null) {
-                                objData.put(currentType, new ArrayList<float[]>());
-                            }
                             currentState = STATE_PARSING_DATA;
                         }
                         break;
                     }
                     case STATE_PARSING_DATA: {
-                        String[] slices = currentLine.split(" ");
-                        float[] dataArray = new float[slices.length - 1];
-                        for (int i = 1; i < slices.length; i ++) {
-                            dataArray[i - 1] = Float.valueOf(slices[i]);
+                        try {
+                            parseObjData(currentType, slices);
+                        } catch (IOException e) {
+                            currentState = STATE_ERROR;
+                            errorMessage = e.getMessage();
+                            break;
                         }
-                        objData.get(currentType).add(dataArray);
                         currentState = STATE_READING_LINE;
                         break;
                     }
@@ -134,10 +129,112 @@ public class ObjReader {
                         loop = false;
                         break;
                     case STATE_ERROR:
+                        System.err.println(errorMessage);
                         loop = false;
                         break;
                 }
             }
+        }
+
+        private void parseObjData(ObjDataType type, String[] slices) throws IOException {
+            if (slices.length < 2) throw new IOException("Expect the value of " + type.getKeyword() + ".");
+            switch (type) {
+                /* vertex data */
+                case V_GEOMETRIC_VERTICES:
+                case VT_TEXTURE_VERTICES:
+                case VN_VERTEX_NORMALS:
+                case VP_PARAMETER_SPACE_VERTICES: {
+                    double[] dataArray = new double[slices.length - 1];
+                    for (int i = 1; i < slices.length; i++) {
+                        dataArray[i - 1] = Double.valueOf(slices[i]);
+                    }
+                    objData.vectorData.get(type).add(dataArray);
+                }
+                    break;
+
+                /* free-form curve/surface attributes */
+                case CSTYPE_RATIONAL_FORMS_OF_CURVE_ETC:
+                    // spec p.11
+                    // cstype rat type
+                case DEG_DEGREE:
+                case BMAT_BASIS_MATRIX:
+                case STEP_STEP_SIZE:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+
+                /* elements */
+                case P_POINT:
+                case L_LINE:
+                case F_FACE: {
+                    // spec p.17
+                    int cnt = 0;
+                    Pair<Integer, List<double[]>> pair = objData.elementData.get(type);
+                    int indicesCntPerVertex = pair.getKey();
+                    if (indicesCntPerVertex == 0) {
+                        indicesCntPerVertex = slices[1].split("/").length;
+                        pair.setKey(indicesCntPerVertex);
+                    }
+                    double[] dataArray = new double[(slices.length - 1) * indicesCntPerVertex];
+                    for (int i = 1; i < slices.length; i++) {
+                        String[] subArrays = slices[i].split("/");
+                        for (String subArray : subArrays) {
+                            dataArray[cnt ++] = Double.valueOf(subArray);
+                        }
+                    }
+                    pair.getValue().add(dataArray);
+                }
+
+                case CURV_CURVE:
+                case CURV2_2D_CURVE:
+                case SURF_SURFACE:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+
+                /* free-form curve/surface body statements */
+                case PARM_PARAMETER_VALUES:
+                case TRIM_OUTER_TRIMMING_LOOP:
+                case HOLE_INNER_TRIMMING_LOOP:
+                case SCRV_SEPECIAL_CURVE:
+                case SP_SPECIAL_POINT:
+                case END_END_STATEMENT:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+
+                /* connection */
+                case CON_CONNECT:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+
+                /* grouping */
+                case G_GROUP_NAME:
+                case S_SMOOTHING_GROOP:
+                case MG_MERGING_GROUP:
+                case O_OBJECT_NAME:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+
+                /* display / render attributes */
+                case BEVEL_BEVEL_INTERPOLATION:
+                case C_INTERP_COLOR_INTERPOLATION:
+                case D_INTERP_DISSOLVE_INTERPOLATION:
+                case LOD_LEVEL_OF_DETAIL:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
+                case USEMTL_MATERIAL_NAME:
+                case MTLLIB_MATERIAL_LIBRARY:
+                    objData.textData.put(type, slices[1]);
+                    break;
+                case SHADOW_OBJ_SHADOW_CASTING:
+                case TRACE_OBJ_RAY_TRACING:
+                case CTECH_CURVE_APPROXIMATION_TECHNIQUE:
+                case STECH_SURFACE_APPROXIMATION_TECHNIQUE:
+                    break;
+                case COMMENT_COMMENT:
+                    // do nothing
+                    default:
+                    break;
+            }
+
         }
 
     }
@@ -146,7 +243,7 @@ public class ObjReader {
 //
 //    }
 
-    public Map<ObjDataType, List<float[]>> read(File file) {
+    public ObjData read(File file) {
         if (!file.exists()) {
             System.err.println("File: " + file.getName() + " does NOT exist.");
             return null;
