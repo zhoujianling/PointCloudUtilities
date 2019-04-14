@@ -35,6 +35,8 @@ public class ObjReader {
             vectorData.put(ObjDataType.VP_PARAMETER_SPACE_VERTICES, new ArrayList<double[]>());
 
             elementData.put(ObjDataType.P_POINT, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
+            elementData.put(ObjDataType.F_FACE, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
+            elementData.put(ObjDataType.L_LINE, new Pair<Integer, List<double[]>>(0, new ArrayList<double[]>()));
         }
 
         public void clear() {
@@ -183,7 +185,7 @@ public class ObjReader {
                     }
                     pair.getValue().add(dataArray);
                 }
-
+                    break;
                 case CURV_CURVE:
                 case CURV2_2D_CURVE:
                 case SURF_SURFACE:
@@ -258,4 +260,25 @@ public class ObjReader {
         }
         return parser.objData;
     }
+
+//    public <T> T read(File file, Class<T> clazz) {
+//        T object = null;
+//        try {
+//            object = clazz.newInstance();
+//        } catch (InstantiationException e) {
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
+//        readObj(file, object);
+//        return object;
+//    }
+//
+//    private void readObj(File file, Object object) {
+//        ObjData objData = read(file);
+//        if (objData == null) {
+//
+//        }
+//    }
+
 }
