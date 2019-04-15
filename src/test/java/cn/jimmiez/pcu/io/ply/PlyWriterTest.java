@@ -2,6 +2,8 @@ package cn.jimmiez.pcu.io.ply;
 
 import cn.jimmiez.pcu.Constants;
 import cn.jimmiez.pcu.Constants4Test;
+import cn.jimmiez.pcu.model.PointCloud3f;
+import cn.jimmiez.pcu.model.PolygonMesh3f;
 import org.junit.*;
 
 import javax.vecmath.Point3d;
@@ -87,6 +89,15 @@ public class PlyWriterTest {
 
         assertEquals(code, (int) Constants.ERR_CODE_NO_ERROR);
 
+        PlyReader reader = new PlyReader();
+        PolygonMesh3f mesh = reader.read(tempPlyFile, PolygonMesh3f.class);
+        assertNotNull(mesh);
+        assertEquals(vertexData.size(), mesh.getPoints().size());
+        assertEquals(vertexData.get(0)[0], mesh.getPoints().get(0)[0], 1E-6);
+        assertEquals(vertexData.get(0)[1], mesh.getPoints().get(0)[1], 1E-6);
+        assertEquals(vertexData.get(0)[2], mesh.getPoints().get(0)[2], 1E-6);
+        assertEquals(faceData.size(), mesh.getFaces().size());
+
         int code2 = writer
                 .prepare()
                 .format(PlyFormat.BINARY_BIG_ENDIAN)
@@ -101,6 +112,19 @@ public class PlyWriterTest {
 
         assertEquals(code2, (int) Constants.ERR_CODE_NO_ERROR);
 
+        reader = new PlyReader();
+        mesh = reader.read(tempPlyFile, PolygonMesh3f.class);
+        assertNotNull(mesh);
+        assertEquals(vertexData.size(), mesh.getPoints().size());
+        for (int i = 0; i < vertexData.size(); i ++) {
+            assertEquals(vertexData.get(i)[0], mesh.getPoints().get(i)[0], 1E-6);
+            assertEquals(vertexData.get(i)[1], mesh.getPoints().get(i)[1], 1E-6);
+            assertEquals(vertexData.get(i)[2], mesh.getPoints().get(i)[2], 1E-6);
+        }
+        assertEquals(faceData.size(), mesh.getFaces().size());
+        for (int i = 0; i < faceData.size(); i++) {
+            assertEquals(faceData.get(i).length, mesh.getFaces().get(i).length);
+        }
     }
 
     @Test
@@ -109,11 +133,19 @@ public class PlyWriterTest {
         userDir += File.separator;
         userDir += Constants4Test.OUTPUT_DIR;
         File tempPlyFile = new File(userDir.concat(File.separator).concat("temp.ply"));
-        PlyEntity entity = new PlyEntity(1000);
+        int vertexCnt = 1000;
+        PlyEntity entity = new PlyEntity(vertexCnt);
         PlyWriter writer = new PlyWriter();
         int code = writer.write(entity, tempPlyFile);
 
-        assertTrue(code == Constants.ERR_CODE_NO_ERROR);
+        assertEquals(code, (int) Constants.ERR_CODE_NO_ERROR);
+        PlyReader reader = new PlyReader();
+        PlyEntity object4Read = reader.read(tempPlyFile, PlyEntity.class);
+        assertNotNull(object4Read);
+        assertEquals(vertexCnt, object4Read.vertices().size());
+        for (int i = 0; i < vertexCnt; i ++) {
+            assertEquals(3, object4Read.vertices().get(i).length);
+        }
     }
 
     @Test
@@ -148,17 +180,28 @@ public class PlyWriterTest {
                 .okay();
 
         assertEquals(code, (int) Constants.ERR_CODE_NO_ERROR);
+
+        PlyReader reader = new PlyReader();
+        PolygonMesh3f mesh = reader.read(tempPlyFile, PolygonMesh3f.class);
+        assertNotNull(mesh);
+        assertEquals(vertexData.size(), mesh.getPoints().size());
+        assertEquals(vertexData.get(0)[0], mesh.getPoints().get(0)[0], 1E-6);
+        assertEquals(vertexData.get(0)[1], mesh.getPoints().get(0)[1], 1E-6);
+        assertEquals(vertexData.get(0)[2], mesh.getPoints().get(0)[2], 1E-6);
+        assertEquals(faceData.size(), mesh.getFaces().size());
     }
 
-    private static class PlyEntity {
+    public static class PlyEntity {
 
-        List<Point3d> vertices = new ArrayList<>();
+        List<double[]> vertices = new ArrayList<>();
         List<int[]> vertexIndices = new ArrayList<>();
+
+        public PlyEntity() {}
 
         public PlyEntity(int n) {
             Random r = new Random(System.currentTimeMillis());
             for (int i = 0; i < n; i ++) {
-                vertices.add(new Point3d(r.nextDouble(), r.nextDouble(), r.nextDouble()));
+                vertices.add(new double[]{r.nextDouble(), r.nextDouble(), r.nextDouble()});
             }
             int l = Math.min(3, n / 2);
             for (int i = 0; i < n; i ++) {
@@ -171,15 +214,13 @@ public class PlyWriterTest {
         }
 
         @WriteScalarToPly(element = "vertex", properties = {"x", "y", "z"}, type = PcuDataType.DOUBLE)
+        @ReadFromPly(element = "vertex", properties = {"x", "y", "z"})
         public List<double[]> vertices() {
-            List<double[]> result = new ArrayList<>();
-            for (Point3d p : vertices) {
-                result.add(new double[]{p.x, p.y, p.z});
-            }
-            return result;
+            return vertices;
         }
 
-        @WriteListToPly(element = "face", property = "vertex_index")
+        @WriteListToPly(element = "face", property = "vertex_indices")
+        @ReadFromPly(element = "face", properties = {"vertex_indices"})
         public List<int[]> faces() {
             return vertexIndices;
         }

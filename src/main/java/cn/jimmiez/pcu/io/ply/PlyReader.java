@@ -241,9 +241,8 @@ public class PlyReader {
         List<Method> allMethods = PcuReflectUtil.fetchAllMethods(userDefinedEntity);
         for (Method method : allMethods) {
             ReadFromPly annotation = method.getAnnotation(ReadFromPly.class);
-            if (method.getReturnType() != List.class) {
-                continue;
-            }
+            if (annotation == null) continue;
+            if (method.getReturnType() != List.class) continue;
             List list = (List) method.invoke(userDefinedEntity);
             injectDataImpl(data, list, annotation);
         }

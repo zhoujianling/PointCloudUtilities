@@ -109,7 +109,7 @@ public class PlyWriter {
             return scalarType.dataType().typeName();
         } else if (type instanceof PlyPropertyType.PlyListType) {
             PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) type;
-            return "list " + listType.sizeType() + " " + listType.dataType();
+            return "list " + listType.sizeType().typeName() + " " + listType.dataType().typeName();
         } else {
             throw new IllegalStateException("Unsupported ply property type");
         }
@@ -183,8 +183,8 @@ public class PlyWriter {
         for (PlyHeader.PlyElementHeader element : pq.elements) {
             Map<String, List> dataMap = pq.elementData.get(element.elementName);
             if (element.properties.size() < 1) continue;
-            int dataSize = element.number;
-            for (int i = 0; i < dataSize; i ++) {
+
+            for (int i = 0; i < element.number; i ++) {
                 int cnt = 0;
                 List partOfData = null;
                 for (Pair<String, PlyPropertyType> pair : element.properties) {
@@ -194,7 +194,7 @@ public class PlyWriter {
                         partOfData = dataMap.get(propertyName); cnt = 0;
                     }
 
-                    if (pair instanceof PlyPropertyType.PlyListType) {
+                    if (pair.getValue() instanceof PlyPropertyType.PlyListType) {
                         PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) pair.getValue();
                         PcuDataType type = listType.dataType();
                         printAsciiList(partOfData.get(i), ps, type);
@@ -301,8 +301,8 @@ public class PlyWriter {
         for (PlyHeader.PlyElementHeader element : pq.elements) {
             Map<String, List> dataMap = pq.elementData.get(element.elementName);
             if (element.properties.size() < 1) continue;
-            int dataSize = element.number;
-            for (int i = 0; i < dataSize; i ++) {
+            //int dataSize = dataMap.get(element.properties.get(0).getKey()).size();
+            for (int i = 0; i < element.number; i ++) {
                 int cnt = 0;
                 List partOfData = null;
                 for (Pair<String, PlyPropertyType> pair : element.properties) {
@@ -310,7 +310,7 @@ public class PlyWriter {
                     if (partOfData == null || dataMap.get(propertyName) != partOfData) {
                         partOfData = dataMap.get(propertyName); cnt = 0;
                     }
-                    if (pair instanceof PlyPropertyType.PlyListType) {
+                    if (pair.getValue() instanceof PlyPropertyType.PlyListType) {
                         PlyPropertyType.PlyListType listType = (PlyPropertyType.PlyListType) pair.getValue();
                         PcuDataType sizeType = listType.sizeType();
                         PcuDataType valType = listType.dataType();
@@ -476,6 +476,12 @@ public class PlyWriter {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperties()");
             }
             PlyHeader.PlyElementHeader element = elements.get(elements.size() - 1);
+            int dataSize = data.size();
+            if (element.number != 0 && element.number != dataSize) {
+                throw new IllegalArgumentException("After defining element " + element.elementName + ", you give two list with different sizes.");
+            } else {
+                element.number = dataSize;
+            }
             for (String propertyName : propertyNames) {
                 element.properties.add(new Pair<String, PlyPropertyType>(propertyName, new PlyPropertyType.PlyScalarType() {
                     @Override
@@ -493,6 +499,12 @@ public class PlyWriter {
                 throw new IllegalStateException("defineElement() must be called before defineScalarProperties()");
             }
             PlyHeader.PlyElementHeader element = elements.get(elements.size() - 1);
+            int dataSize = data.size();
+            if (element.number != 0 && element.number != dataSize) {
+                throw new IllegalArgumentException("After defining element " + element.elementName + ", you give two lists with different sizes.");
+            } else {
+                element.number = dataSize;
+            }
             element.properties.add(new Pair<String, PlyPropertyType>(propertyName, new PlyPropertyType.PlyListType() {
                 @Override
                 public PcuDataType sizeType() {
