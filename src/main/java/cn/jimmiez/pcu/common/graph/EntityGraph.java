@@ -50,6 +50,10 @@ public class EntityGraph<E> implements BaseGraph {
         if (e == null) throw new NullPointerException("The value of vertex cannot be null.");
         values.put(id, e);
         delegate.addVertex(id);
+        int nextId = idGenerator.incrementAndGet();
+        while (nextId < id) {
+            nextId = idGenerator.incrementAndGet();
+        }
     }
 
     /**
