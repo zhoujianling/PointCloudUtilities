@@ -131,7 +131,7 @@ public class Octree {
 
         long leafNodeIndex = indexOfNearestCell(point);
 
-        PriorityQueue<Integer> queue = new PriorityQueue<>(k, comparator);
+        PriorityQueue<Integer> queue = new PriorityQueue<>(k + 1, comparator);
         Set<Point3d> set = new HashSet<>(k * 2);
         Set<Long> visitedBoxes = new HashSet<>();
         double leafSize = octreeIndices.get(leafNodeIndex).getxExtent();

@@ -104,6 +104,59 @@ public class GraphsTest {
     }
 
     @Test
+    public void testPrimMst() {
+        // test null
+        UndirectedGraph graph = null;
+        UndirectedGraph mst = Graphs.minimalSpanningTree(graph);
+        assertNull(mst);
+
+        // test a graph with one vertex
+        graph = new UndirectedGraph();
+        graph.addVertex(0);
+        mst = Graphs.minimalSpanningTree(graph);
+        assertNotNull(mst);
+        assertEquals(1, mst.vertices().size());
+
+        // test a graph with two vertices, no edge
+        graph = new UndirectedGraph();
+        graph.addVertex(0);
+        graph.addVertex(1);
+        mst = Graphs.minimalSpanningTree(graph);
+        assertNotNull(mst);
+        assertEquals(1, mst.vertices().size());
+
+        // test a graph with two vertices, one edge
+        graph = new UndirectedGraph();
+        graph.addVertex(0);
+        graph.addVertex(1);
+        graph.addEdge(0, 1, 1.0);
+        mst = Graphs.minimalSpanningTree(graph);
+        assertNotNull(mst);
+        assertEquals(2, mst.vertices().size());
+
+        // test a graph with three vertices, three edges
+        graph = new UndirectedGraph();
+        graph.addVertex(0);
+        graph.addVertex(1);
+        graph.addVertex(2);
+        graph.addEdge(0, 1, 1.0);
+        graph.addEdge(0, 2, 2.0);
+        graph.addEdge(1, 2, 1.5);
+        mst = Graphs.minimalSpanningTree(graph);
+        assertNotNull(mst);
+        assertEquals(3, mst.vertices().size());
+        assertEquals(2, Graphs.edgesCountOf(mst) / 2);
+        assertEquals(2.5, edgeWeightSum(mst), 1E-5);
+
+        // test big graph
+        int verticeNum = 300;
+        UndirectedGraph undirectedGraph = generateUndirectedGraph(verticeNum);
+        mst = Graphs.minimalSpanningTree(undirectedGraph);
+        assertFalse("Minimal spanning tree should not contain cycle.", Graphs.containsCycle(mst));
+        assertEquals(verticeNum, mst.vertices().size());
+    }
+
+    @Test
     public void testEdgesCount() {
         Random r = new Random(System.currentTimeMillis());
 
@@ -355,6 +408,34 @@ public class GraphsTest {
             vertices.add(new Point3d(random.nextDouble(), random.nextDouble(), random.nextDouble()));
         }
         return Graphs.fullConnectedGraph(vertices, false);
+    }
+
+    private UndirectedGraph generateUndirectedGraph(int vn) {
+        Random random = new Random(System.currentTimeMillis());
+        UndirectedGraph graph = new UndirectedGraph();
+        for (int i = 0; i < vn; i ++) {
+            graph.addVertex(i);
+        }
+        for (int i = 0; i < vn; i ++) {
+            int vi = i;
+            for (int j = 0; j < vn / 5; j ++) {
+                double weight = random.nextDouble();
+                int vj = random.nextInt(vn);
+                if (vi == vj) continue;
+                graph.addEdge(vi, vj, weight);
+            }
+        }
+        return graph;
+    }
+
+    private double edgeWeightSum(UndirectedGraph graph) {
+        double sum = 0;
+        for (int vi : graph.vertices()) {
+            for (int ai : graph.adjacentVertices(vi)) {
+                sum += graph.edgeWeight(vi, ai);
+            }
+        }
+        return sum / 2.0;
     }
 
 }

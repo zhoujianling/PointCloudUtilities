@@ -2,6 +2,7 @@ package cn.jimmiez.pcu.common.graph;
 
 import cn.jimmiez.pcu.util.Pair;
 import cn.jimmiez.pcu.util.PcuCommonUtil;
+import cn.jimmiez.pcu.util.VectorUtil;
 
 import javax.vecmath.Point3d;
 import java.util.*;
@@ -96,6 +97,55 @@ public class Graphs {
             }
         }
         return false;
+    }
+
+    /**
+     * Construct a minimal spanning tree from a graph using Prim algorithm.
+     * @param graph an undirected graph
+     * @return the spanning tree, may be null
+     */
+    public static UndirectedGraph minimalSpanningTree(final UndirectedGraph graph) {
+        if (graph == null) return null;
+        List<List<Integer>> conns = Graphs.connectedComponents(graph);
+        Collections.sort(conns, new Comparator<List<Integer>>() {
+            @Override
+            public int compare(List<Integer> conn1, List<Integer> conn2) {
+                Integer size1 = conn1.size();
+                Integer size2 = conn2.size();
+                return size2.compareTo(size1);
+            }
+        });
+        if (conns.size() < 1 || conns.get(0).size() < 1) return null;
+        UndirectedGraph mst = new UndirectedGraph();
+        Set<Integer> visited = new HashSet<>();
+        List<Integer> mstVertices = conns.get(0);
+        int currVertex = mstVertices.get(0); int nextVertex = currVertex;
+        visited.add(currVertex); mst.addVertex(currVertex);
+        PriorityQueue<VertexPair> minHeap = new PriorityQueue<>(mstVertices.size() / 2 + 1, new Comparator<VertexPair>() {
+            @Override
+            public int compare(VertexPair pair1, VertexPair pair2) {
+                return Double.compare(
+                        graph.edgeWeight(pair1.getVi(), pair1.getVj()),
+                        graph.edgeWeight(pair2.getVi(), pair2.getVj()));
+            }
+        });
+        while (visited.size() < mstVertices.size()) {
+            for (int ai : graph.adjacentVertices(currVertex)) {
+                VertexPair vp = new VertexPair(ai, currVertex);
+                if (visited.contains(ai)) {
+                    minHeap.remove(vp);
+                } else {
+                    minHeap.add(vp);
+                }
+            }
+            VertexPair newVP = minHeap.poll();
+            if (newVP == null) continue;
+            nextVertex = newVP.getVi() == currVertex ? newVP.getVj() : newVP.getVi();
+            visited.add(nextVertex);mst.addVertex(nextVertex);
+            mst.addEdge(currVertex, nextVertex, graph.edgeWeight(currVertex, nextVertex));
+            currVertex = nextVertex;
+        }
+        return mst;
     }
 
     /**
