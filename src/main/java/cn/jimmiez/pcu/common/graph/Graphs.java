@@ -104,7 +104,7 @@ public class Graphs {
      * @param graph an undirected graph
      * @return the spanning tree, may be null
      */
-    public static UndirectedGraph minimalSpanningTree(final UndirectedGraph graph) {
+    public static UndirectedGraph minimalSpanningTree(final BaseGraph graph) {
         if (graph == null) return null;
         List<List<Integer>> conns = Graphs.connectedComponents(graph);
         Collections.sort(conns, new Comparator<List<Integer>>() {
@@ -119,8 +119,8 @@ public class Graphs {
         UndirectedGraph mst = new UndirectedGraph();
         Set<Integer> visited = new HashSet<>();
         List<Integer> mstVertices = conns.get(0);
-        int currVertex = mstVertices.get(0); int nextVertex = currVertex;
-        visited.add(currVertex); mst.addVertex(currVertex);
+        int currVertex = mstVertices.get(0);    int nextVertex = currVertex;
+        visited.add(currVertex);    mst.addVertex(currVertex);
         PriorityQueue<VertexPair> minHeap = new PriorityQueue<>(mstVertices.size() / 2 + 1, new Comparator<VertexPair>() {
             @Override
             public int compare(VertexPair pair1, VertexPair pair2) {
@@ -138,11 +138,11 @@ public class Graphs {
                     minHeap.add(vp);
                 }
             }
-            VertexPair newVP = minHeap.poll();
-            if (newVP == null) continue;
-            nextVertex = newVP.getVi() == currVertex ? newVP.getVj() : newVP.getVi();
-            visited.add(nextVertex);mst.addVertex(nextVertex);
-            mst.addEdge(currVertex, nextVertex, graph.edgeWeight(currVertex, nextVertex));
+            VertexPair nextVP = minHeap.poll();
+            if (nextVP == null) continue;
+            nextVertex = visited.contains(nextVP.getVi()) ? nextVP.getVj() : nextVP.getVi();
+            visited.add(nextVertex);    mst.addVertex(nextVertex);
+            mst.addEdge(nextVP.getVi(), nextVP.getVj(), graph.edgeWeight(nextVP.getVi(), nextVP.getVj()));
             currVertex = nextVertex;
         }
         return mst;
