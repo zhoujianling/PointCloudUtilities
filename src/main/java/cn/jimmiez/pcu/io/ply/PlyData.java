@@ -67,18 +67,20 @@ public class PlyData implements Iterable<PlyElement>{
 
         private byte[] bytes = null;
 
+        private Scanner scanner;
+
         public AsciiParser(byte[] bytes) {
             this.bytes = bytes;
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.getBytesCount(), bytes.length - header.getBytesCount());
+            this.scanner = new Scanner(stream);
         }
 
         @Override
         public PlyElement next() throws IOException {
             if (elementPointer >= header.getElementHeaders().size()) return null;
             PlyElement element = new PlyElement(header.getElementHeaders().get(elementPointer));
-            ByteArrayInputStream stream = new ByteArrayInputStream(bytes, header.getBytesCount(), bytes.length - header.getBytesCount());
             int propertiesCount = element.getHeader().properties.size();
             // TODO: 2019/3/20 optimize scanner read()
-            Scanner scanner = new Scanner(stream);
             boolean[] isList = new boolean[element.getHeader().properties.size()];
             for (int i = 0; i < isList.length; i ++) {
                 isList[i] = false;
