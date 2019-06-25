@@ -25,6 +25,12 @@ public class ObjReaderTest {
     @Test
     public void testReadObjData() {
         ObjReader reader = new ObjReader();
+
+        // test non-existent files
+        File nonExistentFile = new File("No-Such-File");
+        assertNull(reader.read(nonExistentFile));
+
+        // test bunny
         File file = new File(ObjReaderTest.class.getClassLoader().getResource("model/obj/bunny.obj").getFile());
         ObjData data = reader.read(file);
         assertNotNull(data);
@@ -34,9 +40,15 @@ public class ObjReaderTest {
         assertEquals(2503, data.vertices().size());
         assertEquals(4968, data.originalFaces().getValue().size());
         assertEquals(1, (int)data.originalFaces().getKey());
-        assertNull(data.vertexTextures());
+        assertNull(data.textureCoordinates());
         assertNull(data.normals());
         assertNull(data.mtllib());
 
+        // test gargoyle, which contains empty lines
+        File gargoyle = new File(ObjReaderTest.class.getClassLoader().getResource("model/obj/gargoyle.obj").getFile());
+        ObjData gargoyleData = reader.read(gargoyle);
+        assertNotNull(gargoyleData);
+        assertEquals(25002, gargoyleData.vertices().size());
+        // assertEquals(0, gargoyleData.originalFaces().getValue().size());
     }
 }

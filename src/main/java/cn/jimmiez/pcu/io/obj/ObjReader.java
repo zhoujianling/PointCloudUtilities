@@ -56,6 +56,9 @@ public class ObjReader {
                     case STATE_READING_LINE:
                         if (scanner.hasNextLine()) {
                             currentLine = scanner.nextLine();
+                            // skip empty lines and comments
+                            if (currentLine.isEmpty() || currentLine.startsWith("#")) break;
+
                             // '\' may occur in the matrix definition
                             while (currentLine.endsWith("\\") && scanner.hasNextLine()) {
                                 currentLine = currentLine + scanner.nextLine();
@@ -72,7 +75,8 @@ public class ObjReader {
                         }
                         slices = currentLine.split("(\\s)+");
                         if (slices.length < 1) {
-                            currentState = STATE_ERROR;
+                            // empty line, skip
+                            currentState = STATE_READING_LINE;
                             break;
                         }
                         String typeKeyword = slices[0];

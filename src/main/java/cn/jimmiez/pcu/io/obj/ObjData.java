@@ -46,14 +46,14 @@ public class ObjData {
         return result;
     }
 
-    public List<double[]> vertexTextures() {
+    public List<double[]> textureCoordinates() {
         List<double[]> result = vectorData.get(ObjDataType.VT_TEXTURE_VERTICES);
         if (result != null && result.size() < 1) return null;
         return result;
     }
 
     public List<double[]> normals() {
-        List<double[]> result = vectorData.get(ObjDataType.VT_TEXTURE_VERTICES);
+        List<double[]> result = vectorData.get(ObjDataType.VN_VERTEX_NORMALS);
         if (result != null && result.size() < 1) return null;
         return result;
     }
