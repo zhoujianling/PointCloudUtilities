@@ -14,11 +14,8 @@ public class ShortestPath {
      * @return list of pairs, for each pair, the key is the path, the value is length of shortest path
      */
     public static Map<Integer, Pair<List<Integer>, Double>> dijkstra(BaseGraph graph, int rootIndex) {
-        if (graph == null) throw new NullPointerException("Graph cannot be null");
         Map<Integer, Pair<List<Integer>, Double>> result = new HashMap<>();
-//        if (rootIndex < 0 || rootIndex >= graph.vertices().size()) {
-//            throw new IllegalArgumentException("Invalid root index");
-//        }
+
         Set<Integer> sSet = new HashSet<>();
         Set<Integer> sExcluded = new HashSet<>();
         Map<Integer, Integer> prev = new HashMap<>();

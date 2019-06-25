@@ -15,12 +15,15 @@ public class Graphs {
 
     /**
      * obtain connected components of a **UNDIRECTED GRAPH**.
-     * @param graph the undirected graph
-     * @return return a list, each element in it represents a sub-graph, which is a collection of
+     * @param graph an undirected graph
+     * @return return a nullable list, each element in it represents a sub-graph, which is a collection of
      * indices of vertices
      */
     public static List<List<Integer>> connectedComponents(BaseGraph graph) {
-        if (graph.isDirected()) throw new UnsupportedOperationException("Currently this method cannot operate on directed graph.");
+        if (graph.isDirected()) {
+            System.err.println("Currently this method cannot operate on directed graph.");
+            return null;
+        }
         List<List<Integer>> subGraphs = new Vector<>();
         Set<Integer> visited = new HashSet<>();
 //        System.out.println("num of vertices: " + graph.vertices().size());
@@ -213,15 +216,15 @@ public class Graphs {
         return new BaseGraph() {
             @Override
             public double edgeWeight(int i, int j) {
-                if (i < 0 || i >= vt.size() || j < 0 || j >= vt.size())
-                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
+//                if (i < 0 || i >= vt.size() || j < 0 || j >= vt.size())
+//                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + j + ".");
                 return vertices.get(i).distance(vertices.get(j));
             }
 
             @Override
             public List<Integer> adjacentVertices(int i) {
-                if (i < 0 || i >= vt.size())
-                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + ".");
+//                if (i < 0 || i >= vt.size())
+//                    throw new IllegalArgumentException("Invalid index of vertex: " + i + " " + ".");
                 return vt;
             }
 

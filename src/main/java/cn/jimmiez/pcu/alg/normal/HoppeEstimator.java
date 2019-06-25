@@ -22,10 +22,14 @@ public class HoppeEstimator implements NormalEstimator {
     private final int MINIMAL_POINTS = 5;
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Vector3d> estimateNormals(List<Point3d> data) {
         if (data.size() < MINIMAL_POINTS) {
-            throw new IllegalArgumentException("Too few points given! The size of point cloud is expected to be larger than " + MINIMAL_POINTS);
+            System.err.println("Too few points given! The size of point cloud is expected to be larger than " + MINIMAL_POINTS);
+            return null;
         }
         int k = defaultNeighborhoodSize(data);
         List<Vector3d> normals = new Vector<>();

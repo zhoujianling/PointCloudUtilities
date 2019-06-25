@@ -17,12 +17,6 @@ public class ShortestPathTest {
     public void testDijkstra() {
         Random random = new Random(System.currentTimeMillis());
 
-        // test null
-        try {
-            ShortestPath.dijkstra(null, 0);
-            fail("Should throw exception.");
-        } catch (NullPointerException npe) {}
-
         // test a graph without vertex
         BaseGraph testCase1 = new UndirectedGraph();
         try {
