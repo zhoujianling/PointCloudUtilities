@@ -35,11 +35,11 @@ public class ObjReaderTest {
         ObjData data = reader.read(file);
         assertNotNull(data);
         assertNotNull(data.vertices());
-        assertNotNull(data.originalFaces());
+        assertNotNull(data.faces());
 
         assertEquals(2503, data.vertices().size());
-        assertEquals(4968, data.originalFaces().getValue().size());
-        assertEquals(1, (int)data.originalFaces().getKey());
+        assertEquals(4968, data.faces().size());
+        assertEquals(9, data.faces().get(0).length);
         assertNull(data.textureCoordinates());
         assertNull(data.normals());
         assertNull(data.mtllib());
@@ -49,6 +49,6 @@ public class ObjReaderTest {
         ObjData gargoyleData = reader.read(gargoyle);
         assertNotNull(gargoyleData);
         assertEquals(25002, gargoyleData.vertices().size());
-        // assertEquals(0, gargoyleData.originalFaces().getValue().size());
+        assertEquals(0, gargoyleData.faces().size());
     }
 }

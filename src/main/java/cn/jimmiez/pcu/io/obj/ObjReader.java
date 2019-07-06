@@ -140,21 +140,30 @@ public class ObjReader {
                 /* elements */
                 case P_POINT:
                 case L_LINE:
+                    System.err.println("Warning: unsupported data type: " + type.getKeyword());
+                    break;
                 case F_FACE: {
                     // spec p.17
-                    int cnt = 0;
+                    // int cnt = 0;
                     Pair<Integer, List<double[]>> pair = objData.elementData.get(type);
                     int indicesCntPerVertex = pair.getKey();
                     if (indicesCntPerVertex == 0) {
                         indicesCntPerVertex = slices[1].split("/").length;
                         pair.setKey(indicesCntPerVertex);
                     }
-                    double[] dataArray = new double[(slices.length - 1) * indicesCntPerVertex];
+                    double[] dataArray = new double[(slices.length - 1) * 3];
+                    for (int valIndex = 0; valIndex < dataArray.length; valIndex ++) dataArray[valIndex] = ObjData.DEFAULT_INDEX;
                     for (int i = 1; i < slices.length; i++) {
                         String[] subArrays = slices[i].split("/");
-                        for (String subArray : subArrays) {
-                            dataArray[cnt ++] = Double.valueOf(subArray);
+                        for (int subArrayIndex = 0; subArrayIndex < subArrays.length; subArrayIndex ++) {
+                            String subArray = subArrays[subArrayIndex];
+                            if (subArray.isEmpty()) continue;
+                            dataArray[3 * subArrayIndex + i - 1] = Double.valueOf(subArray);
                         }
+//                        for (String subArray : subArrays) {
+//                            if (subArray.isEmpty()) continue;
+//                            dataArray[cnt ++] = Double.valueOf(subArray);
+//                        }
                     }
                     pair.getValue().add(dataArray);
                 }

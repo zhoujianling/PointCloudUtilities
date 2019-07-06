@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class ObjData {
 
+    public static final double DEFAULT_INDEX = -1;
+
     Map<ObjDataType, List<double[]>> vectorData;
 
     /**
@@ -62,10 +64,10 @@ public class ObjData {
         return textData.get(ObjDataType.MTLLIB_MATERIAL_LIBRARY);
     }
 
-    public Pair<Integer, List<double[]>> originalFaces() {
+    public List<double[]> faces() {
         Pair<Integer, List<double[]>> result = elementData.get(ObjDataType.F_FACE);
-        if (result != null && result.getKey() == 0) return null;
-        return result;
+        if (result == null || result.getValue() == null) return new ArrayList<>();
+        return result.getValue();
     }
 
 }
