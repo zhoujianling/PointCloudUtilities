@@ -50,6 +50,7 @@ public class GridVoxelizer {
      * The size of cells are automatically determined according to the {@link GridVoxelizer#cellRatio} and average
      * length of edges in three-nearest-neighbor graph.
      * @param points the point cloud to be voxelized
+     * @return the list of grid cells
      */
     public List<GridCell> voxelize(List<Point3d> points) {
         return this.voxelize(points, -1);
@@ -59,6 +60,7 @@ public class GridVoxelizer {
      * Perform the voxelizing.
      * @param points the point cloud to be voxelized
      * @param cellSize the size of each cell
+     * @return the list of gird cells
      */
     public List<GridCell> voxelize(List<Point3d> points, double cellSize) {
         this.points = points;

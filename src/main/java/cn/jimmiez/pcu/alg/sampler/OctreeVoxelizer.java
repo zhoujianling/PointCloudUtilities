@@ -17,7 +17,7 @@ public class OctreeVoxelizer extends Octree {
     /**
      *
      * @param data the point cloud
-     * @param maxPointsPerNode
+     * @param maxPointsPerNode the maximum number of points in an octree node
      * @return the list of octree cells
      */
     public List<OctreeNode> voxelize(List<Point3d> data, int maxPointsPerNode) {

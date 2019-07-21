@@ -5,8 +5,8 @@ import java.io.Serializable;
 /**
  * This class is a substitute for javafx.util.Pair coz OpenJFX is not included
  * in OpenJDK.
- * @param <K>
- * @param <V>
+ * @param <K> type of key in a k-v pair
+ * @param <V> type of value in a k-v pair
  */
 public class Pair<K, V> implements Serializable{
 
