@@ -128,7 +128,7 @@ faceData.add(new int[] {1, 0, 4});
 
 ```
 
-Secondly, use one line code to write the ply.
+Secondly, use one line of code to write the geometry data to a ply file.
 ```java
 int result = new PlyWriter()
         .prepare()
@@ -191,11 +191,35 @@ int[] neighborIndices = octree.searchNearestNeighbors(n, i);
 
 ```
 
-Another function *searchNeighborsInSphere()* is useful in finding all points from which the distance to a certain point is less than *radius*.
+Another function *searchNeighborsInSphere()* is useful in finding all points within a given distance.
 ```java
 double radius = 0.5d;
 List<Integer> neighborIndices2 = octree.searchNeighborsInSphere(i, radius);
 ```
+
+### Point Cloud Algorithms
+PCU implements some commonly used point cloud algorithms.
+WLOP method can re-sample point cloud: 
+
+```java
+List<Point3d> pointCloud = new ArrayList();
+// ... 
+int iterationNum = 10;
+WeightedLocallyOptimalProjector wlop = new WeightedLocallyOptimalProjector(pointCloud);
+// the positions of points will be updated in place.
+wlop.project(points, iterationNum);
+```
+
+Level set method can be used to extract skeleton of tree-like object:
+```java
+List<Point3d> vertices = new ArrayList();
+LevelSetSkeleton skeleton = new LevelSetSkeleton();
+Skeleton skel = skeleton.skeletonize(vertices);
+```
+
+### Graph API
+PCU provide some commonly used graph-based methods, which can be found under package *cn.jimmiez.pcu.graph*.  
+
 
 ## How to Visualize Point Cloud
 This library only provide api to operate 3d point cloud and cannot be used for 3d presentation. 
