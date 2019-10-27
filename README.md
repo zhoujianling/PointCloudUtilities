@@ -1,7 +1,7 @@
 # PointCloudUtilities
 
-[![GitHub license](https://img.shields.io/github/license/Jimmie00x0000/PointCloudUtil.svg)](https://github.com/Jimmie00x0000/PointCloudUtil/blob/master/LICENSE)
-[![Circle CI](https://img.shields.io/circleci/project/github/Jimmie00x0000/PointCloudUtil/dev.svg)](https://circleci.com/gh/Jimmie00x0000/PointCloudUtil/tree/dev)
+[![GitHub license](https://img.shields.io/github/license/Jimmie00x0000/PointCloudUtil.svg)](https://github.com/Jimmie00x0000/PointCloudUtilities/blob/master/LICENSE)
+[![Circle CI](https://img.shields.io/circleci/project/github/Jimmie00x0000/PointCloudUtilities/dev.svg)](https://circleci.com/gh/Jimmie00x0000/PointCloudUtilities/tree/dev)
 [![CodeCov](https://img.shields.io/codecov/c/github/Jimmie00x0000/PointCloudUtil.svg)](https://codecov.io/gh/Jimmie00x0000/PointCloudUtil)
 [![Maven Central](https://img.shields.io/maven-central/v/cn.jimmiez/pcutil.svg)](https://mvnrepository.com/artifact/cn.jimmiez/pcutil)
 
