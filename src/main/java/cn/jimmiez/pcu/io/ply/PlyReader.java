@@ -41,10 +41,11 @@ public class PlyReader {
     }
 
     private PlyData readPlyImpl(File file) throws IOException {
+        final byte[] bytes = Files.readAllBytes(file.toPath());
         FileInputStream stream = new FileInputStream(file);
         Scanner scanner = new Scanner(stream);
-        PlyHeader header = readHeader(scanner);
-        final byte[] bytes = Files.readAllBytes(file.toPath());
+        PlyHeader header = readHeader(scanner, bytes);
+        scanner.close();
         PlyData data = new PlyData(header);
         data.parse(bytes);
         return data;
@@ -262,7 +263,8 @@ public class PlyReader {
         return object;
     }
 
-    private PlyHeader readHeader(Scanner scanner) throws IOException {
+    private PlyHeader readHeader(Scanner scanner, byte[] bytes) throws IOException {
+        scanner.reset();
         PlyHeader header = new PlyHeader();
         List<String> headerLines = new ArrayList<>();
         int byteCount = 0;
@@ -270,6 +272,8 @@ public class PlyReader {
             String line;
             while ((line = scanner.nextLine()) != null) {
                 byteCount += (line.getBytes().length + 1);
+                // A terrible hack, to be improved
+                if (bytes[byteCount] == 10) byteCount += 1; // test if line separator is 0D 0A
                 if (line.equals("end_header")) break;
                 if (line.startsWith("comment ")) {
                     header.getComments().add(line);

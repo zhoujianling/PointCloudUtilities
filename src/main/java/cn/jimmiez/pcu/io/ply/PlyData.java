@@ -94,7 +94,9 @@ public class PlyData implements Iterable<PlyElement>{
                 }
                 String nextLine = scanner.nextLine();
                 String[] vals = nextLine.split("\\s+");
-                if (vals.length < propertiesCount) throw new IllegalStateException("Less properties than expected.");
+                if (vals.length < propertiesCount) {
+                    throw new IllegalStateException("Less properties than expected.");
+                }
                 for (int i = 0; i < propertiesCount; i ++) {
                     double val = Double.valueOf(vals[i]);
                     if (isList[i]) {
