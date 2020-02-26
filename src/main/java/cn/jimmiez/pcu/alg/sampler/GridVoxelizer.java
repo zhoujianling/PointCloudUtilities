@@ -129,7 +129,7 @@ public class GridVoxelizer {
         return indexOfCell(x, y, z);
     }
 
-    private Long indexOfCell(int xRow, int yRow, int zRow) {
+    public Long indexOfCell(int xRow, int yRow, int zRow) {
         long index = zRow;
         index <<= 20;
         index |= yRow;
@@ -139,9 +139,9 @@ public class GridVoxelizer {
     }
 
     // return [xRow, yRow, zRow]
-    private int[] parseIndex(long index) {
+    public int[] parseIndex(long index) {
         int[] coordinates = new int[3];
-        long mask = 0x00FF_FFFF;
+        long mask = 0x000F_FFFF;
         coordinates[0] = (int) (index & mask);
         coordinates[1] = (int) ((index >> 20) & mask);
         coordinates[2] = (int) ((index >> 40) & mask);
