@@ -8,8 +8,8 @@
 
 ## Description
 Utilities for point cloud processing. 
-![](https://jimmie00x0000.github.io/img/Normals.png)
-![](https://jimmie00x0000.github.io/img/Skeleton.png)
+![](https://zhoujianling.github.io/img/Normals.png)
+![](https://zhoujianling.github.io/img/Skeleton.png)
 
 ## Features
 * Read and write a *PLY* file.
